@@ -27,6 +27,7 @@ if(NOT DEFINED OpenCV_DIR)
       -DWITH_TIFF:BOOL=OFF
       -DWITH_PNG:BOOL=OFF
     UPDATE_COMMAND ""
+    INSTALL_COMMAND ""
     )
   set(OpenCV_DIR ${CMAKE_BINARY_DIR}/${proj}-build/share/opencv)
 endif(NOT DEFINED OpenCV_DIR)

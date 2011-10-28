@@ -77,7 +77,7 @@ if(USE_BRAINSABC OR USE_BRAINSCut)
 endif()
 
 if(USE_BRAINSCut)
-  list(APPEND BRAINSTools_DEPENDENCIES ReferenceANNModels OpenCV)
+  list(APPEND BRAINSTools_DEPENDENCIES OpenCV)
 endif()
 
 #-----------------------------------------------------------------------------
