@@ -27,6 +27,7 @@ public:
   void SetANNOutputThresholdFromNetConfiguration();
 
   BinaryTypePointer ThresholdImage( WorkingImagePointer image );
+  BinaryTypePointer GetOneContinuousObject( BinaryTypePointer binaryImage );
 
 private:
   NetConfiguration::ApplyDataSetListType applyDataSetList;

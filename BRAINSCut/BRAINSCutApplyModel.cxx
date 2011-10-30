@@ -18,6 +18,7 @@ BRAINSCutApplyModel
   SetRhoPhiThetaFromNetConfiguration();
   SetANNModelConfiguration();
   SetGradientSizeFromNetConfiguration();
+  SetANNOutputThresholdFromNetConfiguration();
 
   normalization = GetNormalizationFromNetConfiguration();
 
@@ -127,6 +128,8 @@ BRAINSCutApplyModel
   BinaryTypePointer maskVolume;
 
   maskVolume = ThresholdImage( continuousImage );
+  maskVolume = GetOneContiuousObject( maskVolume );
+  //maskVolume = FillHoles( maskVolume );
 
   /* TODO hole filling here */
 
@@ -137,16 +140,28 @@ BinaryTypePointer
 BRAINSCutApplyModel
 ::ThresholdImage( WorkingImagePointer image )
 {
-  typedef itk::BinaryThresholdImageFilter<WorkingImageType, WorkingImageType> ThresholdFilterType;
+  typedef itk::BinaryThresholdImageFilter<WorkingImageType,WorkingImageType> ThresholdFilterType;
   ThresholdFilterType::Pointer thresholder = ThresholdFilterType::New();
 
+  std::cout<<"Treshold at "<< annOutputThreshold <<std::endl;
+  if( annOutputThreshold <= 0.0F )
+  {
+    std::string msg = " ANNOutput Threshold cannot be less than zero. \n";
+    throw BRAINSCutExceptionStringHandler( msg );
+  }
   thresholder->SetInput( image );
-  thresholder->SetInsideValue( 1 );
   thresholder->SetOutsideValue( 0 );
+  thresholder->SetInsideValue( 255 );
   thresholder->SetLowerThreshold( annOutputThreshold  );
   thresholder->Update();
+  return mask;
+}
 
-  BinaryTypePointer mask = itkUtil::TypeCast<WorkingImageType, BinaryImageType>( thresholder->GetOutput() );
+BinaryTypePointer
+BRAINSCutApplyModel
+::GetOneContinuousObject( BinaryTypePointer binaryImage )
+{
+
   return mask;
 }
 
