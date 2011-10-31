@@ -40,7 +40,9 @@ add_library(BRAINSCutCOMMONLIB STATIC ${BRAINSCutCOMMONLIB_SRCS})
 target_link_libraries(BRAINSCutCOMMONLIB
   NetConfigurationCOMMONLIB
   ${ITK_LIBRARIES}
-  ${OpenCV_LIBS}
+  #${OpenCV_LIBS}
+  ${OPENCV_LIB_COMPONENTS}
+  gz
   )
 
 

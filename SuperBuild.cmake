@@ -192,6 +192,12 @@ list(APPEND ${CMAKE_PROJECT_NAME}_SUPERBUILD_EP_VARS
   USE_ImageCalculator:BOOL
   )
 
+if(USE_BRAINSCut)
+  list(APPEND ${CMAKE_PROJECT_NAME}_SUPERBUILD_EP_VARS
+      OpenCV_DIR:PATH
+  )
+endif()
+
 _expand_external_project_vars()
 
 if(verbose)
