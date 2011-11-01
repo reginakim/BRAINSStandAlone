@@ -42,7 +42,6 @@ target_link_libraries(BRAINSCutCOMMONLIB
   ${ITK_LIBRARIES}
   #${OpenCV_LIBS}
   ${OPENCV_LIB_COMPONENTS}
-  gz
   )
 
 
