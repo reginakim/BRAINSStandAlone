@@ -29,3 +29,4 @@ add_subdirectory(HistogramMatchingFilter)
 add_subdirectory(TextureMeasureFilter)
 
 add_subdirectory(STAPLE)
+add_subdirectory(Generate2DDebuggingImages)

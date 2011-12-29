@@ -26,6 +26,7 @@
 #include "vector"
 #include "itkArray.h"
 #include "itkArray2D.h"
+#include "set"
 
 namespace itk
 {
@@ -269,12 +270,15 @@ protected:
 
   /** Determine maximum value among all input images' pixels */
   typename TInputImage::PixelType ComputeMaximumInputValue();
+  void GenerateLabelSet();
 
 private:
   MultiLabelSTAPLEImageFilter(const Self&); //purposely not implemented
   void operator=(const Self&); //purposely not implemented
 
   InputPixelType m_TotalLabelCount;
+
+  std::map<unsigned int, unsigned int> labelSetMap;
 
   OutputPixelType m_LabelForUndecidedPixels;
   bool m_HasLabelForUndecidedPixels;

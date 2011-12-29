@@ -45,6 +45,10 @@ int STAPLE(unsigned int argc, char *argv[] )
 
     typename FilterType::ConfusionMatrixType conf =
       filter->GetConfusionMatrix( i );
+    std::cout<<" *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*" 
+             <<"Size of Confision Matrix:"
+             << conf.rows() << " x "
+             << conf.cols() <<std::endl;
     for( unsigned int j = 0; j < conf.rows(); j++ )
       {
       for( unsigned int k = 0; k < conf.cols(); k++ )
