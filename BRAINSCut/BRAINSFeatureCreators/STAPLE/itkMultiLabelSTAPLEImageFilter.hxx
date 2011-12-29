@@ -60,8 +60,9 @@ MultiLabelSTAPLEImageFilter< TInputImage, TOutputImage, TWeights >
        it!=labelSet.end();
        ++it)
     {
-    labelSetMap[labelCount]=*it;
+    m_LabelSetMap[*it]=labelCount;
     std::cout<<" "<<*it;
+    labelCount++;
     }
   m_TotalLabelCount= labelSet.size() +1 ;
   std::cout<<std::endl;
@@ -125,7 +126,6 @@ MultiLabelSTAPLEImageFilter< TInputImage, TOutputImage, TWeights >
   typedef typename LabelVotingFilterType::Pointer LabelVotingFilterPointer;
 
   typename OutputImageType::Pointer votingOutput;
-  std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
   { // begin scope for local filter allocation
     LabelVotingFilterPointer votingFilter = LabelVotingFilterType::New();
 
@@ -137,54 +137,55 @@ MultiLabelSTAPLEImageFilter< TInputImage, TOutputImage, TWeights >
     votingOutput = votingFilter->GetOutput();
   } // begin scope for local filter allocation; de-allocate filter
 
-  std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
   OutputIteratorType out =
     OutputIteratorType( votingOutput, votingOutput->GetRequestedRegion() );
 
-  std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
-  std::cout<< votingOutput ;
   for ( unsigned int k = 0; k < numberOfInputs; ++k )
     {
     this->m_ConfusionMatrixArray[k].Fill( 0.0 );
-    std::cout<<__LINE__<<"::"<<__FILE__<<"::k::"<<k<<std::endl;
 
     InputConstIteratorType in =
       InputConstIteratorType( this->GetInput( k ), votingOutput->GetRequestedRegion() );
 
-    std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
-
+    in.GoToBegin();
+    
     for ( out.GoToBegin(); ! out.IsAtEnd(); ++out, ++in )
       {
-      std::cout<<"["<<k<<","<<in.Get()<<","<<out.Get()<<"]:";
-      std::cout<<this->m_ConfusionMatrixArray[k][labelSetMap[in.Get()]][labelSetMap[out.Get()]]
-               <<std::endl;
-      ++(this->m_ConfusionMatrixArray[k][labelSetMap[in.Get()]][labelSetMap[out.Get()]]);
+      unsigned int inLabel =m_LabelSetMap[in.Get()];
+      unsigned int outLabel=m_LabelSetMap[out.Get()];
+      ++(this->m_ConfusionMatrixArray[k][ inLabel ][ outLabel ] );
       }
     }
-  std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
 
   // normalize matrix rows to unit probability sum
   for ( unsigned int k = 0; k < numberOfInputs; ++k )
     {
-    for ( InputPixelType inLabel = 0; inLabel < this->m_TotalLabelCount+1; ++inLabel )
+    //for ( InputPixelType inLabel = 0; inLabel < this->m_TotalLabelCount+1; ++inLabel )
+    for( std::map<unsigned int, unsigned int>::iterator inLabelIt=m_LabelSetMap.begin();
+         inLabelIt != m_LabelSetMap.end();
+         ++inLabelIt)
       {
       // compute sum over all output labels for given input label
       WeightsType sum = 0;
-      for ( OutputPixelType outLabel = 0; outLabel < this->m_TotalLabelCount; ++outLabel )
+      for( std::map<unsigned int, unsigned int>::iterator outLabelIt=m_LabelSetMap.begin();
+           outLabelIt != m_LabelSetMap.end();
+           ++outLabelIt )
 	      {
-	      sum += this->m_ConfusionMatrixArray[k][labelSetMap[inLabel]][labelSetMap[outLabel]];
+	      sum += this->m_ConfusionMatrixArray[k][ (*inLabelIt).second ][ (*outLabelIt).second ];
 	      }
 
-      std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
       // make sure that this input label did in fact show up in the input!!
       if ( sum > 0 )
 	      {
 	      // normalize
-	      for ( OutputPixelType outLabel = 0; outLabel < this->m_TotalLabelCount; ++outLabel )
+        for( std::map<unsigned int, unsigned int>::iterator outLabelIt=m_LabelSetMap.begin();
+             outLabelIt != m_LabelSetMap.end();
+             ++outLabelIt )
 	        {
-	        this->m_ConfusionMatrixArray[k][inLabel][outLabel] /= sum;
+	        this->m_ConfusionMatrixArray[k][ (*inLabelIt).second ][ (*outLabelIt).second ] /= sum;
 	        }
         }
+      std::cout<<"sum::"<<sum<<std::endl;
       }
     }
 }
@@ -200,7 +201,9 @@ MultiLabelSTAPLEImageFilter< TInputImage, TOutputImage, TWeights >
     {
     if ( this->m_PriorProbabilities.GetSize() < this->m_TotalLabelCount )
       {
-      itkExceptionMacro ("m_PriorProbabilities array has wrong size " << m_PriorProbabilities << "; should be at least " << 1+this->m_TotalLabelCount );
+      itkExceptionMacro ("m_PriorProbabilities array has wrong size " 
+                          << m_PriorProbabilities 
+                          << "; should be at least " << 1+this->m_TotalLabelCount );
       }
     }
   else
@@ -212,19 +215,19 @@ MultiLabelSTAPLEImageFilter< TInputImage, TOutputImage, TWeights >
     for ( unsigned int k = 0; k < numberOfInputs; ++k )
       {
       InputConstIteratorType in = InputConstIteratorType
-	( this->GetInput( k ), this->GetOutput()->GetRequestedRegion() );
+	        ( this->GetInput( k ), this->GetOutput()->GetRequestedRegion() );
 
       for ( in.GoToBegin(); ! in.IsAtEnd(); ++in )
-	{
-	++(this->m_PriorProbabilities[in.Get()]);
-	}
+	      {
+	      ++(this->m_PriorProbabilities[m_LabelSetMap[in.Get()]]);
+	      }
       }
 
     WeightsType totalProbMass = 0.0;
     for ( InputPixelType l = 0; l < this->m_TotalLabelCount; ++l )
-      totalProbMass += this->m_PriorProbabilities[l];
+      totalProbMass += this->m_PriorProbabilities[m_LabelSetMap[l]];
     for ( InputPixelType l = 0; l < this->m_TotalLabelCount; ++l )
-      this->m_PriorProbabilities[l] /= totalProbMass;
+      this->m_PriorProbabilities[m_LabelSetMap[l]] /= totalProbMass;
     }
 }
 
@@ -236,31 +239,24 @@ MultiLabelSTAPLEImageFilter< TInputImage, TOutputImage, TWeights >
   // determine the maximum label in all input images
   // this->m_TotalLabelCount = this->ComputeMaximumInputValue() + 1;
   this->GenerateLabelSet();
-  std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
 
   if ( ! this->m_HasLabelForUndecidedPixels )
     {
     this->m_LabelForUndecidedPixels = this->m_TotalLabelCount;
     }
-  std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
 
   // allocate and initialize the confusion matrices
   this->AllocateConfusionMatrixArray();
-  std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
   this->InitializeConfusionMatrixArrayFromVoting();
 
   // test existing or allocate and initialize new array with prior class
   // probabilities
-  std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
   this->InitializePriorProbabilities();
 
   // Allocate the output image.
   typename TOutputImage::Pointer output = this->GetOutput();
-  std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
   output->SetBufferedRegion( output->GetRequestedRegion() );
-  std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
   output->Allocate();
-  std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
 
   // Record the number of input files.
   const unsigned int numberOfInputs = this->GetNumberOfInputs();
@@ -269,14 +265,12 @@ MultiLabelSTAPLEImageFilter< TInputImage, TOutputImage, TWeights >
   InputConstIteratorType *it = new InputConstIteratorType[numberOfInputs];
   for ( unsigned int k = 0; k < numberOfInputs; ++k )
     {
-  std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
     it[k] = InputConstIteratorType
       ( this->GetInput( k ), output->GetRequestedRegion() );
     }
 
   // allocate array for pixel class weights
   WeightsType* W = new WeightsType[ this->m_TotalLabelCount ];
-  std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
 
   for ( unsigned int iteration = 0;
 	(!this->m_HasMaximumNumberOfIterations) ||
@@ -298,41 +292,38 @@ MultiLabelSTAPLEImageFilter< TInputImage, TOutputImage, TWeights >
       {
       // the following is the E step
       for ( OutputPixelType ci = 0; ci < this->m_TotalLabelCount; ++ci )
-	      W[ci] = this->m_PriorProbabilities[ci];
+	      W[m_LabelSetMap[ci]] = this->m_PriorProbabilities[m_LabelSetMap[ci]];
 
-      std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
       for ( unsigned int k = 0; k < numberOfInputs; ++k )
 	      {
 	      const InputPixelType j = it[k].Get();
 	      for ( OutputPixelType ci = 0; ci < this->m_TotalLabelCount; ++ci )
 	        {
-	        W[ci] *= this->m_ConfusionMatrixArray[k][labelSetMap[j]][labelSetMap[ci]];
+	        W[m_LabelSetMap[ci]] *= this->m_ConfusionMatrixArray[k][m_LabelSetMap[j]][m_LabelSetMap[ci]];
 	        }
         }
-      std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
 
       // the following is the M step
       WeightsType sumW = W[0];
       for ( OutputPixelType ci = 1; ci < this->m_TotalLabelCount; ++ci )
-	      sumW += W[ci];
+	      sumW += W[m_LabelSetMap[ci]];
 
       if ( sumW )
         {
         for ( OutputPixelType ci = 0; ci < this->m_TotalLabelCount; ++ci )
-          W[ci] /= sumW;
+          W[m_LabelSetMap[ci]] /= sumW;
         }
 
       for ( unsigned int k = 0; k < numberOfInputs; ++k )
       	{
 	      const InputPixelType j = it[k].Get();
 	      for ( OutputPixelType ci = 0; ci < this->m_TotalLabelCount; ++ci )
-	        this->m_UpdatedConfusionMatrixArray[k][labelSetMap[j]][labelSetMap[ci]] += W[ci];
+	        this->m_UpdatedConfusionMatrixArray[k][m_LabelSetMap[j]][m_LabelSetMap[ci]] += W[m_LabelSetMap[ci]];
 
 	      // we're now done with this input pixel, so update.
 	      ++(it[k]);
 	      }
       }
-      std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
 
       // Normalize matrix elements of each of the updated confusion matrices
       // with sum over all expert decisions.
@@ -341,19 +332,18 @@ MultiLabelSTAPLEImageFilter< TInputImage, TOutputImage, TWeights >
         // compute sum over all output classifications
         for ( OutputPixelType ci = 0; ci < this->m_TotalLabelCount; ++ci )
 	        {
-	        WeightsType sumW = this->m_UpdatedConfusionMatrixArray[k][0][labelSetMap[ci]];
+	        WeightsType sumW = this->m_UpdatedConfusionMatrixArray[k][0][m_LabelSetMap[ci]];
 	        for ( InputPixelType j = 1; j < 1+this->m_TotalLabelCount; ++j )
-	          sumW += this->m_UpdatedConfusionMatrixArray[k][labelSetMap[j]][labelSetMap[ci]];
+	          sumW += this->m_UpdatedConfusionMatrixArray[k][m_LabelSetMap[j]][m_LabelSetMap[ci]];
 
 	        // normalize with for each class ci
 	        if ( sumW )
 	          {
 	          for ( InputPixelType j = 0; j < 1+this->m_TotalLabelCount; ++j )
-              this->m_UpdatedConfusionMatrixArray[k][labelSetMap[j]][labelSetMap[ci]] /= sumW;
+              this->m_UpdatedConfusionMatrixArray[k][m_LabelSetMap[j]][m_LabelSetMap[ci]] /= sumW;
             }
           }
         }
-      std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
 
       // now we're applying the update to the confusion matrices and compute the
       // maximum parameter change in the process.
@@ -363,13 +353,13 @@ MultiLabelSTAPLEImageFilter< TInputImage, TOutputImage, TWeights >
 	        for ( OutputPixelType ci = 0; ci < this->m_TotalLabelCount; ++ci )
 	          {
 	          const WeightsType thisParameterUpdate =
-	              fabs( this->m_UpdatedConfusionMatrixArray[k][labelSetMap[j]][labelSetMap[ci]] -
-		            this->m_ConfusionMatrixArray[k][labelSetMap[j]][labelSetMap[ci]] );
+	              fabs( this->m_UpdatedConfusionMatrixArray[k][m_LabelSetMap[j]][m_LabelSetMap[ci]] -
+		            this->m_ConfusionMatrixArray[k][m_LabelSetMap[j]][m_LabelSetMap[ci]] );
 
 	          maximumUpdate = vnl_math_max( maximumUpdate, thisParameterUpdate );
 
-	          this->m_ConfusionMatrixArray[k][labelSetMap[j]][labelSetMap[ci]] =
-	          this->m_UpdatedConfusionMatrixArray[k][labelSetMap[j]][labelSetMap[ci]];
+	          this->m_ConfusionMatrixArray[k][m_LabelSetMap[j]][m_LabelSetMap[ci]] =
+	          this->m_UpdatedConfusionMatrixArray[k][m_LabelSetMap[j]][m_LabelSetMap[ci]];
 	          }
 
       this->InvokeEvent( IterationEvent() );
@@ -385,7 +375,6 @@ MultiLabelSTAPLEImageFilter< TInputImage, TOutputImage, TWeights >
       if ( maximumUpdate < this->m_TerminationUpdateThreshold )
         break;
     } // end for ( iteration )
-    std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
 
     // now we'll build the combined output image based on the estimated
     // confusion matrices
@@ -394,45 +383,42 @@ MultiLabelSTAPLEImageFilter< TInputImage, TOutputImage, TWeights >
     for ( unsigned int k = 0; k < numberOfInputs; ++k )
       it[k].GoToBegin();
 
-    std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
     // reset output iterator to start
     OutputIteratorType out   = OutputIteratorType( output, output->GetRequestedRegion() );
     for ( out.GoToBegin(); !out.IsAtEnd(); ++out )
       {
       // basically, we'll repeat the E step from above
       for ( OutputPixelType ci = 0; ci < this->m_TotalLabelCount; ++ci )
-        W[ci] = this->m_PriorProbabilities[ci];
+        W[m_LabelSetMap[ci]] = this->m_PriorProbabilities[m_LabelSetMap[ci]];
 
       for ( unsigned int k = 0; k < numberOfInputs; ++k )
         {
         const InputPixelType j = it[k].Get();
         for ( OutputPixelType ci = 0; ci < this->m_TotalLabelCount; ++ci )
 	        {
-	        W[ci] *= this->m_ConfusionMatrixArray[k][labelSetMap[j]][labelSetMap[ci]];
+	        W[m_LabelSetMap[ci]] *= this->m_ConfusionMatrixArray[k][m_LabelSetMap[j]][m_LabelSetMap[ci]];
 	        }
         ++it[k];
         }
 
-    std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
     // now determine the label with the maximum W
     OutputPixelType winningLabel = this->m_TotalLabelCount;
     WeightsType winningLabelW = 0;
     for ( OutputPixelType ci = 0; ci < this->m_TotalLabelCount; ++ci )
       {
-      if ( W[ci] > winningLabelW )
+      if ( W[m_LabelSetMap[ci]] > winningLabelW )
 	      {
-	      winningLabelW = W[ci];
-	      winningLabel = ci;
+	      winningLabelW = W[m_LabelSetMap[ci]];
+	      winningLabel = m_LabelSetMap[ci];
         }
       else
-        if ( ! (W[ci] < winningLabelW ) )
+        if ( ! (W[m_LabelSetMap[ci]] < winningLabelW ) )
           {
           winningLabel = this->m_TotalLabelCount;
           }
       }
     out.Set( winningLabel );
     }
-    std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
 
     delete[] W;
     delete[] it;

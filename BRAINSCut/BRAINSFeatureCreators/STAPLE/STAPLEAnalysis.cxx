@@ -15,7 +15,7 @@ int STAPLE(unsigned int argc, char *argv[] )
 
   typedef float RealType;
 
-  typedef itk::Image<unsigned int, ImageDimension> LabelImageType;
+  typedef itk::Image<unsigned char, ImageDimension> LabelImageType;
 
   typedef itk::MultiLabelSTAPLEImageFilter<LabelImageType, LabelImageType> FilterType;
 
@@ -45,7 +45,7 @@ int STAPLE(unsigned int argc, char *argv[] )
 
     typename FilterType::ConfusionMatrixType conf =
       filter->GetConfusionMatrix( i );
-    std::cout<<" *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*" 
+    std::cout<<" *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*" <<std::endl
              <<"Size of Confision Matrix:"
              << conf.rows() << " x "
              << conf.cols() <<std::endl;
@@ -63,6 +63,7 @@ int STAPLE(unsigned int argc, char *argv[] )
           std::cout << ",";
           }
         }
+      std::cout<<std::endl;
       }
     }
 

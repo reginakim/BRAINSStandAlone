@@ -27,6 +27,7 @@
 #include "itkArray.h"
 #include "itkArray2D.h"
 #include "set"
+#include "map"
 
 namespace itk
 {
@@ -278,7 +279,7 @@ private:
 
   InputPixelType m_TotalLabelCount;
 
-  std::map<unsigned int, unsigned int> labelSetMap;
+  std::map<unsigned int, unsigned int> m_LabelSetMap;
 
   OutputPixelType m_LabelForUndecidedPixels;
   bool m_HasLabelForUndecidedPixels;

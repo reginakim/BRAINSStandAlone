@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8" ?>
+  <executable>
+  <category>Filtering.FeatureDetection</category>
+  <title>Dilate Image</title>
+
+  <description>Uses mathematical morphology to dilate the input images.</description>
+  <version>0.1.0.$Revision: 1 $(alpha)</version>
+  <documentation-url>http:://www.na-mic.org/</documentation-url>
+  <license>https://www.nitrc.org/svn/brains/BuildScripts/trunk/License.txt </license>
+  <contributor>This tool was developed by Mark Scully and Jeremy Bockholt.</contributor>
+
+  <parameters>
+    <label>Output Parameters</label>
+    <description>Input parameters for analysis.</description>
+    <image>
+      <name>outputVolume</name>
+      <longflag>--outputVolume</longflag>
+      <description>Required: output image</description>
+      <label>Output Volume</label>
+      <channel>output</channel>
+    </image>
+
+    <integer>
+      <name>inputSize</name>
+      <longflag>inputSize</longflag>
+      <description>size of entire image</description>
+      <label>inputSize</label>
+      <channel>input</channel>
+      <default>50</default>
+    </integer>
+
+    <integer>
+      <name>begin</name>
+      <longflag>begin</longflag>
+      <description>Starting of white box</description>
+      <label>begin</label>
+      <channel>input</channel>
+      <default>10</default>
+    </integer>
+
+    <integer>
+      <name>end</name>
+      <longflag>end</longflag>
+      <description>Ending of white box</description>
+      <label>end</label>
+      <channel>input</channel>
+      <default>20</default>
+    </integer>
+  </parameters>
+
+  </executable>
