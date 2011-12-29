@@ -7,12 +7,15 @@
 #include <itkRelabelComponentImageFilter.h>
 #include <itkBinaryBallStructuringElement.h>
 #include <itkBinaryMorphologicalClosingImageFilter.h>
+#include <itkShapeDetectionLevelSetImageFilter.h>
+#include <itkSigmoidImageFilter.h>
 
 // TODO: consider using itk::LabelMap Hole filling process in ITK4
 
 BRAINSCutApplyModel
 ::BRAINSCutApplyModel( std::string netConfigurationFilename)
-  : BRAINSCutPrimary( netConfigurationFilename )
+  : 
+    BRAINSCutPrimary( netConfigurationFilename )
   // ANNModelFilename(NULL)
 {
   // TODO Take this apart to generate registration one by one!
@@ -31,6 +34,7 @@ BRAINSCutApplyModel
   SetApplyDataSetFromNetConfiguration();
   SetANNModelFilenameFromNetConfiguration();
 
+  SetANNLevelSetImageTypeFromNetConfiguration();
   openCVANN = new OpenCVMLPType();
 }
 
@@ -77,6 +81,13 @@ BRAINSCutApplyModel
   inputVectorGenerator.SetInputVectorSize();
   inputVectorGenerator.SetNormalization( normalization );
 
+  /* Level Set Parameter Setting */
+  std::cout<< "levelSetImageType::"<<levelSetImageType<<std::endl;
+  WorkingImagePointer featureImage;
+  if( levelSetImageType !="" )
+    {
+    featureImage = GetFeatureImageForLevelSet( subject);
+    }
 
   /* now iterate through the roi */
 
@@ -107,6 +118,7 @@ BRAINSCutApplyModel
          * may include hole-filling(closing), thresholding, and more adjustment
          */
         BinaryImagePointer mask = PostProcessingOfANNContinuousImage( ANNContinuousOutputFilename,
+                                                                      featureImage,
                                                                       annOutputThreshold);
 
         std::string roiOutputFilename = GetROIVolumeName( subject, *roiTyIt );
@@ -177,15 +189,27 @@ BRAINSCutApplyModel
 
 BinaryImagePointer
 BRAINSCutApplyModel
-::PostProcessingOfANNContinuousImage( std::string continuousFilename, scalarType threshold )
+::PostProcessingOfANNContinuousImage( std::string continuousFilename, 
+                                      WorkingImagePointer& levelSetFeatureImage,
+                                      scalarType threshold )
 {
   WorkingImagePointer continuousImage = ReadImageByFilename( continuousFilename );
 
-  /* threshold */
   BinaryImagePointer maskVolume;
 
-  maskVolume = ThresholdImageAtLower( continuousImage, threshold);
-
+  /* level set filtering */
+  if( levelSetImageType != "" )
+    {
+    WorkingImagePointer levelSetAdjustedImage;
+    levelSetAdjustedImage = LevelSetAdjustment( continuousImage,
+                                              levelSetFeatureImage,
+                                              threshold);
+    maskVolume = ThresholdImageAtUpper( levelSetAdjustedImage, 0.0F);
+    }
+  else
+    {
+    maskVolume = ThresholdImageAtLower( continuousImage, threshold);
+    }
   /* Get One label */
   maskVolume = GetOneConnectedRegion( maskVolume );
 
@@ -194,14 +218,88 @@ BRAINSCutApplyModel
   return maskVolume;
 }
 
+/** BRAINSCut Laplaian LevelSet **/
+WorkingImagePointer
+BRAINSCutApplyModel
+::LevelSetAdjustment( WorkingImagePointer& annOutput,
+                      WorkingImagePointer& featureImage,
+                      scalarType threshold
+                      )
+{
+  typedef itk::ShapeDetectionLevelSetImageFilter< 
+                                                 WorkingImageType, 
+                                                 WorkingImageType >
+                                               LevelSetFilterType;
+  LevelSetFilterType::Pointer levelSetFilter = LevelSetFilterType::New();
+
+  levelSetFilter->SetInput( annOutput );
+
+  levelSetFilter->SetFeatureImage( featureImage );
+
+  levelSetFilter->SetMaximumRMSError( 0.02 );
+  levelSetFilter->SetNumberOfIterations( 1 );
+
+  // half way between outer and inner value
+  levelSetFilter->SetIsoSurfaceValue( threshold ); 
+  levelSetFilter->SetPropagationScaling( 0.3F );
+  levelSetFilter->SetCurvatureScaling( 1.0e-10F );
+
+  std::cout<<__LINE__<<"::"<<__FILE__
+           <<":: LevelSetAdjustment "
+           <<std::endl;
+          
+  levelSetFilter->Update();
+  
+  // output of the filter is signed image, 
+  // inside = positive
+  // outside = negative
+  return levelSetFilter->GetOutput();
+}
+
+/** feature image */
+WorkingImagePointer
+BRAINSCutApplyModel
+::GetFeatureImageForLevelSet( DataSet& subject)
+{
+  std::cout<<"Read :: "
+           <<subject.GetImageFilenameByType( levelSetImageType ) 
+           <<std::endl;
+
+  WorkingImagePointer image =
+    ReadImageByFilename( subject.GetImageFilenameByType( levelSetImageType ) );
+  return image;
+}
+
 BinaryImagePointer
 BRAINSCutApplyModel
-::ThresholdImageAtLower( WorkingImagePointer image, scalarType thresholdValue  )
+::ThresholdImageAtUpper( WorkingImagePointer& image, scalarType thresholdValue  )
 {
   typedef itk::BinaryThresholdImageFilter<WorkingImageType,WorkingImageType> ThresholdFilterType;
   ThresholdFilterType::Pointer thresholder = ThresholdFilterType::New();
 
-  std::cout<<"Treshold at "<< thresholdValue <<std::endl;
+  if( thresholdValue < 0.0F )
+  {
+    std::string msg = " ANNOutput Threshold cannot be less than zero. \n";
+    throw BRAINSCutExceptionStringHandler( msg );
+  }
+  thresholder->SetInput( image );
+  thresholder->SetOutsideValue( 0 );
+  thresholder->SetInsideValue( 1 );
+  thresholder->SetUpperThreshold( thresholdValue );
+  thresholder->SetLowerThreshold( -1e+10F);
+  thresholder->Update();
+
+  BinaryImagePointer mask = itkUtil::TypeCast<WorkingImageType, BinaryImageType>( thresholder->GetOutput() );
+  return mask;
+}
+
+BinaryImagePointer
+BRAINSCutApplyModel
+::ThresholdImageAtLower( WorkingImagePointer& image, scalarType thresholdValue  )
+{
+  typedef itk::BinaryThresholdImageFilter<WorkingImageType,WorkingImageType> ThresholdFilterType;
+  ThresholdFilterType::Pointer thresholder = ThresholdFilterType::New();
+
   if( thresholdValue < 0.0F )
   {
     std::string msg = " ANNOutput Threshold cannot be less than zero. \n";
@@ -271,6 +369,32 @@ BRAINSCutApplyModel
     {
     std::string msg = " ANNOutput Threshold cannot be less than zero. \n";
     throw BRAINSCutExceptionStringHandler( msg );
+    }
+}
+
+void
+BRAINSCutApplyModel
+::SetANNLevelSetImageType( std::string imageType )
+{
+  levelSetImageType=imageType;
+}
+void
+BRAINSCutApplyModel
+::SetANNLevelSetImageTypeFromNetConfiguration()
+{
+  levelSetImageType=
+    BRAINSCutNetConfiguration.Get<ApplyModelType>("ApplyModel")
+    ->GetAttribute<StringValue>("LevelSetImageType");
+
+  std::cout<<__LINE__<<"::"<<__FILE__
+           <<" LevelSet Image Type:: " 
+           << levelSetImageType 
+           << std::endl;
+
+  if( levelSetImageType == "" )
+    {
+    std::cout<<"Simple threshold method will be used for post-processing"
+             << std::endl;
     }
 }
 
