@@ -5,7 +5,7 @@
 ##
 ARCH=`uname`;
 if [ "$ARCH" == "Darwin" ]; then
-  BRAINSBuild="/ipldev/scratch/eunyokim/src/BRAINS20111028/build-Darwin-20111028";
+  BRAINSBuild="/ipldev/scratch/eunyokim/src/BRAINS20111028/build-Darwin/";
 else
   BRAINSBuild="/scratch/PREDICT/regina/BRAINS/buildICC/";
 fi
