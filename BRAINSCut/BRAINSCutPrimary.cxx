@@ -245,6 +245,7 @@ BRAINSCutPrimary
   const bool useTransform( filename.find(".mat") != std::string::npos );
   if( useTransform )
     {
+    std::cout<<"**** Return NULL transoformation"<<std::endl;
     return NULL;
     }
   typedef itk::ImageFileReader<DisplacementFieldType> DeformationReaderType;
@@ -263,6 +264,7 @@ BRAINSCutPrimary
   const bool useDeformation( filename.find(".mat") == std::string::npos );
   if( useDeformation )
     {
+    std::cout<<"**** Return NULL deformation"<<std::endl;
     return NULL;
     }
   return itk::ReadTransformFromDisk( filename );

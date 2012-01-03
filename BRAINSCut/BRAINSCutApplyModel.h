@@ -28,14 +28,9 @@ public:
   void ReadANNModelFile();
 
   BinaryImagePointer PostProcessingOfANNContinuousImage( std::string continuousFilename, 
-                                                         WorkingImagePointer& levelSetFeatureImage,
                                                          scalarType threshold );
 
   void SetANNOutputThresholdFromNetConfiguration();
-  void SetANNLevelSetImageTypeFromNetConfiguration();
-  void SetANNLevelSetImageType( std::string imageType );
-
-  WorkingImagePointer GetFeatureImageForLevelSet( DataSet& subject);
 
   BinaryImagePointer ThresholdImageAtLower( WorkingImagePointer& image, scalarType thresholdValue );
   BinaryImagePointer ThresholdImageAtUpper( WorkingImagePointer& image, scalarType thresholdValue );
@@ -54,8 +49,6 @@ private:
   std::string ANNTestingSSEFilename;
   std::fstream ANNTestingSSEFileStream;
 
-  std::string levelSetImageType;
-
   scalarType annOutputThreshold;
   OpenCVMLPType * openCVANN;
 
@@ -63,9 +56,6 @@ private:
   std::string GetANNModelBaseName();
   float ComputeSSE(const PredictValueMapType& predictedOutputVector,      
                    const std::string roiReferenceFilename );
-  WorkingImagePointer LevelSetAdjustment( WorkingImagePointer& annOutput,
-                                          WorkingImagePointer& featureImage,
-                                          scalarType threahold);
 
   /* inline functions */
 
