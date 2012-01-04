@@ -1,6 +1,6 @@
 #include "BRAINSCutExceptionStringHandler.h"
 #include "BRAINSCutVectorTrainingSet.h"
-#include "ANNParams.h"
+#include "TrainingPrameters.h"
 
 class BRAINSCutTrainModel : public BRAINSCutPrimary
 {
@@ -9,23 +9,27 @@ public:
 
   /** train */
   void InitializeNeuralNetwork();
+  void InitializeRandomForest();
 
   void InitializeTrainDataSet();
 
   void TrainANN();
-  void TrainRandomForest();
-
+  void TrainRandomForest( );
   /** inline functions */
   inline void TrainWithUpdate(neuralNetType& myTrainer, bool update, pairedTrainingSetType& currentTrainData);
 
-  inline void SaveTrainModelAtIteration( neuralNetType& myTrainer, unsigned int No);
+  inline void SaveANNTrainModelAtIteration( neuralNetType& myTrainer, unsigned int No);
+  inline void SaveRFTrainModelAtIteration( CvRTrees& myTrainer, int depth, int NTrees);
 
-  inline void printTrainInformation( neuralNetType& myTrainer, unsigned int No );
+  inline void writeRFTrainInformation( CvRTrees& myTrainer, 
+                                       int depth, 
+                                       int nTree);
+  inline void printANNTrainInformation( neuralNetType& myTrainer, unsigned int No );
 
   inline int * GetANNLayerStructureArray();
 
   /** setting function with net configuration */
-  std::string GetANNModelFilenamePrefix();
+  std::string GetModelBasename();
 
   std::string GetANNVectorFilenamePrefix();
 
@@ -41,7 +45,7 @@ public:
 
   void SetActivatioinFunctionFromNetConfiguration();
 
-  void SetANNModelFilenamePrefix();
+  void SetModelBasename();
 
   /** default functions to set/get member variables */
   void SetIteration(unsigned int iteration);
@@ -70,9 +74,19 @@ public:
 
   float GetActivationMinMax();
 
+  /** random trees */
+  void  SetMaxDepthFromNetConfiguration();
+  void  SetMinSampleCountFromNetConfiguration();
+  void  SetUseSurrogatesFromNetConfiguration();
+  void  SetCalcVarImportanceFromNetConfiguration();
+  void  SetMaxTreeCountFromNetConfiguration();
+  void  SetRFErrorFilename();
+  void  SetRFErrorFile();
+
+  inline void appendToFile( std::string filename, std::string line);
 private:
   /* train parameters */
-  ANNParams *ANNParameterNetConfiguration;
+  TrainingParameters *ANNParameterNetConfiguration;
 
   unsigned int trainIteration;
   unsigned int trainEpochIteration;
@@ -84,8 +98,17 @@ private:
   float activationSlope;
   float activationMinMax;
 
-  std::string                 ANNModelFilenamePrefix;
+  /** random tree */
+  int   trainMaxDepth;
+  int   trainMinSampleCount;
+  bool  trainUseSurrogates;
+  bool  trainCalcVarImportance;
+  int   trainMaxTreeCount;
+
+  /** common paramters */ 
+  std::string                 modelBasename;
   std::string                 ANNVectorFilenamePrefix;
+  std::string                 RFErrorFilename;
   BRAINSCutVectorTrainingSet* trainingDataSet;
 
   matrixType ANNLayerStructure;
