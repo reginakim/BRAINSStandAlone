@@ -60,7 +60,7 @@ BRAINSCutTrainModel
   SetMaximumDataSizeFromNetConfiguration();
   SetANNHiddenNodesNumberFromNetConfiguration();
   SetActivatioinFunctionFromNetConfiguration();
-  SetANNModelFilenamePrefix();
+  SetModelBasename();
 
 }
 
@@ -95,7 +95,7 @@ BRAINSCutTrainModel
   char tempid[10];
 
   sprintf( tempid, "%09u", No + 1 );
-  std::string filename = ANNModelFilenamePrefix + tempid;
+  std::string filename = modelBasename + tempid;
 
   myTrainer.save( filename.c_str() );
 }
@@ -164,16 +164,16 @@ BRAINSCutTrainModel
                 CV_ROW_SAMPLE,
                 trainingDataSet->GetTrainingSubSet(0)->pairedOutputRF
                 );
-  forest.save( "./dummyRandomTrees.txt");
+  forest.save( modelBasename.c_str() );
 }
 /** setting function with net configuration */
 void
 BRAINSCutTrainModel
-::SetANNModelFilenamePrefix()
+::SetModelBasename()
 {
   NeuralParams * model = BRAINSCutNetConfiguration.Get<NeuralParams>("NeuralNetParams");
 
-  ANNModelFilenamePrefix = model->GetAttribute<StringValue>("TrainingModelFilename");
+  modelBasename = model->GetAttribute<StringValue>("TrainingModelFilename");
 }
 
 std::string

@@ -25,7 +25,7 @@ public:
   inline int * GetANNLayerStructureArray();
 
   /** setting function with net configuration */
-  std::string GetANNModelFilenamePrefix();
+  std::string GetModelBasename();
 
   std::string GetANNVectorFilenamePrefix();
 
@@ -41,7 +41,7 @@ public:
 
   void SetActivatioinFunctionFromNetConfiguration();
 
-  void SetANNModelFilenamePrefix();
+  void SetModelBasename();
 
   /** default functions to set/get member variables */
   void SetIteration(unsigned int iteration);
@@ -84,7 +84,7 @@ private:
   float activationSlope;
   float activationMinMax;
 
-  std::string                 ANNModelFilenamePrefix;
+  std::string                 modelBasename;
   std::string                 ANNVectorFilenamePrefix;
   BRAINSCutVectorTrainingSet* trainingDataSet;
 

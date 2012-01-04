@@ -34,14 +34,33 @@ BRAINSCutApplyModel
   SetANNModelFilenameFromNetConfiguration();
   SetGaussianSmoothingSigmaFromNetConfiguration();
 
+  SetRandomForestModelFilenameFromNetConfiguration();
+
   openCVANN = new OpenCVMLPType();
+
+  SetMethod( "ANN" );
 }
 
+void
+BRAINSCutApplyModel
+::SetMethod( std::string inputMethod)
+{
+  method = inputMethod;
+}
 /* iterate through subject */
 void
 BRAINSCutApplyModel
 ::Apply()
 {
+  if( method ==  "ANN")
+    {
+    ReadANNModelFile();
+    }
+  else if( method == "RandomForest")
+    {
+    ReadRandomForestModelFile();
+    }
+
   typedef NetConfiguration::ApplyDataSetListType::iterator  ApplySubjectIteratorType;
 
   normalization = GetNormalizationFromNetConfiguration();
@@ -356,7 +375,7 @@ BRAINSCutApplyModel
               unsigned int         roiNumber,
               unsigned int         inputVectorSize)
 {
-  ReadANNModelFile();
+
   /* initialize container of output vector*/
   resultOutputVector.clear();
 
@@ -370,17 +389,29 @@ BRAINSCutApplyModel
 
     /* get open cv type matrix from array for prediction */
     matrixType openCVInputFeature = cvCreateMat( 1, inputVectorSize, CV_32FC1);
+    std::cout<<FeatureInputVector::HashIndexFromKey( it->first );
     GetOpenCVMatrixFromArray( openCVInputFeature, arrayInputFeatureVector, inputVectorSize);
 
     /* predict */
-    matrixType openCVOutput = cvCreateMat( 1, roiIDsInOrder.size(), CV_32FC1);
-    openCVANN->predict( openCVInputFeature, openCVOutput );
 
-    /* insert result to the result output vector */
-    resultOutputVector.insert( std::pair<int, scalarType>(  ( it->first ),  CV_MAT_ELEM( *openCVOutput,
+    if( method == "ANN")
+      {
+      matrixType openCVOutput = cvCreateMat( 1, roiIDsInOrder.size(), CV_32FC1);
+      openCVANN->predict( openCVInputFeature, openCVOutput );
+
+      /* insert result to the result output vector */
+      resultOutputVector.insert( std::pair<int, scalarType>(  ( it->first ),  CV_MAT_ELEM( *openCVOutput,
                                                                                     scalarType,
                                                                                     0,
                                                                                     roiNumber) ) );
+      }
+    else if( method == "RandomForest")
+      {
+      scalarType response=openCVRandomForest.predict( openCVInputFeature );
+      resultOutputVector.insert( std::pair<int, scalarType>(  ( it->first ),
+                                 response ) );
+      std::cout<<"--> "<<response<<std::endl;
+      }
     }
 }
 
@@ -388,9 +419,14 @@ inline void
 BRAINSCutApplyModel
 ::GetOpenCVMatrixFromArray( matrixType& matrix, scalarType array[], unsigned int inputVectorSize)
 {
+  for(int i=0; i<inputVectorSize; i++)
+    {
+    std::cout<<array[i]<<", ";
+    }
   cvInitMatHeader( matrix, 1, inputVectorSize, CV_32FC1, array );
 }
 
+/** Model file name */
 std::string
 BRAINSCutApplyModel
 ::GetANNModelBaseName( )
@@ -409,6 +445,13 @@ BRAINSCutApplyModel
 
 void
 BRAINSCutApplyModel
+::SetANNModelFilenameFromNetConfiguration()
+{
+  SetANNModelFilenameAtIteration( trainIteration );
+}
+
+void
+BRAINSCutApplyModel
 ::SetANNModelFilenameAtIteration( const int iteration)
 {
   ANNModelFilename = GetANNModelBaseName();
@@ -416,6 +459,13 @@ BRAINSCutApplyModel
   char temp[10];
   sprintf( temp, "%09d", iteration );
   ANNModelFilename += temp;
+}
+
+void
+BRAINSCutApplyModel
+::SetRandomForestModelFilenameFromNetConfiguration( )
+{
+  RandomForestModelFilename = GetANNModelBaseName(); 
 }
 
 void
@@ -452,13 +502,9 @@ BRAINSCutApplyModel
     }
 }
 
-void
-BRAINSCutApplyModel
-::SetANNModelFilenameFromNetConfiguration()
-{
-  SetANNModelFilenameAtIteration( trainIteration );
-}
 
+
+/** read model files */
 void
 BRAINSCutApplyModel
 ::ReadANNModelFile()
@@ -471,6 +517,20 @@ BRAINSCutApplyModel
     }
 
   openCVANN->load( ANNModelFilename.c_str() );
+}
+
+void
+BRAINSCutApplyModel
+::ReadRandomForestModelFile()
+{
+  if( !itksys::SystemTools::FileExists( ANNModelFilename.c_str() ) )
+    {
+    std::string errorMsg = " File does not exist! :";
+    errorMsg += ANNModelFilename;
+    throw BRAINSCutExceptionStringHandler( errorMsg );
+    }
+
+  openCVRandomForest.load( RandomForestModelFilename.c_str() );
 }
 
 inline scalarType *
