@@ -36,6 +36,8 @@ BRAINSCutApplyModel
 
   SetRandomForestModelFilenameFromNetConfiguration();
 
+  SetRandomForestModelFilenameFromNetConfiguration();
+
   openCVANN = new OpenCVMLPType();
 
   SetMethod( "ANN" );
