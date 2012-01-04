@@ -94,6 +94,7 @@ int main(int argc, char * *argv)
 
       BRAINSCutApplyModel applyTest( netConfiguration );
 
+      applyTest.SetMethod( method );
       applyTest.SetComputeSSE( computeSSEOn );
       applyTest.Apply();
       }

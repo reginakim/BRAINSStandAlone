@@ -21,11 +21,14 @@ public:
 
   void SetANNModelFilenameFromNetConfiguration();
   void SetANNModelFilenameAtIteration( const int iteration);
+  void SetRandomForestModelFilenameFromNetConfiguration();
   void SetTrainIterationFromNetConfiguration();
   void SetComputeSSE( const bool sse );
   void SetANNTestingSSEFilename();
+  void SetMethod( std::string inputMethod);
 
   void ReadANNModelFile();
+  void ReadRandomForestModelFile();
 
   BinaryImagePointer PostProcessingOfANNContinuousImage( std::string continuousFilename, 
                                                          scalarType threshold );
@@ -43,6 +46,7 @@ public:
 private:
   NetConfiguration::ApplyDataSetListType applyDataSetList;
 
+  std::string method;
   bool        normalization;
   bool        computeSSE;
   int         trainIteration;
@@ -52,6 +56,9 @@ private:
 
   scalarType annOutputThreshold;
   OpenCVMLPType * openCVANN;
+
+  std::string RandomForestModelFilename;
+  CvRTrees    openCVRandomForest;
 
   /* private functions  */
   std::string GetANNModelBaseName();
