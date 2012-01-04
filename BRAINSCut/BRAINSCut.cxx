@@ -23,9 +23,9 @@ int main(int argc, char * *argv)
    * ITK4 resigration initilization 
    */
   // Call register default transforms
-  itk::TransformFactoryBase::RegisterDefaultTransforms();
+  //itk::TransformFactoryBase::RegisterDefaultTransforms();
 
-  BRAINSCutGenerateRegistrations registrationGenerator( netConfiguration );
+  BRAINSCutGenerateRegistrations registrationGenerator ( netConfiguration );
   const bool applyDataSetOff=false;
   const bool applyDataSetOn=true;
 
@@ -68,13 +68,9 @@ int main(int argc, char * *argv)
       else if( method=="RandomForest")
         {
         BRAINSCutTrainModel RandomForestTrain( netConfiguration );
-        std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
-        RandomForestTrain.InitializeNeuralNetwork();
-        std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
+        RandomForestTrain.InitializeRandomForest();
         RandomForestTrain.InitializeTrainDataSet();
-        std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
         RandomForestTrain.TrainRandomForest();
-        std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
         }
       else
         {
@@ -94,6 +90,7 @@ int main(int argc, char * *argv)
 
       BRAINSCutApplyModel applyTest( netConfiguration );
 
+      applyTest.SetMethod( method );
       applyTest.SetComputeSSE( computeSSEOn );
       applyTest.Apply();
       }
