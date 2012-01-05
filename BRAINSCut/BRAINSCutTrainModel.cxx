@@ -24,6 +24,7 @@ BRAINSCutTrainModel
   
   const std::string Local_ANNVectorFilenamePrefix = this->GetANNVectorFilenamePrefix();
 
+  std::cout<<__LINE__<<__FILE__;
   trainingDataSet = new BRAINSCutVectorTrainingSet( Local_ANNVectorFilenamePrefix);
   try
     {
@@ -67,7 +68,6 @@ BRAINSCutTrainModel
   SetDesiredErrorFromNetConfiguration();
   SetANNHiddenNodesNumberFromNetConfiguration();
   SetActivatioinFunctionFromNetConfiguration();
-
   SetModelBasename();
 }
 
@@ -250,8 +250,6 @@ void
 BRAINSCutTrainModel
 ::TrainRandomForest() 
 {
-
-
   for( int depth=1; depth<trainMaxDepth; depth++)
     {
     for( int nTree=2; nTree<trainMaxTreeCount; nTree++)

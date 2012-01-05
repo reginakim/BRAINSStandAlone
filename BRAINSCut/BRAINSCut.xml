@@ -135,5 +135,13 @@
       <description> Random tree depth. This is to be used when only one model with specified depth wish to be created. </description>
       <default>-1</default>
     </integer>
+    <string-enumeration>
+      <name>method</name>
+      <label>method</label>
+      <longflag>method</longflag>
+      <default>ANN</default>
+      <element>RandomForest</element>
+      <element></element>
+    </string-enumeration>
 </parameters>
 </executable>
