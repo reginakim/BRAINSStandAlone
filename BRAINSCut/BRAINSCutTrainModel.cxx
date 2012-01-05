@@ -26,7 +26,6 @@ BRAINSCutTrainModel
 
   std::cout<<__LINE__<<__FILE__;
   trainingDataSet = new BRAINSCutVectorTrainingSet( Local_ANNVectorFilenamePrefix);
-  std::cout<<__LINE__<<__FILE__;
   try
     {
     trainingDataSet->ReadHeaderFileInformation();
@@ -272,7 +271,6 @@ BRAINSCutTrainModel
       }
     }
 }
-
 /** setting function with net configuration */
 void
 BRAINSCutTrainModel
