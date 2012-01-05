@@ -95,5 +95,13 @@
       <description>Explicitly specify the maximum number of threads to use.</description>
       <default>-1</default>
     </integer>
+    <string-enumeration>
+      <name>method</name>
+      <label>method</label>
+      <longflag>method</longflag>
+      <default>ANN</default>
+      <element>RandomForest</element>
+      <element></element>
+    </string-enumeration>
 </parameters>
 </executable>

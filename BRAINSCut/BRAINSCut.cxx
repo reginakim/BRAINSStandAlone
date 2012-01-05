@@ -51,19 +51,38 @@ int main(int argc, char * *argv)
     }
   if( trainModel )
     {
-    try
-      {
-      BRAINSCutTrainModel testTrain( netConfiguration);
-      testTrain.InitializeNeuralNetwork();
-      testTrain.InitializeTrainDataSet();
-      testTrain.Train();
-
-      }
-    catch( BRAINSCutExceptionStringHandler& e )
-      {
-      std::cout << e.Error();
-      }
-
+      if( method=="ANN")
+        {
+        try
+          {
+          BRAINSCutTrainModel ANNTrain( netConfiguration);
+          ANNTrain.InitializeNeuralNetwork();
+          ANNTrain.InitializeTrainDataSet();
+          ANNTrain.TrainANN();
+          }
+        catch( BRAINSCutExceptionStringHandler& e )
+          {
+          std::cout << e.Error();
+          }
+        }
+      else if( method=="RandomForest")
+        {
+        BRAINSCutTrainModel RandomForestTrain( netConfiguration );
+        std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
+        RandomForestTrain.InitializeNeuralNetwork();
+        std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
+        RandomForestTrain.InitializeTrainDataSet();
+        std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
+        RandomForestTrain.TrainRandomForest();
+        std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
+        }
+      else
+        {
+        std::cout<<"No proper method found to train"
+                 <<std::endl;
+        exit(EXIT_FAILURE);
+        }
+   
     }
   if( applyModel )
     {
