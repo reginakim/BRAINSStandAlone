@@ -331,14 +331,27 @@ BRAINSCutVectorTrainingSet
 
   scalarType * pairedInputBuffer = new scalarType[subSetSize * inputVectorSize];
   scalarType * pairedOutputBuffer = new scalarType[subSetSize * outputVectorSize];
+  scalarType * pairedOutputBufferRF = new scalarType[subSetSize ]; // RandomForest
+
   for( unsigned int i = 0; i < subSetSize  && !readInFile.eof(); i++ )
     {
     currentBuffer = ReadBufferFromFileStream( readInFile );
     /* move this to one line buffer for open cv matrix type */
+    scalarType tempOutput = 0;
     for( int j = 0; j < outputVectorSize; j++ )
       {
       pairedOutputBuffer[i * outputVectorSize + j] = currentBuffer[j];
+      if( currentBuffer[j] > 0.5F && tempOutput == 0)
+        {
+        tempOutput=j+1;
+        }
+      else if(  currentBuffer[j] > 0.5F && tempOutput != 0)
+        {
+        std::cout<<"A voxel belongs to more than a structure"<<std::endl;
+        exit(EXIT_FAILURE);
+        }
       }
+    pairedOutputBufferRF[i] =tempOutput;
     for( int j = 0; j < inputVectorSize; j++ )
       {
       pairedInputBuffer[i * inputVectorSize + j] = currentBuffer[j + outputVectorSize];
@@ -360,6 +373,13 @@ BRAINSCutVectorTrainingSet
                    outputVectorSize,
                    CV_32FC1,
                    pairedOutputBuffer);
+
+  currentTrainingSubSet->pairedOutputRF = cvCreateMat( subSetSize, 1, CV_32FC1);
+  cvInitMatHeader( currentTrainingSubSet->pairedOutputRF,
+                   subSetSize,
+                   1,
+                   CV_32FC1,
+                   pairedOutputBufferRF);
 
   if( currentTrainingSubSet->pairedInput->rows == 0 )
     {

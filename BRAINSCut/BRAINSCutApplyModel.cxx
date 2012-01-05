@@ -298,7 +298,6 @@ BRAINSCutApplyModel
     }
 }
 
-
 BinaryImagePointer
 BRAINSCutApplyModel
 ::FillHole( BinaryImagePointer mask)

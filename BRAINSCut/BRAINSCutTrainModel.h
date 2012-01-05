@@ -12,7 +12,8 @@ public:
 
   void InitializeTrainDataSet();
 
-  void Train();
+  void TrainANN();
+  void TrainRandomForest();
 
   /** inline functions */
   inline void TrainWithUpdate(neuralNetType& myTrainer, bool update, pairedTrainingSetType& currentTrainData);

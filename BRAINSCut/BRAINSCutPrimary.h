@@ -23,6 +23,7 @@ struct pairedTrainingSetType
   {
   matrixType pairedInput;
   matrixType pairedOutput;
+  matrixType pairedOutputRF;
   unsigned int size;
   };
 
