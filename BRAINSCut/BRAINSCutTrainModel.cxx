@@ -90,7 +90,22 @@ BRAINSCutTrainModel
 
 inline void
 BRAINSCutTrainModel
-::SaveTrainModelAtIteration( neuralNetType& myTrainer, unsigned int No)
+::SaveRFTrainModelAtIteration( CvRTrees& myTrainer, int depth, int NTrees)
+{
+  char tempDepth[5];
+  sprintf( tempDepth, "%04u", depth );
+
+  char tempNTrees[5];
+  sprintf( tempNTrees, "%04u", NTrees );
+
+  std::string filename = modelBasename + "D"+tempDepth+"NF"+tempNTrees;
+
+  myTrainer.save( filename.c_str() );
+}
+
+inline void
+BRAINSCutTrainModel
+::SaveANNTrainModelAtIteration( neuralNetType& myTrainer, unsigned int No)
 {
   char tempid[10];
 
@@ -145,7 +160,7 @@ BRAINSCutTrainModel
     TrainWithUpdate( *trainner,
                      (currentIteration > 0),
                      *(trainingDataSet->GetTrainingSubSet(subSetNo) ) );
-    SaveTrainModelAtIteration( *trainner, currentIteration );
+    SaveANNTrainModelAtIteration( *trainner, currentIteration );
     printTrainInformation( *trainner, currentIteration );
     if( trainner->get_MSE()  < trainDesiredError )
       {
@@ -155,17 +170,48 @@ BRAINSCutTrainModel
     }
 }
 
+/** random forest training */
 void
 BRAINSCutTrainModel
-::TrainRandomForest()
+::TrainRandomForest( int maxDepth, 
+                     int minSampleCount, 
+                     bool useSurrogates,
+                     bool calcVarImportance,
+                     int maxTreeCount
+                     )
 {
   CvRTrees forest;
-  forest.train( trainingDataSet->GetTrainingSubSet(0)->pairedInput,
-                CV_ROW_SAMPLE,
-                trainingDataSet->GetTrainingSubSet(0)->pairedOutputRF
+
+  for( int depth=1; depth<maxDepth; depth++)
+  {
+    CvRTParams randomTreeTrainParamters=
+      CvRTParams( depth, 
+                  minSampleCount,
+                  0.0F,             //float  _regression_accuracy=0, 
+                  useSurrogates, 
+                  10,               //int    _max_categories=10, 
+                  0,                //float* _priors,
+                  calcVarImportance, //bool   _calc_var_importance=false,
+                  0,                //int    _nactive_vars=0, 
+                  maxTreeCount,     
+                  0,                //float  forest_accuracy=0, 
+                  0
                 );
-  forest.save( modelBasename.c_str() );
+        
+    forest.train( trainingDataSet->GetTrainingSubSet(0)->pairedInput,
+                CV_ROW_SAMPLE, // or CV_COL_SAMPLE
+                trainingDataSet->GetTrainingSubSet(0)->pairedOutputRF,
+                0,
+                0,//CvMat* sampleIdx=0,
+                0,//CvMat* varType=0,
+                0,//CvMat* missingMask=0,
+                randomTreeTrainParamters
+                );
+
+    SaveRFTrainModelAtIteration( forest, depth, maxTreeCount );
+  }
 }
+
 /** setting function with net configuration */
 void
 BRAINSCutTrainModel

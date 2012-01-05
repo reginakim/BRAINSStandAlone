@@ -13,12 +13,17 @@ public:
   void InitializeTrainDataSet();
 
   void TrainANN();
-  void TrainRandomForest();
+  void TrainRandomForest( int maxDepth=5, 
+                          int minSampleCount=10, 
+                          bool useSurrogates=false,
+                          bool calcVarImportance=false,
+                          int maxTreeCount=10  );
 
   /** inline functions */
   inline void TrainWithUpdate(neuralNetType& myTrainer, bool update, pairedTrainingSetType& currentTrainData);
 
-  inline void SaveTrainModelAtIteration( neuralNetType& myTrainer, unsigned int No);
+  inline void SaveANNTrainModelAtIteration( neuralNetType& myTrainer, unsigned int No);
+  inline void SaveRFTrainModelAtIteration( CvRTrees& myTrainer, int depth, int NTrees);
 
   inline void printTrainInformation( neuralNetType& myTrainer, unsigned int No );
 
