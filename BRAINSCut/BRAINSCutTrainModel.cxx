@@ -25,7 +25,15 @@ BRAINSCutTrainModel
   const std::string Local_ANNVectorFilenamePrefix = this->GetANNVectorFilenamePrefix();
 
   trainingDataSet = new BRAINSCutVectorTrainingSet( Local_ANNVectorFilenamePrefix);
-  trainingDataSet->ReadHeaderFileInformation();
+  try
+    {
+    trainingDataSet->ReadHeaderFileInformation();
+    }
+  catch( BRAINSCutExceptionStringHandler& e )
+    {
+    std::cout << e.Error();
+    exit(EXIT_FAILURE);
+    }
   trainingDataSet->SetRecordSize();
   trainingDataSet->SetBufferRecordSize();
   trainingDataSet->ShuffleVectors();
@@ -116,7 +124,7 @@ BRAINSCutTrainModel
 
 void
 BRAINSCutTrainModel
-::Train()
+::TrainANN()
 {
 
   neuralNetType * trainner = new neuralNetType();
@@ -147,6 +155,17 @@ BRAINSCutTrainModel
     }
 }
 
+void
+BRAINSCutTrainModel
+::TrainRandomForest()
+{
+  CvRTrees forest;
+  forest.train( trainingDataSet->GetTrainingSubSet(0)->pairedInput,
+                CV_ROW_SAMPLE,
+                trainingDataSet->GetTrainingSubSet(0)->pairedOutputRF
+                );
+  forest.save( "./dummyRandomTrees.txt");
+}
 /** setting function with net configuration */
 void
 BRAINSCutTrainModel
