@@ -263,6 +263,7 @@ BRAINSCutPrimary
   const bool useDeformation( filename.find(".mat") == std::string::npos );
   if( useDeformation )
     {
+    std::cout<<"return null deformation"<<std::endl;
     return NULL;
     }
   return itk::ReadTransformFromDisk( filename );
