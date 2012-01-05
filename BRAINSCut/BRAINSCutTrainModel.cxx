@@ -233,7 +233,12 @@ BRAINSCutTrainModel
 /** random forest training */
 void
 BRAINSCutTrainModel
-::TrainRandomForest()
+::TrainRandomForest( int maxDepth, 
+                     int minSampleCount, 
+                     bool useSurrogates,
+                     bool calcVarImportance,
+                     int maxTreeCount
+                     )
 {
   CvRTrees forest;
 
@@ -271,6 +276,7 @@ BRAINSCutTrainModel
       }
     }
 }
+
 /** setting function with net configuration */
 void
 BRAINSCutTrainModel
