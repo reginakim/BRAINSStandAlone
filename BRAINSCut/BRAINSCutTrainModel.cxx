@@ -183,33 +183,36 @@ BRAINSCutTrainModel
   CvRTrees forest;
 
   for( int depth=1; depth<maxDepth; depth++)
-  {
-    CvRTParams randomTreeTrainParamters=
-      CvRTParams( depth, 
-                  minSampleCount,
-                  0.0F,             //float  _regression_accuracy=0, 
-                  useSurrogates, 
-                  10,               //int    _max_categories=10, 
-                  0,                //float* _priors,
-                  calcVarImportance, //bool   _calc_var_importance=false,
-                  0,                //int    _nactive_vars=0, 
-                  maxTreeCount,     
-                  0,                //float  forest_accuracy=0, 
-                  0
-                );
-        
-    forest.train( trainingDataSet->GetTrainingSubSet(0)->pairedInput,
-                CV_ROW_SAMPLE, // or CV_COL_SAMPLE
-                trainingDataSet->GetTrainingSubSet(0)->pairedOutputRF,
-                0,
-                0,//CvMat* sampleIdx=0,
-                0,//CvMat* varType=0,
-                0,//CvMat* missingMask=0,
-                randomTreeTrainParamters
-                );
-
-    SaveRFTrainModelAtIteration( forest, depth, maxTreeCount );
-  }
+    {
+    for( int nTree=2; nTree<maxTreeCount; nTree++)
+      {
+      CvRTParams randomTreeTrainParamters=
+        CvRTParams( depth, 
+                    minSampleCount,
+                    0.0F,              //float  _regression_accuracy=0, 
+                    useSurrogates, 
+                    10,                //int    _max_categories=10, 
+                    0,                 //float* _priors,
+                    calcVarImportance, //bool   _calc_var_importance=false,
+                    0,                 //int    _nactive_vars=0, 
+                    nTree,     
+                    0,                 //float  forest_accuracy=0, 
+                    0
+                  );
+          
+      forest.train( trainingDataSet->GetTrainingSubSet(0)->pairedInput,
+                  CV_ROW_SAMPLE, // or CV_COL_SAMPLE
+                  trainingDataSet->GetTrainingSubSet(0)->pairedOutputRF,
+                  0,
+                  0,  //CvMat* sampleIdx=0,
+                  0,  //CvMat* varType=0,
+                  0,  //CvMat* missingMask=0,
+                  randomTreeTrainParamters
+                  );
+  
+      SaveRFTrainModelAtIteration( forest, depth, nTree);
+      }
+    }
 }
 
 /** setting function with net configuration */
