@@ -68,6 +68,7 @@ BRAINSCutTrainModel
   SetDesiredErrorFromNetConfiguration();
   SetANNHiddenNodesNumberFromNetConfiguration();
   SetActivatioinFunctionFromNetConfiguration();
+
   SetModelBasename();
 }
 
