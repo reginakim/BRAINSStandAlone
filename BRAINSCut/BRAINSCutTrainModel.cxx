@@ -50,18 +50,35 @@ BRAINSCutTrainModel
     }
 }
 
+/** initialization for the model */
 void
 BRAINSCutTrainModel
 ::InitializeNeuralNetwork()
 {
+  SetMaximumDataSizeFromNetConfiguration();
+
   SetIterationFromNetConfiguration();
   SetEpochIterationFromNetConfiguration();
   SetDesiredErrorFromNetConfiguration();
-  SetMaximumDataSizeFromNetConfiguration();
   SetANNHiddenNodesNumberFromNetConfiguration();
   SetActivatioinFunctionFromNetConfiguration();
-  SetModelBasename();
 
+  SetModelBasename();
+}
+
+void
+BRAINSCutTrainModel
+::InitializeRandomForest()
+{
+  SetMaximumDataSizeFromNetConfiguration();
+
+  SetMaxDepthFromNetConfiguration();
+  SetMinSampleCountFromNetConfiguration();
+  SetUseSurrogatesFromNetConfiguration();
+  SetCalculateVariableImportanceFromNetConfiguration();
+  SetMaxTreeCountFromNetConfiguration();
+
+  SetModelBasename();
 }
 
 inline void
@@ -100,7 +117,17 @@ BRAINSCutTrainModel
 
   std::string filename = modelBasename + "D"+tempDepth+"NF"+tempNTrees;
 
-  myTrainer.save( filename.c_str() );
+  try
+    {
+    std::cout<<"Save Model File :: "<<filename <<std::endl;
+    myTrainer.save( filename.c_str() );
+    }
+  catch( ... )
+    {
+      std::cout<<"Fail to save the model file ::" <<std::endl 
+               << filename <<std::endl;  
+      exit(EXIT_FAILURE);
+    }
 }
 
 inline void
@@ -369,3 +396,21 @@ BRAINSCutTrainModel
 {
   return activationMinMax;
 }
+
+/** setting functions for random forest */
+
+void 
+BRAINSCutTrainModel
+::SetMaxDepthFromNetConfiguration();
+void 
+BRAINSCutTrainModel
+::SetMinSampleCountFromNetConfiguration();
+void 
+BRAINSCutTrainModel
+::SetUseSurrogatesFromNetConfiguration();
+void 
+BRAINSCutTrainModel
+::SetCalculateVariableImportanceFromNetConfiguration();
+void 
+BRAINSCutTrainModel
+::SetMaxTreeCountFromNetConfiguration();
