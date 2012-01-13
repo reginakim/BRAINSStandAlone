@@ -68,13 +68,9 @@ int main(int argc, char * *argv)
       else if( method=="RandomForest")
         {
         BRAINSCutTrainModel RandomForestTrain( netConfiguration );
-        std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
-        RandomForestTrain.InitializeNeuralNetwork();
-        std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
+        RandomForestTrain.InitializeRandomForest();
         RandomForestTrain.InitializeTrainDataSet();
-        std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
         RandomForestTrain.TrainRandomForest();
-        std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
         }
       else
         {

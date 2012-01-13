@@ -9,6 +9,7 @@ public:
 
   /** train */
   void InitializeNeuralNetwork();
+  void InitializeRandomForest();
 
   void InitializeTrainDataSet();
 
@@ -47,6 +48,14 @@ public:
   void SetActivatioinFunctionFromNetConfiguration();
 
   void SetModelBasename();
+
+  /** setting functions for random forest */
+
+  void SetMaxDepthFromNetConfiguration();
+  void SetMinSampleCountFromNetConfiguration();
+  void SetUseSurrogatesFromNetConfiguration();
+  void SetCalculateVariableImportanceFromNetConfiguration();
+  void SetMaxTreeCountFromNetConfiguration();
 
   /** default functions to set/get member variables */
   void SetIteration(unsigned int iteration);
