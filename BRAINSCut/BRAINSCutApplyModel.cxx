@@ -1,6 +1,6 @@
 #include "BRAINSCutApplyModel.h"
 #include "FeatureInputVector.h"
-#include "ANNParams.h"
+#include "TrainingPrameters.h"
 #include "ApplyModel.h"
 
 #include <itkConnectedComponentImageFilter.h>
@@ -447,7 +447,7 @@ void
 BRAINSCutApplyModel
 ::SetTrainIterationFromNetConfiguration()
 {
-  trainIteration = BRAINSCutNetConfiguration.Get<ANNParams>("ANNParams")->GetAttribute<IntValue>("Iterations");
+  trainIteration = BRAINSCutNetConfiguration.Get<TrainingParameters>("ANNParameters")->GetAttribute<IntValue>("Iterations");
 }
 
 void

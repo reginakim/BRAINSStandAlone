@@ -23,9 +23,9 @@ int main(int argc, char * *argv)
    * ITK4 resigration initilization 
    */
   // Call register default transforms
-  itk::TransformFactoryBase::RegisterDefaultTransforms();
+  //itk::TransformFactoryBase::RegisterDefaultTransforms();
 
-  BRAINSCutGenerateRegistrations registrationGenerator( netConfiguration );
+  BRAINSCutGenerateRegistrations registrationGenerator ( netConfiguration );
   const bool applyDataSetOff=false;
   const bool applyDataSetOn=true;
 

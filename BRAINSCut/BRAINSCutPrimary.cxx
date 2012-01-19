@@ -7,21 +7,37 @@
 BRAINSCutPrimary
 ::BRAINSCutPrimary( std::string netConfigurationFilename )
 {
-  SetNetConfigurationFilename( netConfigurationFilename );
-  SetNetConfiguration();
+  try
+    {
+    SetNetConfigurationFilename( netConfigurationFilename );
+    SetNetConfiguration();
+    }
+  catch( BRAINSCutExceptionStringHandler& e)
+    {
+      std::cout<<e.Error()<<std::endl;
+      exit(EXIT_FAILURE);
+    }
 }
 
 void
 BRAINSCutPrimary
 ::SetNetConfiguration()
 {
-  std::list<XMLElementContainer *> elementList;
+  try
+    {
+    std::list<XMLElementContainer *> elementList;
 
-  elementList.push_front( &BRAINSCutNetConfiguration );
+    elementList.push_front( &BRAINSCutNetConfiguration );
 
-  NetConfigurationParser BRIANSCutNetConfigurationParser = NetConfigurationParser( NetConfigurationFilename );
-  BRIANSCutNetConfigurationParser.SetUserData( &elementList );
-  BRIANSCutNetConfigurationParser.Parse();
+    NetConfigurationParser BRIANSCutNetConfigurationParser = NetConfigurationParser( NetConfigurationFilename );
+    BRIANSCutNetConfigurationParser.SetUserData( &elementList );
+    BRIANSCutNetConfigurationParser.Parse();
+    }
+  catch( BRAINSCutExceptionStringHandler& e)
+    {
+      std::cout<<e.Error()<<std::endl;
+      exit(EXIT_FAILURE);
+    }
 }
 
 void

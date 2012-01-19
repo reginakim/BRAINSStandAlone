@@ -1,6 +1,6 @@
 #include "BRAINSCutExceptionStringHandler.h"
 #include "BRAINSCutVectorTrainingSet.h"
-#include "ANNParams.h"
+#include "TrainingPrameters.h"
 
 class BRAINSCutTrainModel : public BRAINSCutPrimary
 {
@@ -14,19 +14,17 @@ public:
   void InitializeTrainDataSet();
 
   void TrainANN();
-  void TrainRandomForest( int maxDepth=5, 
-                          int minSampleCount=10, 
-                          bool useSurrogates=false,
-                          bool calcVarImportance=false,
-                          int maxTreeCount=10  );
-
+  void TrainRandomForest( );
   /** inline functions */
   inline void TrainWithUpdate(neuralNetType& myTrainer, bool update, pairedTrainingSetType& currentTrainData);
 
   inline void SaveANNTrainModelAtIteration( neuralNetType& myTrainer, unsigned int No);
   inline void SaveRFTrainModelAtIteration( CvRTrees& myTrainer, int depth, int NTrees);
 
-  inline void printTrainInformation( neuralNetType& myTrainer, unsigned int No );
+  inline void writeRFTrainInformation( CvRTrees& myTrainer, 
+                                       int depth, 
+                                       int nTree);
+  inline void printANNTrainInformation( neuralNetType& myTrainer, unsigned int No );
 
   inline int * GetANNLayerStructureArray();
 
@@ -48,14 +46,6 @@ public:
   void SetActivatioinFunctionFromNetConfiguration();
 
   void SetModelBasename();
-
-  /** setting functions for random forest */
-
-  void SetMaxDepthFromNetConfiguration();
-  void SetMinSampleCountFromNetConfiguration();
-  void SetUseSurrogatesFromNetConfiguration();
-  void SetCalculateVariableImportanceFromNetConfiguration();
-  void SetMaxTreeCountFromNetConfiguration();
 
   /** default functions to set/get member variables */
   void SetIteration(unsigned int iteration);
@@ -84,9 +74,19 @@ public:
 
   float GetActivationMinMax();
 
+  /** random trees */
+  void  SetMaxDepthFromNetConfiguration();
+  void  SetMinSampleCountFromNetConfiguration();
+  void  SetUseSurrogatesFromNetConfiguration();
+  void  SetCalcVarImportanceFromNetConfiguration();
+  void  SetMaxTreeCountFromNetConfiguration();
+  void  SetRFErrorFilename();
+  void  SetRFErrorFile();
+
+  inline void appendToFile( std::string filename, std::string line);
 private:
   /* train parameters */
-  ANNParams *ANNParameterNetConfiguration;
+  TrainingParameters *ANNParameterNetConfiguration;
 
   unsigned int trainIteration;
   unsigned int trainEpochIteration;
@@ -98,8 +98,17 @@ private:
   float activationSlope;
   float activationMinMax;
 
+  /** random tree */
+  int   trainMaxDepth;
+  int   trainMinSampleCount;
+  bool  trainUseSurrogates;
+  bool  trainCalcVarImportance;
+  int   trainMaxTreeCount;
+
+  /** common paramters */ 
   std::string                 modelBasename;
   std::string                 ANNVectorFilenamePrefix;
+  std::string                 RFErrorFilename;
   BRAINSCutVectorTrainingSet* trainingDataSet;
 
   matrixType ANNLayerStructure;

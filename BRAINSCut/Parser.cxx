@@ -1,6 +1,6 @@
 #include "Parser.h"
 #include "NeuralParams.h"
-#include "ANNParams.h"
+#include "TrainingParameters.h"
 #include "SVMParams.h"
 #include "ApplyModel.h"
 #include <ProcessObjectBase.h>
@@ -256,42 +256,42 @@ Parser::StartElement(void *userData,
       throw;
       }
     }
-  else if( Name == "ANNParams" )
+  else if( Name == "ANNParameters" )
     {
     try
       {
-      ANNParams *ap = new ANNParams;
-      // ap->SetAttribute<IntValue>( "VectorSize",    attribMap.Get("ANNParams",
+      TrainingParameters *ap = new TrainingParameters("ANN");
+      // ap->SetAttribute<IntValue>( "VectorSize",    attribMap.Get("TrainingParameters",
       //          "VectorSize") );
       ap->SetAttribute<IntValue>( "Iterations",
-                                  attribMap.Get("ANNParams",
+                                  attribMap.Get("ANN",
                                                 "Iterations") );
       ap->SetAttribute<IntValue>( "MaximumVectorsPerEpoch",
-                                  attribMap.Get("ANNParams",
+                                  attribMap.Get("ANN",
                                                 "MaximumVectorsPerEpoch") );
       ap->SetAttribute<IntValue>( "EpochIterations",
-                                  attribMap.Get("ANNParams",
+                                  attribMap.Get("ANN",
                                                 "EpochIterations") );
       ap->SetAttribute<IntValue>( "ErrorInterval",
-                                  attribMap.Get("ANNParams",
+                                  attribMap.Get("ANN",
                                                 "ErrorInterval") );
       ap->SetAttribute<FloatValue>( "ActivationSlope",
-                                    attribMap.Get("ANNParams",
+                                    attribMap.Get("ANN",
                                                   "ActivationSlope") );
       ap->SetAttribute<FloatValue>( "ActivationMinMax",
-                                    attribMap.Get("ANNParams",
+                                    attribMap.Get("ANN",
                                                   "ActivationMinMax") );
       ap->SetAttribute<FloatValue>( "DesiredError",
-                                    attribMap.Get("ANNParams",
+                                    attribMap.Get("ANN",
                                                   "DesiredError") );
       ap->SetAttribute<IntValue>( "NumberOfHiddenNodes",
-                                  attribMap.Get("ANNParams",
+                                  attribMap.Get("ANN",
                                                 "NumberOfHiddenNodes") );
       // ap->SetAttribute<FloatValue>("LearningRate",
-      //                           attribMap.Get("ANNParams",
+      //                           attribMap.Get("TrainingParameters",
       //                                         "LearningRate"));
       // ap->SetAttribute<FloatValue>("MomentumRate",
-      //                           attribMap.Get("ANNParams",
+      //                           attribMap.Get("TrainingParameters",
       //                                         "MomentumRate"));
       proc->Add(ap, Name);
       }
@@ -304,26 +304,32 @@ Parser::StartElement(void *userData,
       throw;
       }
     }
-  else if( Name == "SVMParams" )
+  else if( Name == "RandomForestParameters" )
     {
     try
       {
-      SVMParams *sp = new SVMParams;
-      sp->SetAttribute<IntValue>( "VectorSize",
-                                  attribMap.Get("SVMParams",
-                                                "VectorSize") );
-      sp->SetAttribute<FloatValue>( "GaussianSize",
-                                    attribMap.Get("SVMParams",
-                                                  "GaussianSize") );
-      proc->Add(sp, Name);
+      TrainingParameters *ap = new TrainingParameters("RandomForest");
+      ap->SetAttribute<IntValue>( "maxDepth",
+                                  attribMap.Get("RandomForestParameters",
+                                                "maxDepth") );
+      ap->SetAttribute<IntValue>( "minSampleCount",
+                                  attribMap.Get("RandomForestParameters",
+                                                "minSampleCount") );
+      ap->SetAttribute<BooleanValue>( "useSurrogates",
+                                  attribMap.Get("RandomForestParameters",
+                                                "useSurrogates") );
+      ap->SetAttribute<BooleanValue>( "calcVarImportance",
+                                  attribMap.Get("RandomForestParameters",
+                                                "calcVarImportance") );
+      ap->SetAttribute<IntValue>( "maxTreeCount",
+                                  attribMap.Get("RandomForestParameters",
+                                                "maxTreeCount") );
+      Local_netConfiguration->Add(ap, Name);
       }
-    catch( ProcessObjectException& ex )
+    catch( BRAINSCutExceptionStringHandler& ex )
       {
-      std::string msg = " ERROR :: One of attribute name of the \"";
-      msg += Name;
-      msg += "\" is not proper, Please check if the xml file is well-formed\n";
-      std::cerr << "****ERROR!!!\n " << msg;
-      throw;
+      std::cerr << ex << std::endl;
+      throw ex;
       }
     }
   else if( Name == "ApplyModel" )
