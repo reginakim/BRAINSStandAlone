@@ -8,7 +8,7 @@ public:
   BRAINSCutTrainModel( std::string netConfigurationFilename );
 
   /** train */
-  void InitializeNeuralNetwork();
+  void InitializeNeuralNetwork( );
   void InitializeRandomForest();
 
   void InitializeTrainDataSet( bool doShuffle);
