@@ -53,7 +53,7 @@ public:
 
   std::ios::off_type *    ShufflingOrder();
 
-  void                    ShuffleVectors();
+  void                    ShuffleVectors( bool shuffle);
 
   pairedTrainingSetType * GetTrainingDataSet();
 

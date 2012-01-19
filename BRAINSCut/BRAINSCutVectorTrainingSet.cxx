@@ -230,7 +230,7 @@ BRAINSCutVectorTrainingSet
 // ---------------------------//
 void
 BRAINSCutVectorTrainingSet
-::ShuffleVectors()
+::ShuffleVectors( bool shuffle)
 {
   PrintDebuggingMessage( "this shuffling process will override current version of vector *" );
 
@@ -272,7 +272,6 @@ BRAINSCutVectorTrainingSet
     std::string msg = "The " + temporaryResultFilename + " successfully renamed to " + trainingVectorFilename;
     PrintDebuggingMessage( msg );
     }
-
 }
 
 // ---------------------------//

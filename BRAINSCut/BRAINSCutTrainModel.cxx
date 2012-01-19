@@ -19,14 +19,12 @@ BRAINSCutTrainModel
 /** train */
 void
 BRAINSCutTrainModel
-::InitializeTrainDataSet()
+::InitializeTrainDataSet( bool doShuffle )
 {
   
   const std::string Local_ANNVectorFilenamePrefix = this->GetANNVectorFilenamePrefix();
 
-  std::cout<<__LINE__<<__FILE__;
   trainingDataSet = new BRAINSCutVectorTrainingSet( Local_ANNVectorFilenamePrefix);
-  std::cout<<__LINE__<<__FILE__;
   try
     {
     trainingDataSet->ReadHeaderFileInformation();
@@ -38,7 +36,7 @@ BRAINSCutTrainModel
     }
   trainingDataSet->SetRecordSize();
   trainingDataSet->SetBufferRecordSize();
-  trainingDataSet->ShuffleVectors();
+  trainingDataSet->ShuffleVectors( doShuffle );
   if( trainingDataSet->GetTotalVectorSize() > (int)trainMaximumDataSize )
     {
     unsigned int numberOfSubSet =  
@@ -269,6 +267,7 @@ BRAINSCutTrainModel
                   randomTreeTrainParamters
                   );
   
+      writeRFTrainInformation( forest, depth, nTree );
       SaveRFTrainModelAtIteration( forest, depth, nTree);
       }
     }

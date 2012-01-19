@@ -8,10 +8,10 @@ public:
   BRAINSCutTrainModel( std::string netConfigurationFilename );
 
   /** train */
-  void InitializeNeuralNetwork();
+  void InitializeNeuralNetwork( );
   void InitializeRandomForest();
 
-  void InitializeTrainDataSet();
+  void InitializeTrainDataSet( bool doShuffle);
 
   void TrainANN();
   void TrainRandomForest( );

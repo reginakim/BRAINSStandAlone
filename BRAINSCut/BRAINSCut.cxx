@@ -56,8 +56,8 @@ int main(int argc, char * *argv)
         try
           {
           BRAINSCutTrainModel ANNTrain( netConfiguration);
-          ANNTrain.InitializeNeuralNetwork();
-          ANNTrain.InitializeTrainDataSet();
+          ANNTrain.InitializeNeuralNetwork( );
+          ANNTrain.InitializeTrainDataSet( shuffleTrainVector );
           ANNTrain.TrainANN();
           }
         catch( BRAINSCutExceptionStringHandler& e )
@@ -69,7 +69,7 @@ int main(int argc, char * *argv)
         {
         BRAINSCutTrainModel RandomForestTrain( netConfiguration );
         RandomForestTrain.InitializeRandomForest();
-        RandomForestTrain.InitializeTrainDataSet();
+        RandomForestTrain.InitializeTrainDataSet( shuffleTrainVector);
         RandomForestTrain.TrainRandomForest();
         }
       else

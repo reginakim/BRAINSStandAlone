@@ -75,6 +75,13 @@
      <default>false</default>
    </boolean>
    <boolean>
+     <name>shuffleTrainVector</name>
+     <label>shuffleTrainVector</label>
+     <longflag>shuffleTrainVector</longflag>
+     <description>shuffleTrainVector</description>
+     <default>false</default>
+   </boolean>
+   <boolean>
      <name>applyModel</name>
      <label>Apply Model</label>
      <longflag>applyModel</longflag>
