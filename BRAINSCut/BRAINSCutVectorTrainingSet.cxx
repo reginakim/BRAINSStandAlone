@@ -103,6 +103,13 @@ BRAINSCutVectorTrainingSet
   bufferRecordSize = ( inputVectorSize + outputVectorSize + LineGuardSize );
 }
 
+void 
+BRAINSCutVectorTrainingSet
+::SetShuffled(bool shuffled)
+{
+  shuffled = shuffled;
+}
+
 // ---------------------------//
 void
 BRAINSCutVectorTrainingSet
@@ -230,7 +237,7 @@ BRAINSCutVectorTrainingSet
 // ---------------------------//
 void
 BRAINSCutVectorTrainingSet
-::ShuffleVectors( bool shuffle)
+::ShuffleVectors( )
 {
   PrintDebuggingMessage( "this shuffling process will override current version of vector *" );
 

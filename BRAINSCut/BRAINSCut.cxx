@@ -28,6 +28,10 @@ int main(int argc, char * *argv)
   BRAINSCutGenerateRegistrations registrationGenerator ( netConfiguration );
   const bool applyDataSetOff=false;
   const bool applyDataSetOn=true;
+  const bool shuffleTrainVector = (NoTrainingVectorShuffling != true ) ;
+
+
+  std::cout<<"shuffleTrainVector::"<< shuffleTrainVector<<std::endl;
 
   if( generateProbability )
     {

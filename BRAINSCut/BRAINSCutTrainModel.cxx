@@ -36,7 +36,10 @@ BRAINSCutTrainModel
     }
   trainingDataSet->SetRecordSize();
   trainingDataSet->SetBufferRecordSize();
-  trainingDataSet->ShuffleVectors( doShuffle );
+  if( doShuffle )
+    {
+    trainingDataSet->ShuffleVectors();
+    }
   if( trainingDataSet->GetTotalVectorSize() > (int)trainMaximumDataSize )
     {
     unsigned int numberOfSubSet =  

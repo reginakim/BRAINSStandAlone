@@ -75,10 +75,10 @@
      <default>false</default>
    </boolean>
    <boolean>
-     <name>shuffleTrainVector</name>
-     <label>shuffleTrainVector</label>
-     <longflag>shuffleTrainVector</longflag>
-     <description>shuffleTrainVector</description>
+     <name>NoTrainingVectorShuffling</name>
+     <label>NoTrainingVectorShuffling</label>
+     <longflag>NoTrainingVectorShuffling</longflag>
+     <description>If this flag is on, there will be no shuffling.</description>
      <default>false</default>
    </boolean>
    <boolean>
