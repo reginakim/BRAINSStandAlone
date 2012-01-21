@@ -239,13 +239,22 @@ void
 BRAINSCutTrainModel
 ::TrainRandomForest()
 {
-  CvRTrees forest;
+
 
   for( int depth=1; depth<trainMaxDepth; depth++)
     {
     for( int nTree=2; nTree<trainMaxTreeCount; nTree++)
       {
-      forest.clear();
+      TrainRandomForestAt( depth, nTree );
+      }
+    }
+}
+
+void
+BRAINSCutTrainModel
+::TrainRandomForestAt( const int depth, const int numberOfTree )
+{
+      CvRTrees forest;
       CvRTParams randomTreeTrainParamters=
         CvRTParams( depth, 
                     trainMinSampleCount,
@@ -255,7 +264,7 @@ BRAINSCutTrainModel
                     0,                 //float* _priors,
                     trainCalcVarImportance, //bool   _calc_var_importance=false,
                     0,                 //int    _nactive_vars=0, 
-                    nTree,     
+                    numberOfTree,     
                     0,                 //float  forest_accuracy=0, 
                     0
                   );
@@ -269,11 +278,8 @@ BRAINSCutTrainModel
                   0,  //CvMat* missingMask=0,
                   randomTreeTrainParamters
                   );
-  
-      writeRFTrainInformation( forest, depth, nTree );
-      SaveRFTrainModelAtIteration( forest, depth, nTree);
-      }
-    }
+      writeRFTrainInformation( forest, depth, numberOfTree );
+      SaveRFTrainModelAtIteration( forest, depth, numberOfTree);
 }
 
 /** setting function with net configuration */

@@ -15,6 +15,7 @@ public:
 
   void TrainANN();
   void TrainRandomForest( );
+  void TrainRandomForestAt( const int depth, const int numberOfTree );
   /** inline functions */
   inline void TrainWithUpdate(neuralNetType& myTrainer, bool update, pairedTrainingSetType& currentTrainData);
 

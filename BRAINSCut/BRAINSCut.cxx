@@ -74,7 +74,16 @@ int main(int argc, char * *argv)
         BRAINSCutTrainModel RandomForestTrain( netConfiguration );
         RandomForestTrain.InitializeRandomForest();
         RandomForestTrain.InitializeTrainDataSet( shuffleTrainVector);
-        RandomForestTrain.TrainRandomForest();
+
+        /* these set has to be **AFTER** InitializeTrainDataSet */
+        if( numberOfTrees > 0 && randomTreeDepth >0 )
+          {
+          RandomForestTrain.TrainRandomForestAt( randomTreeDepth, numberOfTrees );
+          }
+        else
+          {
+          RandomForestTrain.TrainRandomForest();
+          }
         }
       else
         {
