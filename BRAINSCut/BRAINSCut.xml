@@ -120,4 +120,20 @@
       <element></element>
     </string-enumeration>
 </parameters>
+<parameters>
+    <integer>
+      <name>numberOfTrees</name>
+      <longflag>numberOfTrees</longflag>
+      <label>number of trees for random tree</label>
+      <description> Random tree: number of trees. This is to be used when only one model with specified depth wish to be created. </description>
+      <default>-1</default>
+    </integer>
+    <integer>
+      <name>randomTreeDepth</name>
+      <longflag>randomTreeDepth</longflag>
+      <label>depth for random tree</label>
+      <description> Random tree depth. This is to be used when only one model with specified depth wish to be created. </description>
+      <default>-1</default>
+    </integer>
+</parameters>
 </executable>

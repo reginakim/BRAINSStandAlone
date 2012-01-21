@@ -249,7 +249,7 @@ void
 BRAINSCutTrainModel
 ::TrainRandomForest() 
 {
-  CvRTrees forest;
+
 
   for( int depth=1; depth<trainMaxDepth; depth++)
     {
