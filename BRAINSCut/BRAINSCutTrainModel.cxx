@@ -179,6 +179,7 @@ BRAINSCutTrainModel
 ::appendToFile( std::string filename, std::string line )
 {
    fstream filestr;
+
    filestr.open ( filename.c_str(), std::ios::app | std::ios::out );
    if( !filestr.good() )
     {
