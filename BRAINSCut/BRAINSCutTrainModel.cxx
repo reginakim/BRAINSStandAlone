@@ -169,6 +169,7 @@ BRAINSCutTrainModel
 ::appendToFile( std::string filename, std::string line )
 {
    fstream filestr;
+
    filestr.open ( filename.c_str(), std::ios::app | std::ios::out );
    if( !filestr.good() )
     {
@@ -312,6 +313,15 @@ BRAINSCutTrainModel
 ::SetRFErrorFile()
 {
    fstream filestr;
+   ifstream ifile(RFErrorFilename.c_str());
+   if (ifile) 
+    {
+    std::cout<<"file already exist. Append to the file"
+             <<std::endl;
+    ifile.close();
+    return;
+    }
+
    filestr.open ( RFErrorFilename.c_str(), fstream::out);
 
    if( !filestr.good() )
