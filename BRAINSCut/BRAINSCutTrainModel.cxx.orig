@@ -24,6 +24,7 @@ BRAINSCutTrainModel
   
   const std::string Local_ANNVectorFilenamePrefix = this->GetANNVectorFilenamePrefix();
 
+  std::cout<<__LINE__<<__FILE__;
   trainingDataSet = new BRAINSCutVectorTrainingSet( Local_ANNVectorFilenamePrefix);
   try
     {
@@ -59,28 +60,31 @@ void
 BRAINSCutTrainModel
 ::InitializeNeuralNetwork()
 {
-<<<<<<< HEAD
   ANNParameterNetConfiguration = BRAINSCutNetConfiguration.Get<TrainingParameters>("ANNParameters");
   ANNLayerStructure = cvCreateMat( 1, 3, CV_32SC1);
+<<<<<<< HEAD
   SetMaximumDataSizeFromNetConfiguration();
 =======
-  SetMaximumDataSizeFromNetConfiguration();
-
->>>>>>> randomTreeReal
+>>>>>>> 86921e388d84f8c4ab55482b0906d856427f9342
   SetIterationFromNetConfiguration();
   SetEpochIterationFromNetConfiguration();
   SetDesiredErrorFromNetConfiguration();
   SetANNHiddenNodesNumberFromNetConfiguration();
   SetActivatioinFunctionFromNetConfiguration();
+<<<<<<< HEAD
 
   SetModelBasename();
 }
 
+=======
+  SetModelBasename();
+}
+
+>>>>>>> 86921e388d84f8c4ab55482b0906d856427f9342
 void
 BRAINSCutTrainModel
 ::InitializeRandomForest()
 {
-<<<<<<< HEAD
   ANNParameterNetConfiguration = BRAINSCutNetConfiguration.Get<TrainingParameters>("RandomForestParameters");
   SetMaxDepthFromNetConfiguration();
   SetMinSampleCountFromNetConfiguration();
@@ -91,17 +95,6 @@ BRAINSCutTrainModel
   SetModelBasename();
   SetRFErrorFilename();
   SetRFErrorFile();
-=======
-  SetMaximumDataSizeFromNetConfiguration();
-
-  SetMaxDepthFromNetConfiguration();
-  SetMinSampleCountFromNetConfiguration();
-  SetUseSurrogatesFromNetConfiguration();
-  SetCalculateVariableImportanceFromNetConfiguration();
-  SetMaxTreeCountFromNetConfiguration();
-
-  SetModelBasename();
->>>>>>> randomTreeReal
 }
 
 inline void
@@ -141,8 +134,6 @@ BRAINSCutTrainModel
   std::string filename = modelBasename + "D"+tempDepth+"NF"+tempNTrees;
 
 <<<<<<< HEAD
-  myTrainer.save( filename.c_str() );
-=======
   try
     {
     std::cout<<"Save Model File :: "<<filename <<std::endl;
@@ -154,7 +145,9 @@ BRAINSCutTrainModel
                << filename <<std::endl;  
       exit(EXIT_FAILURE);
     }
->>>>>>> randomTreeReal
+=======
+  myTrainer.save( filename.c_str() );
+>>>>>>> 86921e388d84f8c4ab55482b0906d856427f9342
 }
 
 inline void
@@ -200,7 +193,10 @@ BRAINSCutTrainModel
 ::appendToFile( std::string filename, std::string line )
 {
    fstream filestr;
+<<<<<<< HEAD
 
+=======
+>>>>>>> 86921e388d84f8c4ab55482b0906d856427f9342
    filestr.open ( filename.c_str(), std::ios::app | std::ios::out );
    if( !filestr.good() )
     {
@@ -257,11 +253,7 @@ BRAINSCutTrainModel
                      (currentIteration > 0),
                      *(trainingDataSet->GetTrainingSubSet(subSetNo) ) );
     SaveANNTrainModelAtIteration( *trainner, currentIteration );
-<<<<<<< HEAD
     printANNTrainInformation( *trainner, currentIteration );
-=======
-    printTrainInformation( *trainner, currentIteration );
->>>>>>> randomTreeReal
     if( trainner->get_MSE()  < trainDesiredError )
       {
       std::cout << "CONVERGED with " << trainner->get_MSE() << std::endl;
@@ -273,15 +265,19 @@ BRAINSCutTrainModel
 /** random forest training */
 void
 BRAINSCutTrainModel
-<<<<<<< HEAD
 ::TrainRandomForest()
 {
+<<<<<<< HEAD
 
+=======
+  CvRTrees forest;
+>>>>>>> 86921e388d84f8c4ab55482b0906d856427f9342
 
   for( int depth=1; depth<trainMaxDepth; depth++)
     {
     for( int nTree=2; nTree<trainMaxTreeCount; nTree++)
       {
+<<<<<<< HEAD
       TrainRandomForestAt( depth, nTree );
       }
     }
@@ -292,6 +288,9 @@ BRAINSCutTrainModel
 ::TrainRandomForestAt( const int depth, const int numberOfTree )
 {
       CvRTrees forest;
+=======
+      forest.clear();
+>>>>>>> 86921e388d84f8c4ab55482b0906d856427f9342
       CvRTParams randomTreeTrainParamters=
         CvRTParams( depth, 
                     trainMinSampleCount,
@@ -301,32 +300,11 @@ BRAINSCutTrainModel
                     0,                 //float* _priors,
                     trainCalcVarImportance, //bool   _calc_var_importance=false,
                     0,                 //int    _nactive_vars=0, 
+<<<<<<< HEAD
                     numberOfTree,     
 =======
-::TrainRandomForest( int maxDepth, 
-                     int minSampleCount, 
-                     bool useSurrogates,
-                     bool calcVarImportance,
-                     int maxTreeCount
-                     )
-{
-  CvRTrees forest;
-
-  for( int depth=1; depth<maxDepth; depth++)
-    {
-    for( int nTree=2; nTree<maxTreeCount; nTree++)
-      {
-      CvRTParams randomTreeTrainParamters=
-        CvRTParams( depth, 
-                    minSampleCount,
-                    0.0F,              //float  _regression_accuracy=0, 
-                    useSurrogates, 
-                    10,                //int    _max_categories=10, 
-                    0,                 //float* _priors,
-                    calcVarImportance, //bool   _calc_var_importance=false,
-                    0,                 //int    _nactive_vars=0, 
                     nTree,     
->>>>>>> randomTreeReal
+>>>>>>> 86921e388d84f8c4ab55482b0906d856427f9342
                     0,                 //float  forest_accuracy=0, 
                     0
                   );
@@ -345,10 +323,11 @@ BRAINSCutTrainModel
       SaveRFTrainModelAtIteration( forest, depth, numberOfTree);
 =======
   
+      writeRFTrainInformation( forest, depth, nTree );
       SaveRFTrainModelAtIteration( forest, depth, nTree);
       }
     }
->>>>>>> randomTreeReal
+>>>>>>> 86921e388d84f8c4ab55482b0906d856427f9342
 }
 
 /** setting function with net configuration */
@@ -359,7 +338,6 @@ BRAINSCutTrainModel
   NeuralParams * model = BRAINSCutNetConfiguration.Get<NeuralParams>("NeuralNetParams");
 
   modelBasename = model->GetAttribute<StringValue>("TrainingModelFilename");
-<<<<<<< HEAD
 }
 
 void
@@ -382,6 +360,7 @@ BRAINSCutTrainModel
 ::SetRFErrorFile()
 {
    fstream filestr;
+<<<<<<< HEAD
    ifstream ifile(RFErrorFilename.c_str());
    if (ifile) 
     {
@@ -391,6 +370,8 @@ BRAINSCutTrainModel
     return;
     }
 
+=======
+>>>>>>> 86921e388d84f8c4ab55482b0906d856427f9342
    filestr.open ( RFErrorFilename.c_str(), fstream::out);
 
    if( !filestr.good() )
@@ -402,8 +383,6 @@ BRAINSCutTrainModel
 
    filestr<<"E, error, D, depth, N, NTree\n";
    filestr.close();
-=======
->>>>>>> randomTreeReal
 }
 
 std::string
@@ -551,7 +530,6 @@ BRAINSCutTrainModel
   return activationMinMax;
 }
 
-<<<<<<< HEAD
 /** Set Random Tree */
 void
 BRAINSCutTrainModel
@@ -587,22 +565,3 @@ BRAINSCutTrainModel
 {
   trainMaxTreeCount= ANNParameterNetConfiguration->GetAttribute<IntValue>("MaxTreeCount");
 }
-=======
-/** setting functions for random forest */
-
-void 
-BRAINSCutTrainModel
-::SetMaxDepthFromNetConfiguration();
-void 
-BRAINSCutTrainModel
-::SetMinSampleCountFromNetConfiguration();
-void 
-BRAINSCutTrainModel
-::SetUseSurrogatesFromNetConfiguration();
-void 
-BRAINSCutTrainModel
-::SetCalculateVariableImportanceFromNetConfiguration();
-void 
-BRAINSCutTrainModel
-::SetMaxTreeCountFromNetConfiguration();
->>>>>>> randomTreeReal
