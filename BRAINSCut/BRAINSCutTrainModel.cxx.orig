@@ -233,10 +233,16 @@ BRAINSCutTrainModel
 /** random forest training */
 void
 BRAINSCutTrainModel
-::TrainRandomForest() 
+::TrainRandomForest( int maxDepth, 
+                     int minSampleCount, 
+                     bool useSurrogates,
+                     bool calcVarImportance,
+                     int maxTreeCount
+                     )
 {
   CvRTrees forest;
 
+<<<<<<< HEAD
   for( int depth=1; depth<trainMaxDepth; depth++)
     {
     for( int nTree=2; nTree<trainMaxTreeCount; nTree++)
@@ -250,6 +256,20 @@ BRAINSCutTrainModel
                     10,                //int    _max_categories=10, 
                     0,                 //float* _priors,
                     trainCalcVarImportance, //bool   _calc_var_importance=false,
+=======
+  for( int depth=1; depth<maxDepth; depth++)
+    {
+    for( int nTree=2; nTree<maxTreeCount; nTree++)
+      {
+      CvRTParams randomTreeTrainParamters=
+        CvRTParams( depth, 
+                    minSampleCount,
+                    0.0F,              //float  _regression_accuracy=0, 
+                    useSurrogates, 
+                    10,                //int    _max_categories=10, 
+                    0,                 //float* _priors,
+                    calcVarImportance, //bool   _calc_var_importance=false,
+>>>>>>> ENH: Add iterations
                     0,                 //int    _nactive_vars=0, 
                     nTree,     
                     0,                 //float  forest_accuracy=0, 
@@ -266,7 +286,10 @@ BRAINSCutTrainModel
                   randomTreeTrainParamters
                   );
   
+<<<<<<< HEAD
       writeRFTrainInformation( forest, depth, nTree );
+=======
+>>>>>>> ENH: Add iterations
       SaveRFTrainModelAtIteration( forest, depth, nTree);
       }
     }
