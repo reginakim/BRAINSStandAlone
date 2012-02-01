@@ -65,22 +65,15 @@ BRAINSCutTrainModel
 <<<<<<< HEAD
   SetMaximumDataSizeFromNetConfiguration();
 =======
->>>>>>> 86921e388d84f8c4ab55482b0906d856427f9342
+>>>>>>> 5b79bbcf5df3c6fd02c6a9a9da8dc985130f0162
   SetIterationFromNetConfiguration();
   SetEpochIterationFromNetConfiguration();
   SetDesiredErrorFromNetConfiguration();
   SetANNHiddenNodesNumberFromNetConfiguration();
   SetActivatioinFunctionFromNetConfiguration();
-<<<<<<< HEAD
-
   SetModelBasename();
 }
 
-=======
-  SetModelBasename();
-}
-
->>>>>>> 86921e388d84f8c4ab55482b0906d856427f9342
 void
 BRAINSCutTrainModel
 ::InitializeRandomForest()
@@ -147,7 +140,7 @@ BRAINSCutTrainModel
     }
 =======
   myTrainer.save( filename.c_str() );
->>>>>>> 86921e388d84f8c4ab55482b0906d856427f9342
+>>>>>>> 5b79bbcf5df3c6fd02c6a9a9da8dc985130f0162
 }
 
 inline void
@@ -167,6 +160,7 @@ BRAINSCutTrainModel
 ::writeRFTrainInformation( CvRTrees& myTrainer, 
                            int depth, 
                            int nTree)
+<<<<<<< HEAD
 {
   char* cError = new char[40];
   sprintf( cError, "%.5g", myTrainer.get_train_error() );
@@ -193,10 +187,6 @@ BRAINSCutTrainModel
 ::appendToFile( std::string filename, std::string line )
 {
    fstream filestr;
-<<<<<<< HEAD
-
-=======
->>>>>>> 86921e388d84f8c4ab55482b0906d856427f9342
    filestr.open ( filename.c_str(), std::ios::app | std::ios::out );
    if( !filestr.good() )
     {
@@ -211,6 +201,48 @@ inline void
 BRAINSCutTrainModel
 ::printANNTrainInformation( neuralNetType& myTrainer, unsigned int No )
 {
+=======
+{
+  char* cError = new char[40];
+  sprintf( cError, "%.5g", myTrainer.get_train_error() );
+
+  char* cDepth = new char[10];
+  sprintf( cDepth, "%d", depth );
+
+  char* cNTree = new char[10];
+  sprintf( cNTree, "%d", nTree);
+
+  std::string line = "error,";
+  line += cError; 
+  line += ", depth, ";
+  line += cDepth ;
+  line += ", number of Tree, ";
+  line += cNTree ;
+
+  std::cout<<line<<std::endl;
+  appendToFile( RFErrorFilename, line );
+}
+
+inline void
+BRAINSCutTrainModel
+::appendToFile( std::string filename, std::string line )
+{
+   fstream filestr;
+   filestr.open ( filename.c_str(), std::ios::app | std::ios::out );
+   if( !filestr.good() )
+    {
+    std::cout<<"Cannot open the file :: " << filename <<std::endl
+             <<"Fail to append line  :: " << line <<std::endl;
+    exit( EXIT_FAILURE );
+    }
+   filestr<<line<<std::endl;
+   filestr.close();
+}
+inline void
+BRAINSCutTrainModel
+::printANNTrainInformation( neuralNetType& myTrainer, unsigned int No )
+{
+>>>>>>> 5b79bbcf5df3c6fd02c6a9a9da8dc985130f0162
   std::cout << " Error, " << myTrainer.get_MSE()
             << " Iteration, " << No + 1
             << std::endl;
@@ -265,14 +297,15 @@ BRAINSCutTrainModel
 /** random forest training */
 void
 BRAINSCutTrainModel
+<<<<<<< HEAD
 ::TrainRandomForest()
 {
-<<<<<<< HEAD
-
 =======
+::TrainRandomForest() 
+{
   CvRTrees forest;
->>>>>>> 86921e388d84f8c4ab55482b0906d856427f9342
 
+>>>>>>> 5b79bbcf5df3c6fd02c6a9a9da8dc985130f0162
   for( int depth=1; depth<trainMaxDepth; depth++)
     {
     for( int nTree=2; nTree<trainMaxTreeCount; nTree++)
@@ -290,7 +323,7 @@ BRAINSCutTrainModel
       CvRTrees forest;
 =======
       forest.clear();
->>>>>>> 86921e388d84f8c4ab55482b0906d856427f9342
+>>>>>>> 5b79bbcf5df3c6fd02c6a9a9da8dc985130f0162
       CvRTParams randomTreeTrainParamters=
         CvRTParams( depth, 
                     trainMinSampleCount,
@@ -304,7 +337,7 @@ BRAINSCutTrainModel
                     numberOfTree,     
 =======
                     nTree,     
->>>>>>> 86921e388d84f8c4ab55482b0906d856427f9342
+>>>>>>> 5b79bbcf5df3c6fd02c6a9a9da8dc985130f0162
                     0,                 //float  forest_accuracy=0, 
                     0
                   );
@@ -327,7 +360,7 @@ BRAINSCutTrainModel
       SaveRFTrainModelAtIteration( forest, depth, nTree);
       }
     }
->>>>>>> 86921e388d84f8c4ab55482b0906d856427f9342
+>>>>>>> 5b79bbcf5df3c6fd02c6a9a9da8dc985130f0162
 }
 
 /** setting function with net configuration */
@@ -371,7 +404,7 @@ BRAINSCutTrainModel
     }
 
 =======
->>>>>>> 86921e388d84f8c4ab55482b0906d856427f9342
+>>>>>>> 5b79bbcf5df3c6fd02c6a9a9da8dc985130f0162
    filestr.open ( RFErrorFilename.c_str(), fstream::out);
 
    if( !filestr.good() )

@@ -247,8 +247,10 @@ BRAINSCutTrainModel
 /** random forest training */
 void
 BRAINSCutTrainModel
-::TrainRandomForest()
+::TrainRandomForest() 
 {
+  CvRTrees forest;
+
   for( int depth=1; depth<trainMaxDepth; depth++)
     {
     for( int nTree=2; nTree<trainMaxTreeCount; nTree++)
