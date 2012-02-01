@@ -319,6 +319,9 @@ NetConfigurationParser::StartElement(void *userData,
       am->SetAttribute<FloatValue>( "MaskThresh",
                                     attribMap.Get("ApplyModel",
                                                   "MaskThresh") );
+      am->SetAttribute<FloatValue>( "GaussianSmoothingSigma",
+                                    attribMap.GetIfExist("ApplyModel",
+                                                  "GaussianSmoothingSigma") );
 
       Local_netConfiguration->Add(am, Name);
       }

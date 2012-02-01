@@ -48,6 +48,16 @@ public:
 
   void SetModelBasename();
 
+  /** setting functions for random forest */
+
+  void  SetMaxDepthFromNetConfiguration();
+  void  SetMinSampleCountFromNetConfiguration();
+  void  SetUseSurrogatesFromNetConfiguration();
+  void  SetCalcVarImportanceFromNetConfiguration();
+  void  SetMaxTreeCountFromNetConfiguration();
+  void  SetRFErrorFilename();
+  void  SetRFErrorFile();
+
   /** default functions to set/get member variables */
   void SetIteration(unsigned int iteration);
 
@@ -74,15 +84,6 @@ public:
   float GetActivationSlope();
 
   float GetActivationMinMax();
-
-  /** random trees */
-  void  SetMaxDepthFromNetConfiguration();
-  void  SetMinSampleCountFromNetConfiguration();
-  void  SetUseSurrogatesFromNetConfiguration();
-  void  SetCalcVarImportanceFromNetConfiguration();
-  void  SetMaxTreeCountFromNetConfiguration();
-  void  SetRFErrorFilename();
-  void  SetRFErrorFile();
 
   inline void appendToFile( std::string filename, std::string line);
 private:

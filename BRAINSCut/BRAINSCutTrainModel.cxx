@@ -123,7 +123,17 @@ BRAINSCutTrainModel
 
   std::string filename = modelBasename + "D"+tempDepth+"NF"+tempNTrees;
 
-  myTrainer.save( filename.c_str() );
+  try
+    {
+    std::cout<<"Save Model File :: "<<filename <<std::endl;
+    myTrainer.save( filename.c_str() );
+    }
+  catch( ... )
+    {
+      std::cout<<"Fail to save the model file ::" <<std::endl 
+               << filename <<std::endl;  
+      exit(EXIT_FAILURE);
+    }
 }
 
 inline void
