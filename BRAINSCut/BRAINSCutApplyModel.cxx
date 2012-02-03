@@ -34,10 +34,6 @@ BRAINSCutApplyModel
   SetANNModelFilenameFromNetConfiguration();
   SetGaussianSmoothingSigmaFromNetConfiguration();
 
-  SetRandomForestModelFilenameFromNetConfiguration();
-
-  SetRandomForestModelFilenameFromNetConfiguration();
-
   openCVANN = new OpenCVMLPType();
 
   SetMethod( "ANN" );
@@ -328,7 +324,8 @@ BRAINSCutApplyModel
 ::SetGaussianSmoothingSigmaFromNetConfiguration()
 {
   gaussianSmoothingSigma=
-    BRAINSCutNetConfiguration.Get<ApplyModelType>("ApplyModel")->GetAttribute<FloatValue>("GaussianSmoothingSigma");
+    BRAINSCutNetConfiguration.Get<ApplyModelType>("ApplyModel")
+              ->GetAttribute<FloatValue>("GaussianSmoothingSigma");
 }
 
 void
@@ -336,7 +333,8 @@ BRAINSCutApplyModel
 ::SetANNOutputThresholdFromNetConfiguration()
 {
   annOutputThreshold =
-    BRAINSCutNetConfiguration.Get<ApplyModelType>("ApplyModel")->GetAttribute<FloatValue>("MaskThresh");
+    BRAINSCutNetConfiguration.Get<ApplyModelType>("ApplyModel")
+              ->GetAttribute<FloatValue>("MaskThresh");
   if( annOutputThreshold < 0.0F )
     {
     std::string msg = " ANNOutput Threshold cannot be less than zero. \n";
@@ -429,21 +427,6 @@ BRAINSCutApplyModel
 }
 
 /** Model file name */
-std::string
-BRAINSCutApplyModel
-::GetANNModelBaseName( )
-{
-  std::string basename;
-  try
-    {
-    basename = annModelConfiguration->GetAttribute<StringValue>("TrainingModelFilename");
-    }
-  catch( ... )
-    {
-    throw BRAINSCutExceptionStringHandler("Fail to get the ann model file name");
-    }
-  return  basename;
-}
 
 void
 BRAINSCutApplyModel
@@ -454,34 +437,35 @@ BRAINSCutApplyModel
 
 void
 BRAINSCutApplyModel
-::SetANNModelFilenameAtIteration( const int iteration)
-{
-  ANNModelFilename = GetANNModelBaseName();
-
-  char temp[10];
-  sprintf( temp, "%09d", iteration );
-  ANNModelFilename += temp;
-}
-
-void
-BRAINSCutApplyModel
-::SetRandomForestModelFilenameFromNetConfiguration( )
-{
-  RandomForestModelFilename = GetANNModelBaseName(); 
-}
-
-void
-BRAINSCutApplyModel
 ::SetTrainIterationFromNetConfiguration()
 {
-  trainIteration = BRAINSCutNetConfiguration.Get<TrainingParameters>("ANNParameters")->GetAttribute<IntValue>("Iterations");
+  trainIteration = BRAINSCutNetConfiguration.Get<TrainingParameters>("ANNParameters")
+                            ->GetAttribute<IntValue>("Iterations");
 }
 
+// TODO TODO TODO TODO TODO
+void
+BRAINSCutApplyModel
+::SetRandomForestModelFilename( int depth, int nTree)
+{
+  RandomForestModelFilename =  GetRFModelFilename( depth, nTree );
+}
+void
+BRAINSCutApplyModel
+::SetRandomForestModelFilenameFromNetConfiguration()
+{
+  int nTree= BRAINSCutNetConfiguration.Get<TrainingParameters>("ANNParameters")
+                            ->GetAttribute<IntValue>("MaxDepth");
+  int depth= BRAINSCutNetConfiguration.Get<TrainingParameters>("ANNParameters")
+                            ->GetAttribute<IntValue>("MaxTreeCount");
+
+  RandomForestModelFilename =  GetRFModelFilename( depth, nTree );
+}
 void
 BRAINSCutApplyModel
 ::SetANNTestingSSEFilename()
 {
-  ANNTestingSSEFilename = GetANNModelBaseName();
+  ANNTestingSSEFilename = GetModelBaseName();
   ANNTestingSSEFilename += "ValidationSetSSE.txt";
 }
 void

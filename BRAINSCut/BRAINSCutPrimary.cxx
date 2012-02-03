@@ -339,3 +339,56 @@ BRAINSCutPrimary
 
   return smoothingFilter->GetOutput();
 }
+/** model file name */
+std::string
+BRAINSCutPrimary
+::GetModelBaseName( )
+{
+  std::string basename;
+  try
+    {
+    basename = annModelConfiguration->GetAttribute<StringValue>("TrainingModelFilename");
+    }
+  catch( ... )
+    {
+    throw BRAINSCutExceptionStringHandler("Fail to get the ann model file name");
+    }
+  return  basename;
+}
+
+std::string
+BRAINSCutPrimary
+::GetANNModelFilenameAtIteration( const int iteration)
+{
+  SetANNModelFilenameAtIteration( iteration );
+  return ANNModelFilename;
+}
+
+void
+BRAINSCutPrimary
+::SetANNModelFilenameAtIteration( const int iteration)
+{
+  ANNModelFilename = GetModelBaseName();
+
+  char temp[10];
+  sprintf( temp, "%09d", iteration );
+  ANNModelFilename += temp;
+}
+
+std::string
+BRAINSCutPrimary
+::GetRFModelFilename( int depth,
+                      int NTrees)
+{
+  std::string basename = GetModelBaseName();
+
+  char tempDepth[5];
+  sprintf( tempDepth, "%04u", depth );
+
+  char tempNTrees[5];
+  sprintf( tempNTrees, "%04u", NTrees );
+
+  std::string filename = basename + "D"+tempDepth+"NF"+tempNTrees;
+
+  return filename;
+}

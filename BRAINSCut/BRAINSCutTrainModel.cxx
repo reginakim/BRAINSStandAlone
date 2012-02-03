@@ -60,7 +60,7 @@ void
 BRAINSCutTrainModel
 ::InitializeNeuralNetwork()
 {
-  ANNParameterNetConfiguration = BRAINSCutNetConfiguration.Get<TrainingParameters>("ANNParameters");
+  TrainNetConfiguration = BRAINSCutNetConfiguration.Get<TrainingParameters>("ANNParameters");
   ANNLayerStructure = cvCreateMat( 1, 3, CV_32SC1);
   SetMaximumDataSizeFromNetConfiguration();
   SetIterationFromNetConfiguration();
@@ -75,7 +75,7 @@ void
 BRAINSCutTrainModel
 ::InitializeRandomForest()
 {
-  ANNParameterNetConfiguration = BRAINSCutNetConfiguration.Get<TrainingParameters>("RandomForestParameters");
+  TrainNetConfiguration = BRAINSCutNetConfiguration.Get<TrainingParameters>("RandomForestParameters");
   SetMaxDepthFromNetConfiguration();
   SetMinSampleCountFromNetConfiguration();
   SetUseSurrogatesFromNetConfiguration();
@@ -115,13 +115,8 @@ inline void
 BRAINSCutTrainModel
 ::SaveRFTrainModelAtIteration( CvRTrees& myTrainer, int depth, int NTrees)
 {
-  char tempDepth[5];
-  sprintf( tempDepth, "%04u", depth );
-
-  char tempNTrees[5];
-  sprintf( tempNTrees, "%04u", NTrees );
-
-  std::string filename = modelBasename + "D"+tempDepth+"NF"+tempNTrees;
+  std::string filename = GetRFModelFilename( depth, 
+                                             NTrees );
 
   try
     {
@@ -140,11 +135,7 @@ inline void
 BRAINSCutTrainModel
 ::SaveANNTrainModelAtIteration( neuralNetType& myTrainer, unsigned int No)
 {
-  char tempid[10];
-
-  sprintf( tempid, "%09u", No + 1 );
-  std::string filename = modelBasename + tempid;
-
+  std::string filename = GetANNModelFilenameAtIteration( No );
   myTrainer.save( filename.c_str() );
 }
 
@@ -356,43 +347,43 @@ void
 BRAINSCutTrainModel
 ::SetIterationFromNetConfiguration()
 {
-  trainIteration = ANNParameterNetConfiguration->GetAttribute<IntValue>("Iterations");
+  trainIteration = TrainNetConfiguration->GetAttribute<IntValue>("Iterations");
 }
 
 void
 BRAINSCutTrainModel
 ::SetEpochIterationFromNetConfiguration()
 {
-  trainEpochIteration = ANNParameterNetConfiguration->GetAttribute<IntValue>("EpochIterations");
+  trainEpochIteration = TrainNetConfiguration->GetAttribute<IntValue>("EpochIterations");
 }
 
 void
 BRAINSCutTrainModel
 ::SetDesiredErrorFromNetConfiguration()
 {
-  trainDesiredError = ANNParameterNetConfiguration->GetAttribute<FloatValue>("DesiredError");
+  trainDesiredError = TrainNetConfiguration->GetAttribute<FloatValue>("DesiredError");
 }
 
 void
 BRAINSCutTrainModel
 ::SetMaximumDataSizeFromNetConfiguration()
 {
-  trainMaximumDataSize = ANNParameterNetConfiguration->GetAttribute<IntValue>("MaximumVectorsPerEpoch");
+  trainMaximumDataSize = TrainNetConfiguration->GetAttribute<IntValue>("MaximumVectorsPerEpoch");
 }
 
 void
 BRAINSCutTrainModel
 ::SetANNHiddenNodesNumberFromNetConfiguration()
 {
-  ANNHiddenNodesNumber = ANNParameterNetConfiguration->GetAttribute<IntValue>("NumberOfHiddenNodes");
+  ANNHiddenNodesNumber = TrainNetConfiguration->GetAttribute<IntValue>("NumberOfHiddenNodes");
 }
 
 void
 BRAINSCutTrainModel
 ::SetActivatioinFunctionFromNetConfiguration()
 {
-  activationSlope = ANNParameterNetConfiguration->GetAttribute<FloatValue>("ActivationSlope");
-  activationMinMax = ANNParameterNetConfiguration->GetAttribute<FloatValue>("ActivationMinMax");
+  activationSlope = TrainNetConfiguration->GetAttribute<FloatValue>("ActivationSlope");
+  activationMinMax = TrainNetConfiguration->GetAttribute<FloatValue>("ActivationMinMax");
 }
 
 /** default functions to set/get member variables */
@@ -493,33 +484,33 @@ void
 BRAINSCutTrainModel
 ::SetMaxDepthFromNetConfiguration()
 {
-  trainMaxDepth= ANNParameterNetConfiguration->GetAttribute<IntValue>("MaxDepth");
+  trainMaxDepth= TrainNetConfiguration->GetAttribute<IntValue>("MaxDepth");
 }
 
 void
 BRAINSCutTrainModel
 ::SetMinSampleCountFromNetConfiguration()
 {
-  trainMinSampleCount= ANNParameterNetConfiguration->GetAttribute<IntValue>("MinSampleCount");
+  trainMinSampleCount= TrainNetConfiguration->GetAttribute<IntValue>("MinSampleCount");
 }
 
 void
 BRAINSCutTrainModel
 ::SetUseSurrogatesFromNetConfiguration()
 {
-  trainUseSurrogates= ANNParameterNetConfiguration->GetAttribute<BooleanValue>("UseSurrogates");
+  trainUseSurrogates= TrainNetConfiguration->GetAttribute<BooleanValue>("UseSurrogates");
 }
 
 void
 BRAINSCutTrainModel
 ::SetCalcVarImportanceFromNetConfiguration()
 {
-  trainCalcVarImportance= ANNParameterNetConfiguration->GetAttribute<BooleanValue>("CalcVarImportance");
+  trainCalcVarImportance= TrainNetConfiguration->GetAttribute<BooleanValue>("CalcVarImportance");
 }
 
 void
 BRAINSCutTrainModel
 ::SetMaxTreeCountFromNetConfiguration()
 {
-  trainMaxTreeCount= ANNParameterNetConfiguration->GetAttribute<IntValue>("MaxTreeCount");
+  trainMaxTreeCount= TrainNetConfiguration->GetAttribute<IntValue>("MaxTreeCount");
 }

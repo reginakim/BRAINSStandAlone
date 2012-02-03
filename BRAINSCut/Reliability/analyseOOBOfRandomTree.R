@@ -36,7 +36,7 @@ plotOOB <- function( filename, titleTxt, detailDepth)
 
 ## color scheme
   numDepth = as.numeric(levels(factor( dt$depth)) );
-  myColors=topo.colors( length( numDepth) , alpha=0.3);
+  myColors=rainbow( length( numDepth) , alpha=0.3);
 
 ## range
   error.range <- max(dt$error) - min( dt$error ) ;
@@ -70,7 +70,7 @@ pdf( paste(titleTxt,".pdf",sep=""));##, width=500, height=800 );
   image.plot( legend.only=T, 
               zlim=c( numDepth[1], numDepth[length(numDepth)]), 
               legend.shrink = 0.8,
-              col=topo.colors(length( numDepth)) );
+              col=rainbow(length( numDepth)) );
 
 ## magnified plot
   magDT <- subset( dt, dt$depth > detailDepth );

@@ -90,19 +90,26 @@ public:
   void SetAtlasImage();
 
   void SetRegionsOfInterestFromNetConfiguration();
-
   void SetRegistrationParametersFromNetConfiguration();
-
   void SetRhoPhiThetaFromNetConfiguration();
-
   void SetANNModelConfiguration();
-
   void SetGradientSizeFromNetConfiguration();
 
-  WorkingImagePointer ReadImageByFilename( const std::string  filename );
+  /** Model file name **/
+  std::string GetModelBaseName();
+  void SetANNModelFilenameAtIteration( const int iteration);
+  std::string GetANNModelFilenameAtIteration( const int iteration);
 
-  WorkingImagePointer WarpImageByFilenames( const std::string & deformationFilename, const std::string & inputFilename,
-                                            const std::string & referenceFilename );
+
+  std::string GetRFModelFilename( int depth,int NTrees);
+
+  WorkingImagePointer 
+    ReadImageByFilename( const std::string  filename );
+
+  WorkingImagePointer 
+    WarpImageByFilenames( const std::string & deformationFilename, 
+                          const std::string & inputFilename,
+                          const std::string & referenceFilename );
 
   /** Get Function */
   DataSet::StringVectorType GetROIIDsInOrder();
@@ -155,6 +162,11 @@ protected:
   WorkingImagePointer theta;
 
   unsigned int gradientSize;
+
+  /** model name **/
+  std::string ANNModelFilename;
+  std::string RandomForestModelFilename;
+  
 private:
   WorkingImageType GetDeformedImage( WorkingImageType image);
 

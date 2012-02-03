@@ -88,7 +88,7 @@ public:
   inline void appendToFile( std::string filename, std::string line);
 private:
   /* train parameters */
-  TrainingParameters *ANNParameterNetConfiguration;
+  TrainingParameters *TrainNetConfiguration;
 
   unsigned int trainIteration;
   unsigned int trainEpochIteration;

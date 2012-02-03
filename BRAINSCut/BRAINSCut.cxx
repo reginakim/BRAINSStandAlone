@@ -101,11 +101,20 @@ int main(int argc, char * *argv)
       registrationGenerator.SetSubjectDataSet( applyDataSetOn );
       registrationGenerator.GenerateRegistrations();
 
-      BRAINSCutApplyModel applyTest( netConfiguration );
+      BRAINSCutApplyModel ApplyModule( netConfiguration );
 
-      applyTest.SetMethod( method );
-      applyTest.SetComputeSSE( computeSSEOn );
-      applyTest.Apply();
+      ApplyModule.SetMethod( method );
+      ApplyModule.SetComputeSSE( computeSSEOn );
+      /* these set has to be **AFTER** InitializeTrainDataSet */
+      if( numberOfTrees > 0 && randomTreeDepth >0 )
+          {
+          ApplyModule.SetRandomForestModelFilename( randomTreeDepth, numberOfTrees );
+          }
+      else
+          {
+          ApplyModule.SetRandomForestModelFilenameFromNetConfiguration();
+          }
+      ApplyModule.Apply();
       }
     catch( BRAINSCutExceptionStringHandler& e )
       {
