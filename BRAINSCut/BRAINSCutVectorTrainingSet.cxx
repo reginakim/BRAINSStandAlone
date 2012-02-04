@@ -105,9 +105,9 @@ BRAINSCutVectorTrainingSet
 
 void 
 BRAINSCutVectorTrainingSet
-::SetShuffled(bool shuffled)
+::SetShuffled(bool shuffledTrue)
 {
-  shuffled = shuffled;
+  shuffled = shuffledTrue;
 }
 
 // ---------------------------//
@@ -199,8 +199,22 @@ GetFileStreamToRead( std::string filename, std::ifstream& fileStreamToRead)
     std::string msg( "Vector File has not been created. " + filename );
     throw BRAINSCutExceptionStringHandler( msg);
     }
-  fileStreamToRead.open( filename.c_str(),
-                         std::ios::in | std::ios::binary );
+  try
+    {
+    fileStreamToRead.open( filename.c_str(),
+                           std::ios::in | std::ios::binary );
+    }
+    catch( std::ifstream::failure e)
+      {
+        std::cout <<"Exception opening file::"
+           <<filename<<std::endl
+           <<e.what()<<std::endl;
+      } 
+    catch( BRAINSCutExceptionStringHandler& e )
+      {
+      std::cout << e.Error();
+      exit(EXIT_FAILURE);
+      }
   if( !fileStreamToRead.is_open() )
     {
     std::string msg( "Cannot Open FileStream of " );

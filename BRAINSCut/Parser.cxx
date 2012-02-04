@@ -256,36 +256,58 @@ Parser::StartElement(void *userData,
       throw;
       }
     }
+  else if( Name == "RandomForestParameters" )
+    {
+    try
+      {
+      TrainingParameters *ap = new TrainingParameters("RandomForestParameters");
+      ap->SetAttribute<IntValue>( "MaxDepth",
+                                  attribMap.Get("RandomForestParameters",
+                                                "MaxDepth") );
+      ap->SetAttribute<IntValue>( "MinSampleCount",
+                                  attribMap.Get("RandomForestParameters",
+                                                "MinSampleCount") );
+      ap->SetAttribute<BooleanValue>( "UseSurrogates",
+                                  attribMap.Get("RandomForestParameters",
+                                                "UseSurrogates") );
+      ap->SetAttribute<BooleanValue>( "CalcVarImportance",
+                                  attribMap.Get("RandomForestParameters",
+                                                "CalcVarImportance") );
+      ap->SetAttribute<IntValue>( "MaxTreeCount",
+                                  attribMap.Get("RandomForestParameters",
+                                                "MaxTreeCount") );
+      Local_netConfiguration->Add(ap, Name);
+      }
   else if( Name == "ANNParameters" )
     {
     try
       {
-      TrainingParameters *ap = new TrainingParameters("ANN");
+      TrainingParameters *ap = new TrainingParameters("ANNParameters");
       // ap->SetAttribute<IntValue>( "VectorSize",    attribMap.Get("TrainingParameters",
       //          "VectorSize") );
       ap->SetAttribute<IntValue>( "Iterations",
-                                  attribMap.Get("ANN",
+                                  attribMap.Get("ANNParameters",
                                                 "Iterations") );
       ap->SetAttribute<IntValue>( "MaximumVectorsPerEpoch",
-                                  attribMap.Get("ANN",
+                                  attribMap.Get("ANNParameters",
                                                 "MaximumVectorsPerEpoch") );
       ap->SetAttribute<IntValue>( "EpochIterations",
-                                  attribMap.Get("ANN",
+                                  attribMap.Get("ANNParameters",
                                                 "EpochIterations") );
       ap->SetAttribute<IntValue>( "ErrorInterval",
-                                  attribMap.Get("ANN",
+                                  attribMap.Get("ANNParameters",
                                                 "ErrorInterval") );
       ap->SetAttribute<FloatValue>( "ActivationSlope",
-                                    attribMap.Get("ANN",
+                                    attribMap.Get("ANNParameters",
                                                   "ActivationSlope") );
       ap->SetAttribute<FloatValue>( "ActivationMinMax",
-                                    attribMap.Get("ANN",
+                                    attribMap.Get("ANNParameters",
                                                   "ActivationMinMax") );
       ap->SetAttribute<FloatValue>( "DesiredError",
-                                    attribMap.Get("ANN",
+                                    attribMap.Get("ANNParameters",
                                                   "DesiredError") );
       ap->SetAttribute<IntValue>( "NumberOfHiddenNodes",
-                                  attribMap.Get("ANN",
+                                  attribMap.Get("ANNParameters",
                                                 "NumberOfHiddenNodes") );
       // ap->SetAttribute<FloatValue>("LearningRate",
       //                           attribMap.Get("TrainingParameters",

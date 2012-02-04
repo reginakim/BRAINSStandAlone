@@ -21,10 +21,8 @@ void
 BRAINSCutTrainModel
 ::InitializeTrainDataSet( bool doShuffle )
 {
-  
   const std::string Local_ANNVectorFilenamePrefix = this->GetANNVectorFilenamePrefix();
 
-  std::cout<<__LINE__<<__FILE__;
   trainingDataSet = new BRAINSCutVectorTrainingSet( Local_ANNVectorFilenamePrefix);
   try
     {
@@ -60,6 +58,7 @@ void
 BRAINSCutTrainModel
 ::InitializeNeuralNetwork()
 {
+  SetANNModelConfiguration();
   TrainNetConfiguration = BRAINSCutNetConfiguration.Get<TrainingParameters>("ANNParameters");
   ANNLayerStructure = cvCreateMat( 1, 3, CV_32SC1);
   SetMaximumDataSizeFromNetConfiguration();
@@ -76,6 +75,7 @@ BRAINSCutTrainModel
 ::InitializeRandomForest()
 {
   TrainNetConfiguration = BRAINSCutNetConfiguration.Get<TrainingParameters>("RandomForestParameters");
+  SetANNModelConfiguration();
   SetMaxDepthFromNetConfiguration();
   SetMinSampleCountFromNetConfiguration();
   SetUseSurrogatesFromNetConfiguration();
@@ -136,6 +136,7 @@ BRAINSCutTrainModel
 ::SaveANNTrainModelAtIteration( neuralNetType& myTrainer, unsigned int No)
 {
   std::string filename = GetANNModelFilenameAtIteration( No );
+  std::cout<<filename<<std::endl;
   myTrainer.save( filename.c_str() );
 }
 

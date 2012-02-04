@@ -352,6 +352,7 @@ BRAINSCutPrimary
   catch( ... )
     {
     throw BRAINSCutExceptionStringHandler("Fail to get the ann model file name");
+    exit(EXIT_FAILURE);
     }
   return  basename;
 }

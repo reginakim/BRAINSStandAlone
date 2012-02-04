@@ -79,6 +79,16 @@
     />
 
   <!-- ========================================================================== 
+        Random Forest Description
+       ========================================================================== -->
+    <RandomForestParameters MaxDepth        = "5"
+                            MinSampleCount    = "5"
+                            UseSurrogates     = "false"
+                            CalcVarImportance = "false"
+                            MaxTreeCount      = "5"
+    />
+
+  <!-- ========================================================================== 
         Train Data Scan Description
        ========================================================================== -->
   <DataSet Name="Scan1"  Type="Train" >

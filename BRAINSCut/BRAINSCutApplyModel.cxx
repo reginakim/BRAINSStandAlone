@@ -389,7 +389,7 @@ BRAINSCutApplyModel
 
     /* get open cv type matrix from array for prediction */
     matrixType openCVInputFeature = cvCreateMat( 1, inputVectorSize, CV_32FC1);
-    std::cout<<FeatureInputVector::HashIndexFromKey( it->first );
+    //std::cout<<FeatureInputVector::HashIndexFromKey( it->first );
     GetOpenCVMatrixFromArray( openCVInputFeature, arrayInputFeatureVector, inputVectorSize);
 
     /* predict */
@@ -410,7 +410,7 @@ BRAINSCutApplyModel
       scalarType response=openCVRandomForest.predict( openCVInputFeature );
       resultOutputVector.insert( std::pair<int, scalarType>(  ( it->first ),
                                  response ) );
-      std::cout<<"--> "<<response<<std::endl;
+      //std::cout<<"--> "<<response<<std::endl;
       }
     }
 }
@@ -419,10 +419,10 @@ inline void
 BRAINSCutApplyModel
 ::GetOpenCVMatrixFromArray( matrixType& matrix, scalarType array[], unsigned int inputVectorSize)
 {
-  for(int i=0; i<inputVectorSize; i++)
-    {
-    std::cout<<array[i]<<", ";
-    }
+  //for(int i=0; i<inputVectorSize; i++)
+  //  {
+  //  std::cout<<array[i]<<", ";
+  //  }
   cvInitMatHeader( matrix, 1, inputVectorSize, CV_32FC1, array );
 }
 
@@ -441,6 +441,7 @@ BRAINSCutApplyModel
 {
   trainIteration = BRAINSCutNetConfiguration.Get<TrainingParameters>("ANNParameters")
                             ->GetAttribute<IntValue>("Iterations");
+
 }
 
 // TODO TODO TODO TODO TODO
@@ -453,10 +454,10 @@ BRAINSCutApplyModel
 void
 BRAINSCutApplyModel
 ::SetRandomForestModelFilenameFromNetConfiguration()
-{
-  int nTree= BRAINSCutNetConfiguration.Get<TrainingParameters>("ANNParameters")
+{    
+  int nTree= BRAINSCutNetConfiguration.Get<TrainingParameters>("RandomForestParameters")
                             ->GetAttribute<IntValue>("MaxDepth");
-  int depth= BRAINSCutNetConfiguration.Get<TrainingParameters>("ANNParameters")
+  int depth= BRAINSCutNetConfiguration.Get<TrainingParameters>("RandomForestParameters")
                             ->GetAttribute<IntValue>("MaxTreeCount");
 
   RandomForestModelFilename =  GetRFModelFilename( depth, nTree );
@@ -509,7 +510,7 @@ void
 BRAINSCutApplyModel
 ::ReadRandomForestModelFile()
 {
-  if( !itksys::SystemTools::FileExists( ANNModelFilename.c_str() ) )
+  if( !itksys::SystemTools::FileExists( RandomForestModelFilename.c_str() ) )
     {
     std::string errorMsg = " File does not exist! :";
     errorMsg += ANNModelFilename;

@@ -19,7 +19,7 @@ public:
 
   TrainingParameters(std::string method) : XMLElementParser(method.c_str())
   {
-    if( method == "ANN" )
+    if( method == "ANNParameters" )
       {
       this->Add(new IntValue("Iterations", "20"), "Iterations");
       this->Add(new IntValue("MaximumVectorsPerEpoch", "2000"), "MaximumVectorsPerEpoch");
@@ -30,14 +30,14 @@ public:
       this->Add(new FloatValue("ActivationMinMax", 1.0), "ActivationMinMax");
       this->Add(new IntValue("NumberOfHiddenNodes", 0), "NumberOfHiddenNodes");
       }
-    else if( method == "RandomForest" )
+    else if( method == "RandomForestParameters" )
       {
       // TODO :: ADD proper initialization
-      this->Add(new IntValue("maxDepth", "5" ), "maxDepth");
-      this->Add(new IntValue("minSampleCount", "5" ), "minSampleCount");
-      this->Add(new BooleanValue("useSurrogates",false),"useSurrogates");
-      this->Add(new BooleanValue("calcVarImportance",false),"calcVarImportance");
-      this->Add(new IntValue("maxTreeCount", "5" ), "maxTreeCount");
+      this->Add(new IntValue("MaxDepth", "5" ), "MaxDepth");
+      this->Add(new IntValue("MinSampleCount", "5" ), "MinSampleCount");
+      this->Add(new BooleanValue("UseSurrogates",false),"UseSurrogates");
+      this->Add(new BooleanValue("CalcVarImportance",false),"CalcVarImportance");
+      this->Add(new IntValue("MaxTreeCount", "5" ), "MaxTreeCount");
       }
     else
       {
