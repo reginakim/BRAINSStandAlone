@@ -17,7 +17,7 @@ set(CMAKE_MODULE_PATH
 set(expected_ITK_VERSION_MAJOR ${ITK_VERSION_MAJOR})
 find_package(ITK REQUIRED)
 if(${ITK_VERSION_MAJOR} VERSION_LESS ${expected_ITK_VERSION_MAJOR})
-  # Note: Since ITKv3 doesn't include a ITKConfigVersion.cmake file, let's check the version 
+  # Note: Since ITKv3 doesn't include a ITKConfigVersion.cmake file, let's check the version
   #       explicitly instead of passing the version as an argument to find_package() command.
   message(FATAL_ERROR "Could not find a configuration file for package \"ITK\" that is compatible "
                       "with requested version \"${expected_ITK_VERSION_MAJOR}\".\n"
@@ -86,7 +86,7 @@ set(brains_modulenames
   BRAINSDemonWarp ## NOTE: This is off by default, but is valid for both ITKv3/4
                   ##       This builds just fine with ITKv3/4, but test cases need
                   ##       further review before trusting it.
-  BRAINSContinuousClass
+                  #  NOTE :  This program is not yet ready for use:  BRAINSContinuousClass
   )
 
 ## Tools that only work with ITKv4
