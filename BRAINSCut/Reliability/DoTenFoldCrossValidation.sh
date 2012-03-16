@@ -5,7 +5,7 @@
 ##
 ARCH=`uname`;
 if [ "$ARCH" == "Darwin" ]; then
-  BRAINSBuild="/ipldev/scratch/eunyokim/src/BRAINS20111028/build-Darwin-20111028";
+  BRAINSBuild="/ipldev/scratch/eunyokim/src/BRAINS20111028/build-Darwin/";
 else
   BRAINSBuild="/scratch/PREDICT/regina/BRAINS/buildICC/";
 fi
@@ -114,7 +114,8 @@ do
    rm -f $currentListFile;
    generateListOfTrainAndApply $testIteration $pseudoRandomDataList $currentListFile
 
-   for HN in 5 10 15 20 30 40 50 60 70 80 90 100 110
+   #####for HN in 5 10 15 20 30 40 50 60 70 80 90 100 110
+   for HN in 60
    do
       currentXMLFile="${currentTargetDirectory}/${Date}_$HN.xml"
       echo "from $startApplyIndex to $endApplyIndex"
@@ -136,12 +137,13 @@ do
 
    qsubHeader $QSUBFile
 
-   for HN in 5
+   for HN in 60
    do
      currentXMLFile="${currentTargetDirectory}/${Date}_$HN.xml"
      echo " \${BRAINSBuild}/BRAINSCut --netConfiguration  ${currentXMLFile} --createVectors --trainModel --generateProbability">>$QSUBFile
    done
-   for HN in 10 15 20 30 40 50 60 70 80 90 100 110
+   ##for HN in 10 15 20 30 40 50 60 70 80 90 100 110
+   for HN in  60 
    do
      currentXMLFile="${currentTargetDirectory}/${Date}_$HN.xml"
      echo " \${BRAINSBuild}/BRAINSCut --netConfiguration  ${currentXMLFile} --trainModel ">>$QSUBFile
