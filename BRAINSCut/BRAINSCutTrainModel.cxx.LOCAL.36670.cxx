@@ -137,15 +137,6 @@ BRAINSCutTrainModel
 {
   std::string filename = GetANNModelFilenameAtIteration( No );
   std::cout<<filename<<std::endl;
-  /** check the directory */
-  std::string path = itksys::SystemTools::GetFilenamePath( filename );
-  if( !itksys::SystemTools::FileExists( path.c_str(), false ) )
-    {
-    std::cout << " A directory for training file does not exist. Create as following:: "
-                << filename.c_str()
-                << std::endl;
-    itksys::SystemTools::MakeDirectory( path.c_str() );
-    }
   myTrainer.save( filename.c_str() );
 }
 

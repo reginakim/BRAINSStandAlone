@@ -131,12 +131,14 @@ BRAINSCutTrainModel
     }
 }
 
+<<<<<<< HEAD
 inline void
 BRAINSCutTrainModel
 ::SaveANNTrainModelAtIteration( neuralNetType& myTrainer, unsigned int No)
 {
   std::string filename = GetANNModelFilenameAtIteration( No );
   std::cout<<filename<<std::endl;
+=======
   /** check the directory */
   std::string path = itksys::SystemTools::GetFilenamePath( filename );
   if( !itksys::SystemTools::FileExists( path.c_str(), false ) )
@@ -146,6 +148,7 @@ BRAINSCutTrainModel
                 << std::endl;
     itksys::SystemTools::MakeDirectory( path.c_str() );
     }
+>>>>>>> master
   myTrainer.save( filename.c_str() );
 }
 
