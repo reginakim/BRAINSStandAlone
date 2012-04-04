@@ -561,7 +561,7 @@ BRAINSCutApplyModel
     {
     if( imgIt.Value() > (HundredPercentValue - FLOAT_TOLERANCE) )
       {
-      ANNContinuousOutputImage->SetPixel( imgIt.GetIndex(), labelValue );
+      ANNContinuousOutputImage->SetPixel( imgIt.GetIndex(), labelValue+1.0F );
       }
     ++imgIt;
     }
