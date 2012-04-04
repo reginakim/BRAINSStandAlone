@@ -252,7 +252,7 @@ BRAINSCutPrimary
   readInImage = itkUtil::ScaleAndCast<ReadInImageType,
                                       WorkingImageType>(inputImage,
                                                         ZeroPercentValue,
-                                                        HundreadPercentValue);
+                                                        HundredPercentValue);
   return readInImage;
 }
 

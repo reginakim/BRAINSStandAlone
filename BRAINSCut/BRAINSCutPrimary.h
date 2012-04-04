@@ -30,7 +30,7 @@ struct pairedTrainingSetType
 /*
  * constant
  */
-static const float        HundreadPercentValue = 1.0F;
+static const float        HundredPercentValue = 1.0F;
 static const float        ZeroPercentValue = 0.0F;
 static const unsigned int LineGuardSize = 1;
 static const scalarType   LineGuard = 1234567.0;

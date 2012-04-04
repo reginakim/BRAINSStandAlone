@@ -78,7 +78,8 @@ private:
   inline void WritePredictROIProbabilityBasedOnReferenceImage( const PredictValueMapType& predictedOutput,
                                                                const WorkingImagePointer& referenceImage,
                                                                const WorkingImagePointer& roi,
-                                                               const std::string imageFIlename );
+                                                               const std::string imageFilename,
+                                                               const WorkingPixelType labelValue = HundredPercentValue);
 
   inline std::string GetSubjectOutputDirectory( DataSet& subject);
 

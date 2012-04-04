@@ -136,7 +136,8 @@ BRAINSCutApplyModel
         WritePredictROIProbabilityBasedOnReferenceImage( predictedOutputVector,
                                                          imagesOfInterest.front(),
                                                          deformedROIs.find( *roiTyIt )->second,
-                                                         ANNContinuousOutputFilename );
+                                                         ANNContinuousOutputFilename, 
+                                                         roiIDsOrderNumber );
 
         /* post processing
          * may include hole-filling(closing), thresholding, and more adjustment
@@ -536,7 +537,8 @@ BRAINSCutApplyModel
 ::WritePredictROIProbabilityBasedOnReferenceImage( const PredictValueMapType& predictedOutput,
                                                    const WorkingImagePointer& referenceImage,
                                                    const WorkingImagePointer& roi,
-                                                   const std::string imageFilename)
+                                                   const std::string imageFilename,
+                                                   const WorkingPixelType labelValue )
 {
   WorkingImagePointer ANNContinuousOutputImage = WorkingImageType::New();
 
@@ -557,9 +559,9 @@ BRAINSCutApplyModel
   imgIt.GoToBegin();
   while( !imgIt.IsAtEnd() )
     {
-    if( imgIt.Value() > (HundreadPercentValue - FLOAT_TOLERANCE) )
+    if( imgIt.Value() > (HundredPercentValue - FLOAT_TOLERANCE) )
       {
-      ANNContinuousOutputImage->SetPixel( imgIt.GetIndex(), HundreadPercentValue );
+      ANNContinuousOutputImage->SetPixel( imgIt.GetIndex(), labelValue );
       }
     ++imgIt;
     }
