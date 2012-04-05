@@ -142,8 +142,16 @@ BRAINSCutApplyModel
         /* post processing
          * may include hole-filling(closing), thresholding, and more adjustment
          */
-        BinaryImagePointer mask = PostProcessingOfANNContinuousImage( ANNContinuousOutputFilename,
-                                                                      annOutputThreshold);
+        BinaryImagePointer mask;
+        if( method == "ANN")
+        {
+          mask = PostProcessingANN( ANNContinuousOutputFilename,
+                                                    annOutputThreshold);
+        }
+        else if( method == "RandomForest")
+        {
+          mask = PostProcessingRF( ANNContinuousOutputFilename );
+        }
 
         std::string roiOutputFilename = GetROIVolumeName( subject, *roiTyIt );
         itkUtil::WriteImage<BinaryImageType>( mask, roiOutputFilename );
@@ -213,7 +221,7 @@ BRAINSCutApplyModel
 
 BinaryImagePointer
 BRAINSCutApplyModel
-::PostProcessingOfANNContinuousImage( std::string continuousFilename, 
+::PostProcessingANN( std::string continuousFilename, 
                                       scalarType threshold )
 {
   WorkingImagePointer continuousImage = ReadImageByFilename( continuousFilename );
@@ -222,6 +230,28 @@ BRAINSCutApplyModel
 
   /* threshold */
   maskVolume = ThresholdImageAtLower( continuousImage, threshold);
+
+  /* Get One label */
+  //maskVolume = GetOneConnectedRegion( maskVolume );
+
+  /* opening and closing to get rid of island and holes */
+  //maskVolume = FillHole( maskVolume );
+  return maskVolume;
+}
+
+BinaryImagePointer
+BRAINSCutApplyModel
+::PostProcessingRF( std::string labelImageFilename )
+{
+  WorkingImagePointer labelImage = ReadImageByFilename( labelImageFilename );
+
+  BinaryImagePointer maskVolume = itkUtil::ScaleAndCast<WorkingImageType,
+                                     BinaryImageType>( labelImage,
+                                                      0,
+                                                      255);
+
+  /* threshold */
+  //maskVolume = ThresholdImageAtLower( labelImage, 1);
 
   /* Get One label */
   maskVolume = GetOneConnectedRegion( maskVolume );
@@ -250,7 +280,10 @@ BRAINSCutApplyModel
   thresholder->SetLowerThreshold( -1e+10F);
   thresholder->Update();
 
-  BinaryImagePointer mask = itkUtil::TypeCast<WorkingImageType, BinaryImageType>( thresholder->GetOutput() );
+  BinaryImagePointer mask = itkUtil::ScaleAndCast<WorkingImageType,
+                                     BinaryImageType>(thresholder->GetOutput(),
+                                                      0,
+                                                      255);
   return mask;
 }
 
@@ -258,6 +291,7 @@ BinaryImagePointer
 BRAINSCutApplyModel
 ::ThresholdImageAtLower( WorkingImagePointer& image, scalarType thresholdValue  )
 {
+
   typedef itk::BinaryThresholdImageFilter<WorkingImageType,WorkingImageType> ThresholdFilterType;
   ThresholdFilterType::Pointer thresholder = ThresholdFilterType::New();
 
@@ -272,7 +306,10 @@ BRAINSCutApplyModel
   thresholder->SetLowerThreshold( thresholdValue );
   thresholder->Update();
 
-  BinaryImagePointer mask = itkUtil::TypeCast<WorkingImageType, BinaryImageType>( thresholder->GetOutput() );
+  BinaryImagePointer mask = itkUtil::ScaleAndCast<WorkingImageType,
+                                     BinaryImageType>(thresholder->GetOutput(),
+                                                      0,
+                                                      255);
   return mask;
 }
 

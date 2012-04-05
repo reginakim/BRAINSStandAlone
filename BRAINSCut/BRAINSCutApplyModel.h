@@ -32,8 +32,10 @@ public:
   void SetRandomForestModelFilename( int depth, int nTree);
 
 
-  BinaryImagePointer PostProcessingOfANNContinuousImage( std::string continuousFilename, 
-                                                         scalarType threshold );
+  BinaryImagePointer PostProcessingANN( std::string continuousFilename, 
+                                        scalarType threshold );
+
+  BinaryImagePointer PostProcessingRF( std::string labelImageFilename );
 
   void SetANNOutputThresholdFromNetConfiguration();
   void SetGaussianSmoothingSigmaFromNetConfiguration();
