@@ -23,7 +23,7 @@ def xmlGenerator( args ):
   outputStream.write( "      <Image Type=\"SG\" Filename=\"na\" />\n") 
 
  
-  if args.templateBrainMask != "NA":
+  if args.inputTemplateBrainMask != "NA":
     outputStream.write( "      <Mask Type=\"RegistrationROI\" Filename=\""+args.inputTemplateBrainMask+"\" />\n")
 
   outputStream.write( "      <SpatialLocation Type=\"rho\" Filename=\""+args.inputTemplateRhoFilename+"\" />\n") 
@@ -47,7 +47,7 @@ def xmlGenerator( args ):
   outputStream.write( "   <NeuralNetParams MaskSmoothingValue     = \"0.0\" \n") 
   outputStream.write( "          GradientProfileSize    = \"1\"\n") 
   outputStream.write( "          TrainingVectorFilename = \""+args.trainingVectorFilename+"\" \n") 
-  outputStream.write( "          TrainingModelFilename  = \""+args.modelFilename+"\" \n") 
+  outputStream.write( "          TrainingModelFilename  = \""+args.modelFileBasename+"\" \n") 
   outputStream.write( "          TestVectorFilename     = \"na\" \n") 
   outputStream.write( "          Normalization          = \""+args.vectorNormalization+"\" \n")
   outputStream.write( "   />\n") 
@@ -155,7 +155,7 @@ brainscutParser.add_argument('--inputTemplateThetaFilename', help='template thet
 
 brainscutParser.add_argument('--trainingVectorFilename', help='training vector filename',
                              default="NA" )
-brainscutParser.add_argument('--modelFilename', help='model filename',
+brainscutParser.add_argument('--modelFileBasename', help='model filename',
                              default="NA" )
 brainscutParser.add_argument('--vectorNormalization', help='model filename',
                              default="true" )

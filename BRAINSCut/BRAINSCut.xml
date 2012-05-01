@@ -127,5 +127,12 @@
       <description> Random tree depth. This is to be used when only one model with specified depth wish to be created. </description>
       <default>-1</default>
     </integer>
+    <string>
+      <name>modelFilename</name>
+      <label>modelFilename</label>
+      <longflag>modelFilename</longflag>
+      <default></default>
+      <description> model file name given from user (not by xml  configuration file) </description>
+    </string>
 </parameters>
 </executable>

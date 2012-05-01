@@ -152,7 +152,6 @@ BRAINSCutGenerateProbability
 
   WorkingImageType::Pointer rhoImage, phiImage, thetaImage;
 
-  std::cout << __LINE__ << "::" << __FILE__ << std::endl;
   CreateNewFloatImageFromTemplate(rhoImage, myDataHandler.GetAtlasImage());
   CreateNewFloatImageFromTemplate(phiImage, myDataHandler.GetAtlasImage());
   CreateNewFloatImageFromTemplate(thetaImage, myDataHandler.GetAtlasImage());
@@ -184,15 +183,6 @@ BRAINSCutGenerateProbability
       {
       LocationWithRespectToCenterOfImageInMM[i] =
         currentLocationPhysicalSpace[i] - centerOfAtlasPhysicalSpace[i];
-      }
-
-    if( CurrentIndex[0] == ( centerOfAtlas[0] ) && CurrentIndex[1] ==
-        ( centerOfAtlas[1] ) && CurrentIndex[2] == ( centerOfAtlas[2] ) )
-      {
-      std::cout << "CENTER_MATH AT (" << CurrentIndex << "): "
-                << LocationWithRespectToCenterOfImageInMM << " = "
-                << currentLocationPhysicalSpace << " - " << centerOfAtlasPhysicalSpace
-                << std::endl;
       }
 
       {

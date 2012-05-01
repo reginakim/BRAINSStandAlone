@@ -91,9 +91,9 @@ SmoothImage( const WorkingImagePointer image, const float GaussianValue)
               << std::endl;
     return image;
     }
-  std::cout<<"Smooth Image with Gaussian value of :: "
+  /*std::cout<<"Smooth Image with Gaussian value of :: "
            << GaussianValue
-           <<std::endl;
+           <<std::endl;*/
   typedef itk::SmoothingRecursiveGaussianImageFilter<WorkingImageType, WorkingImageType> SmoothingFilterType;
   SmoothingFilterType::Pointer smoothingFilter = SmoothingFilterType::New();
 

@@ -32,13 +32,11 @@ private:
                 const std::string & ImageName,
                 typename WarperImageType::Pointer ReferenceImage  )
   {
-  std::cout << __LINE__ << "::" << __FILE__ << std::endl;
   const bool useTransform = ( RegistrationFilename.find(".mat") != std::string::npos );
 
   typename WarperImageType::Pointer PrincipalOperandImage;   // One name for the
                                                              // image to be
                                                              // warped.
-  std::cout << __LINE__ << "::" << __FILE__ << std::endl;
     {
     typedef typename itk::ImageFileReader<WarperImageType> ReaderType;
     typename ReaderType::Pointer imageReader = ReaderType::New();
@@ -48,7 +46,6 @@ private:
     PrincipalOperandImage = imageReader->GetOutput();
     }
 
-  std::cout << __LINE__ << "::" << __FILE__ << std::endl;
   typedef float                                        VectorComponentType;
   typedef typename itk::Vector<VectorComponentType, 3> VectorPixelType;
   typedef typename itk::Image<VectorPixelType,  3>     DisplacementFieldType;
@@ -59,7 +56,6 @@ private:
   typename DisplacementFieldType::Pointer DisplacementField;
   // typename WarperImageType::Pointer ReferenceImage;
   // if there is no *mat file.
-  std::cout << __LINE__ << "::" << __FILE__ << std::endl;
   if( !useTransform )    // that is, it's a warp by deformation field:
     {
     typedef typename itk::ImageFileReader<DisplacementFieldType> DefFieldReaderType;
@@ -85,7 +81,6 @@ private:
               << "!!!!!!!!!!!! CAUTION !!!!!!!!!!!!!!!!!!!" << std::endl;
     genericTransform = itk::ReadTransformFromDisk(RegistrationFilename);
     }
-  std::cout << __LINE__ << "::" << __FILE__ << std::endl;
   const double defaultValue = 0;
   const typename std::string interpolationMode = "Linear";
   const typename std::string pixelType = "short";
@@ -100,7 +95,6 @@ private:
       interpolationMode,
       pixelType == "binary");
 
-  std::cout << __LINE__ << "::" << __FILE__ << std::endl;
   return TransformedImage;
   }
 

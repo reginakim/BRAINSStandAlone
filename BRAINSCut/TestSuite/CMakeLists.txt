@@ -6,6 +6,7 @@
 ##
 set( InputNetConfigurationForTesting ${BRAINSCut_SOURCE_DIR}/TestSuite/NetConfigurations/BRAINSCutTest.xml.in)
 set( OutputNetConfigurationForTesting ${CMAKE_CURRENT_BINARY_DIR}/TestSuite/NetConfigurations/BRAINSCutTest.xml )
+set( modelFilename ${CMAKE_CURRENT_BINARY_DIR}/trainModel.txtD0006NT0006 )
 
 configure_file( ${InputNetConfigurationForTesting} ${OutputNetConfigurationForTesting}  IMMEDIATE @ONLY)
 
@@ -66,6 +67,10 @@ ExternalData_add_test( ${PROJECT_NAME}FetchData NAME RandomForestTrainModelTestF
 ExternalData_add_test( ${PROJECT_NAME}FetchData NAME RandomForestApplyModelTestFromCLP
   COMMAND ${LAUNCH_EXE} $<TARGET_FILE:BRAINSCut>
   --applyModel --method RandomForest --randomTreeDepth 6 --numberOfTrees 6
+  --netConfiguration ${OutputNetConfigurationForTesting})
+ExternalData_add_test( ${PROJECT_NAME}FetchData NAME RandomForestApplyModelFilenameTestFromCLP
+  COMMAND ${LAUNCH_EXE} $<TARGET_FILE:BRAINSCut>
+  --applyModel --method RandomForest --modelFilename ${modelFilename} 
   --netConfiguration ${OutputNetConfigurationForTesting})
 
 ExternalData_Add_Target( ${PROJECT_NAME}FetchData )  # Name of data management target

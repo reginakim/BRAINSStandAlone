@@ -65,9 +65,10 @@ BRAINSCutApplyModel
     }
   else if( method == "RandomForest")
     {
-  std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
-    myDataHandler.SetRandomForestModelFilename( depthOfTree, numberOfTrees);
-  std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
+    if( myDataHandler.GetRandomForestModelFilename() == "" )
+      {
+      myDataHandler.SetRandomForestModelFilename( depthOfTree, numberOfTrees);
+      }
     ReadRandomForestModelFile();
     }
 

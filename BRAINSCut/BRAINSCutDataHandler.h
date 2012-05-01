@@ -44,7 +44,8 @@ public:
   std::string GetANNModelFilenameAtIteration( const int iteration);
   std::string GetANNModelFilename( );
 
-  void        SetRandomForestModelFilename(int depth, int nTree);
+  void        SetRandomForestModelFilename( int depth, int nTree );
+  void        SetRandomForestModelFilename( std::string name );
   std::string GetRandomForestModelFilename();
   std::string GetRFModelFilename( int depth,int NTrees);
 

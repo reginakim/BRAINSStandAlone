@@ -25,13 +25,11 @@ int main(int argc, char * *argv)
   // Call register default transforms
   //itk::TransformFactoryBase::RegisterDefaultTransforms();
 
-  std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
   
   if( !netConfiguration.empty() && modelConfigurationFilename.empty() )
     {
       modelConfigurationFilename = netConfiguration;
     }
-  std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
 
   //
   // Data handler
@@ -43,6 +41,8 @@ int main(int argc, char * *argv)
     throw BRAINSCutExceptionStringHandler( errorMsg );
     }
   BRAINSCutDataHandler dataHandler ( modelConfigurationFilename );
+
+
 
   BRAINSCutGenerateRegistrations registrationGenerator ( dataHandler );
   const bool applyDataSetOff=false;
@@ -61,7 +61,6 @@ int main(int argc, char * *argv)
     BRAINSCutGenerateProbability testBRAINSCutClass( dataHandler );
     testBRAINSCutClass.GenerateProbabilityMaps();
     }
-  std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
   if( createVectors )
     {
     registrationGenerator.SetAtlasToSubjectRegistrationOn( true );
@@ -73,7 +72,6 @@ int main(int argc, char * *argv)
     testCreateVector.CreateVectors();
 
     }
-  std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
   if( trainModel )
     {
       if( method=="ANN")
@@ -122,6 +120,8 @@ int main(int argc, char * *argv)
       registrationGenerator.SetDataSet( applyDataSetOn );
       registrationGenerator.GenerateRegistrations();
 
+      dataHandler.SetRandomForestModelFilename( modelFilename );
+
       BRAINSCutApplyModel ApplyModule( dataHandler );
 
       ApplyModule.SetMethod( method );
@@ -129,6 +129,7 @@ int main(int argc, char * *argv)
 
       if( method == "RandomForest" )
         {
+
         ApplyModule.SetDepthOfTree( randomTreeDepth );
         ApplyModule.SetNumberOfTrees( numberOfTrees );
         }

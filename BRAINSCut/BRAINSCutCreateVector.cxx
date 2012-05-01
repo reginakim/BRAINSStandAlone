@@ -123,7 +123,6 @@ BRAINSCutCreateVector
        * * subjectROIBinaryName = given answer = ground truth of segmentation = manual
        */
       std::string subjectROIBinaryName = GetROIBinaryFilename( subject, currentROI );
-      std::cout << __LINE__ << "::" << __FILE__ << "::" << subjectROIBinaryName << std::endl;
 
       OutputVectorMapType roiOutputVector = GetPairedOutput( deformedROIs, currentROI,
                                                              subjectROIBinaryName, roiIDsOrderNumber );
@@ -152,8 +151,6 @@ BRAINSCutCreateVector
                    std::string subjectROIBinaryFilename,
                    int roiNumber)
 {
-  std::cout << __LINE__ << "::" << __FILE__ << "::" << roiName << std::endl;
-  std::cout << __LINE__ << "::" << __FILE__ << "::" << subjectROIBinaryFilename << std::endl;
   WorkingImagePointer subjectROIBinaryImage = ReadImageByFilename( subjectROIBinaryFilename );
 
   itk::ImageRegionIterator<WorkingImageType> it( deformedROIs.find( roiName )->second,

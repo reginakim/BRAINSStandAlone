@@ -10,7 +10,7 @@ python BRAINSCutCMD.py \
 --inputTemplatePhiFilename /ipldev/scratch/eunyokim/src/BRAINS20111028/build-Darwin/ReferenceAtlas-build/Atlas/Atlas_20120104/spatialImages/phi.nii.gz \
 --inputTemplateThetaFilename /ipldev/scratch/eunyokim/src/BRAINS20111028/build-Darwin/ReferenceAtlas-build/Atlas/Atlas_20120104/spatialImages/theta.nii.gz \
 --trainingVectorFilename  dummyVector.txt \
---modelFilename /hjohnson/HDNI/PREDICT_TRAINING/regina_ann/TrainingModels/BRAINSAutoWorkUpTest/GadSG/Test9/TrainedModels/20110919ANNModel_allSubcorticals.txt \
+--modelFileBasename /hjohnson/HDNI/PREDICT_TRAINING/regina_ann/TrainingModels/BRAINSAutoWorkUpTest/GadSG/Test9/TrainedModels/20110919ANNModel_allSubcorticals.txt \
 --probabilityMapsLeftAccumben    /hjohnson/HDNI/PREDICT_TRAINING/regina_ann/TrainingModels/BRAINSAutoWorkUpTest/GadSG/Test9/ProbabilityMaps/l_accumben_ProbabilityMap.nii.gz \
 --probabilityMapsRightAccumben   /hjohnson/HDNI/PREDICT_TRAINING/regina_ann/TrainingModels/BRAINSAutoWorkUpTest/GadSG/Test9/ProbabilityMaps/r_accumben_ProbabilityMap.nii.gz \
 --probabilityMapsLeftCaudate     /hjohnson/HDNI/PREDICT_TRAINING/regina_ann/TrainingModels/BRAINSAutoWorkUpTest/GadSG/Test9/ProbabilityMaps/l_caudate_ProbabilityMap.nii.gz \
@@ -37,5 +37,5 @@ python BRAINSCutCMD.py \
 --outputBinaryRightThalamus ./right_thalamus.nii.gz \
 --outputBinaryLeftHippocampus ./left_hippocampus.nii.gz \
 --outputBinaryRightHippocampus ./right_hippocampus.nii.gz \
---xmlFilename output.xml
+--xmlFilename /ipldev/scratch/eunyokim/src/BRAINS20111028/build-Darwin/BRAINSTools-build/BRAINSCut/TestSuite/TestSuite/NetConfigurations/output.xml
 

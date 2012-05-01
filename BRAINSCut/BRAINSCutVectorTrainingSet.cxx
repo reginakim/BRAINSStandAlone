@@ -193,7 +193,6 @@ inline
 void
 GetFileStreamToRead( std::string filename, std::ifstream& fileStreamToRead)
 {
-  std::cout << " Get File Stream for " << filename << std::endl;
   if( !itksys::SystemTools::FileExists( filename.c_str() ) )
     {
     std::string msg( "Vector File has not been created. " + filename );

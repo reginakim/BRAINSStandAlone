@@ -464,31 +464,29 @@ BRAINSCutDataHandler
 //
 void
 BRAINSCutDataHandler
+::SetRandomForestModelFilename(std::string name)
+{    
+  RandomForestModelFilename = name;
+}
+
+void
+BRAINSCutDataHandler
 ::SetRandomForestModelFilename(int depth, int nTree)
 {    
-  std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
   if( depth < 0 && nTree <0 )
     {
-    std::cout<<"Read random forest model parameters from xml file"<<std::endl;
     nTree= myConfiguration->Get<TrainingParameters>("RandomForestParameters")
                             ->GetAttribute<IntValue>("MaxDepth");
     depth= myConfiguration->Get<TrainingParameters>("RandomForestParameters")
                             ->GetAttribute<IntValue>("MaxTreeCount");
     }
-  std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
   RandomForestModelFilename =  GetRFModelFilename( depth, nTree );
-  std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
 }
 
 std::string 
 BRAINSCutDataHandler
 ::GetRandomForestModelFilename()
 {
-  if( RandomForestModelFilename.empty() )
-  {
-    std::string msg = "Random forest model file is empty \n";
-    throw BRAINSCutExceptionStringHandler( msg );
-  }
   return RandomForestModelFilename;
 }
 
