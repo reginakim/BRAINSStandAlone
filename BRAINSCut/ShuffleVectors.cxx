@@ -155,18 +155,18 @@ ShuffleVectors::ShuffleVectors() :
   m_OVS(0),
   m_input_TVC(0),
   m_output_TVC(0),
-  m_resampleProportion(0)
+  m_resampleProportion(0.0F)
 {
 }
 
 ShuffleVectors::ShuffleVectors(const std::string& inputVectorFilename, 
                                const std::string& outputVectorFilename,
-                               int resampleProportion  ) :
+                               float resampleProportion  ) :
   m_IVS(0),
   m_OVS(0),
   m_input_TVC(0),
   m_output_TVC(0),
-  m_resampleProportion(0)
+  m_resampleProportion(0.0F)
 {
 
   std::cout << "Shuffle Vectors of ======================================= " << std::endl
