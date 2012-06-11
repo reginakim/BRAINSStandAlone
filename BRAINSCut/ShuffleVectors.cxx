@@ -190,6 +190,12 @@ ShuffleVectors::ShuffleVectors(const std::string& inputVectorFilename,
     m_outputHeaderFilename = outputVectorFilename + ".hdr";
     }
 
+  if( !itksys::SystemTools::FileExists( inputVectorFilename.c_str(), false ) )
+    {
+    std::cout<<"ERROR: Cannot open " <<inputVectorFilename
+             <<". \n The file does not exist."
+             <<std::endl;
+    }
   m_resampleProportion = resampleProportion;
 
 }
