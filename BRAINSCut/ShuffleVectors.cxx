@@ -308,6 +308,7 @@ ShuffleVectors::Shuffling()
       std::cerr << "Record not properly terminated by sentinel value ::  "
                 << buf[m_IVS  + m_OVS] << " != "
                 << LineGuard 
+                << " at Vector index "<<vectorIndex
                 << std::endl;
       exit(EXIT_FAILURE); // TODO throw error here
       }
