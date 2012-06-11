@@ -262,6 +262,7 @@ ShuffleVectors::Shuffling()
       {
       if( vectorIndex % m_input_TVC == 1 )
         {
+        std::cout<<"*** Re-open the vector file"<<std::endl;
         // read input vector file stream from the first again
         inputVectorFileStream.close();
         inputVectorFileStream.open( m_inputVectorFilename.c_str(),
