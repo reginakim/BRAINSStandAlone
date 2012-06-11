@@ -71,7 +71,7 @@ ShuffleVectors::ReadHeader()
 
   filestr.close();
 
-  m_output_TVC = std::floor( (float)temp_TVC * m_resampleProportion + 0.5F );
+  m_output_TVC = std::floor( (float)m_input_TVC * m_resampleProportion + 0.5F );
   std::cout<<m_input_TVC <<" * " <<m_resampleProportion << " = "
            <<"m_output_TVC == " <<m_output_TVC<<std::endl;
 }
