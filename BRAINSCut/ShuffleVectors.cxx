@@ -71,7 +71,7 @@ ShuffleVectors::ReadHeader()
 
   filestr.close();
 
-  m_output_TVC = m_input_TVC * m_resampleProportion;
+  m_output_TVC = (float)( m_input_TVC) * m_resampleProportion;
 }
 
 void
