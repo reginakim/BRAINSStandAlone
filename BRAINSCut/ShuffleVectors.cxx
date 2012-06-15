@@ -292,7 +292,6 @@ ShuffleVectors::Shuffling()
         randomOrder[vectorIndex] * static_cast<std::ios::off_type>( recordsize );
       lseek(shuffledFile, seekval, SEEK_SET);
       (void)write(shuffledFile, (const char *) buf, recordsize);
-      /*
       // debugging code
       // 
       for( int dummy_i = 0; dummy_i< m_IVS  + m_OVS +1; dummy_i++ )
@@ -303,7 +302,7 @@ ShuffleVectors::Shuffling()
                << randomOrder[vectorIndex] 
                << " @ "
                <<seekval <<std::endl;
-      //*/
+      //
       }
 
     if( buf[m_IVS  + m_OVS] != LineGuard)
