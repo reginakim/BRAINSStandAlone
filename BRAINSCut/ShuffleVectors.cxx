@@ -274,7 +274,8 @@ ShuffleVectors::Shuffling()
       else
         {
         std::cerr << "Premature end of file at record "
-                  << vectorIndex << std::endl;
+                  << vectorIndex << std::endl
+                  << (vectorIndex+1) % m_input_TVC <<" != 1" <<std::endl;
         break; // TODO throw error here
         }
       }
