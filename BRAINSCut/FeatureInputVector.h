@@ -74,9 +74,9 @@ public:
   static WorkingImageType::IndexType HashIndexFromKey(const int offSet);
 
 private:
-  int          gradientSize;
-  unsigned int inputVectorSize;
-  bool         normalization;
+  int          m_gradientSize;
+  unsigned int m_inputVectorSize;
+  bool         m_normalization;
 
   ImageLinearInterpolatorType::Pointer imageInterpolator;
 
@@ -84,22 +84,22 @@ private:
   DataSet::StringVectorType roiIDsInOrder;
 
   /** deformed rho/phi/theta images*/
-  std::map<std::string, WorkingImagePointer> spatialLocations;
+  std::map<std::string, WorkingImagePointer> m_spatialLocations;
 
   /** deformed candiateROIs */
-  std::map<std::string, WorkingImagePointer> candidateROIs;
+  std::map<std::string, WorkingImagePointer> m_candidateROIs;
 
   /** gradient image of ROI */
-  std::map<std::string, GradientImageType> gradientOfROI;
+  std::map<std::string, GradientImageType> m_gradientOfROI;
 
   /** feature output*/
-  std::map<std::string, InputVectorMapType> featureInputOfROI;
+  std::map<std::string, InputVectorMapType> m_featureInputOfROI;
 
   /** normalization parameters*/
   /*  mapping from ROIname to the vector of mean/max
    *  for given serios of imagesOfInterestInOrder
    */
-  std::map<std::string, minmaxPairVectorType> minmax;
+  std::map<std::string, minmaxPairVectorType> m_minmax;
 
   /** private functions */
   void ComputeFeatureInputOfROI( std::string ROIName);
