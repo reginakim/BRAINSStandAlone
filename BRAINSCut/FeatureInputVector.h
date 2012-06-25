@@ -12,6 +12,9 @@
  * in this class NO WARPING is occuring.
  * All the images should been warped onto subject space before hand
  */
+
+
+
 class FeatureInputVector
 {
 public:
@@ -22,6 +25,8 @@ public:
   static const scalarType MAX;
 
   /** type definition */
+  enum NormalizationMethodType { NONE, LINEAR, SIGMOID, ZSCORE, TANH };
+
   typedef itk::GradientImageFilter<WorkingImageType,
                                    WorkingPixelType,
                                    WorkingPixelType> GradientFilterType;
@@ -57,7 +62,8 @@ public:
 
   unsigned int GetInputVectorSize();
 
-  void SetNormalization( const bool doNormalize);
+  void SetNormalization( const bool doNormalize); // TODO: this method should go away
+  void SetNormalization( const std::string normalizationMethod);
 
   void NormalizationOfVector( InputVectorMapType& currentFeatureVector, std::string ROIName );
 
@@ -76,7 +82,8 @@ public:
 private:
   int          m_gradientSize;
   unsigned int m_inputVectorSize;
-  bool         m_normalization;
+  bool         m_normalization;     // TODO DELETE
+  NormalizationMethodType m_normalizationMethod;
 
   ImageLinearInterpolatorType::Pointer imageInterpolator;
 

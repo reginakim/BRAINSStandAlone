@@ -106,6 +106,36 @@ FeatureInputVector
   m_normalization = doNormalize;
 };
 
+void
+FeatureInputVector
+::SetNormalization( const std::string normalizationMethod )
+{
+  if( normalizationMethod == "NONE" )
+    {
+    m_normalizationMethod = NONE;
+    }
+  else if( normalizationMethod == "LINEAR" )
+    {
+    m_normalizationMethod = LINEAR;
+    }
+  else if( normalizationMethod == "SIGMOID" )
+    {
+    m_normalizationMethod = SIGMOID;
+    }
+  else if( normalizationMethod == "ZSCORE" )
+    {
+    m_normalizationMethod = ZSCORE;
+    }
+  else if( normalizationMethod == "TANH" )
+    {
+    m_normalizationMethod = TANH;
+    }
+  else
+    {
+    std::cout<<"Invalid normalization method is given \n";
+    }
+};
+
 InputVectorMapType
 FeatureInputVector
 ::GetFeatureInputOfROI( std::string ROIName )
@@ -156,6 +186,7 @@ FeatureInputVector
   /* m_normalization */
   if( m_normalization )
     {
+      // TODO Implement different normalizatio process here
     SetNormalizationParameters( ROIName );
     NormalizationOfVector( currentFeatureVector, ROIName );
     }
