@@ -25,7 +25,7 @@ public:
   static const scalarType MAX;
 
   /** type definition */
-  enum NormalizationMethodType { NONE, LINEAR, SIGMOID, ZSCORE, TANH };
+  enum NormalizationMethodType { NONE, LINEAR, SIGMOID_NORMAL, SIGMOID_QUANTILES, ZSCORE, TANH };
 
   typedef itk::GradientImageFilter<WorkingImageType,
                                    WorkingPixelType,
@@ -41,8 +41,16 @@ public:
 
   /* min/max */
   typedef std::pair<scalarType, scalarType> minmaxPairType;
-  typedef std::vector<minmaxPairType>       minmaxPairVectorType;
+  typedef std::vector<minmaxPairType>       minmaxPairForEachImageType;
 
+  /* alpha/beta for sigmoid */
+  struct sigmoidParameterType {
+                        // f(x) = 1/(1+exp( (x-beta)/alpha ) )
+    scalarType alpha;   // slope
+    scalarType beta;    // translation for mid point
+  };
+  typedef std::vector< sigmoidParameterType > sigmoidParameterForEachImageType;
+     
   matrixType  GetInputVectorAt(WorkingImageVectorType & currentIndex);
 
   /** set functions */
@@ -65,7 +73,7 @@ public:
   void SetNormalization( const bool doNormalize); // TODO: this method should go away
   void SetNormalization( const std::string normalizationMethod);
 
-  void NormalizationOfVector( InputVectorMapType& currentFeatureVector, std::string ROIName );
+
 
   /** get function(s) */
   InputVectorMapType GetFeatureInputOfROI( std::string ROIName );
@@ -106,14 +114,17 @@ private:
   /*  mapping from ROIname to the vector of mean/max
    *  for given serios of imagesOfInterestInOrder
    */
-  std::map<std::string, minmaxPairVectorType> m_minmax;
+  std::map<std::string, minmaxPairForEachImageType> m_minmax;
+  std::map<std::string, sigmoidParameterForEachImageType>   m_sigmoidParameters;
 
   /** private functions */
   void ComputeFeatureInputOfROI( std::string ROIName);
 
   void SetGradientImage( std::string ROIName );
 
+  /* normalization */
   void SetNormalizationParameters( std::string ROIName);
+  void Normalization( InputVectorMapType& currentFeatureVector, std::string ROIName );
 
   /** inline functions */
   inline void AddValueToElement( scalarType value, std::vector<scalarType>::iterator & elementIterator);
