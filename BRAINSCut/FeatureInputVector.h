@@ -39,24 +39,39 @@ public:
   typedef itk::LinearInterpolateImageFunction<WorkingImageType,
                                               WorkingPixelType> ImageLinearInterpolatorType;
 
-  /* min/max */
-  typedef std::pair<scalarType, scalarType> minmaxPairType;
-  typedef std::vector<minmaxPairType>       minmaxPairForEachImageType;
-
-  /* alpha/beta for sigmoid */
-  struct sigmoidParameterType {
-                        // f(x) = 1/(1+exp( (x-beta)/alpha ) )
-    scalarType alpha;   // slope
-    scalarType beta;    // translation for mid point
+  /** types for normalization **/
+  struct LinearNormalizationParameterType {
+    double min;
+    double max;
   };
-  typedef std::vector< sigmoidParameterType > sigmoidParameterForEachImageType;
-     
+
+  struct SigmoidNormalizationParameterType {
+    double alpha;
+    double beta;
+  };
+
+  struct ZScoreNormalizationParameterType {
+    double mean;
+    double std;
+  };
+
+  struct NormalizationParameterType {
+    LinearNormalizationParameterType linearParameter;
+    SigmoidNormalizationParameterType sigmoidParameter;
+    ZScoreNormalizationParameterType zScoreParameter;
+  };
+
+  typedef std::map<std::string, NormalizationParameterType> NormalizationParameterPerImageType;
+
+
   matrixType  GetInputVectorAt(WorkingImageVectorType & currentIndex);
 
   /** set functions */
   void SetGradientSize( unsigned int length);
 
   void SetImagesOfInterestInOrder( WorkingImageVectorType& images);
+
+  void SetImageTypesInOrder( DataSet::StringVectorType & imageList);
 
   void SetImagesOfSpatialLocation(  std::map<std::string, WorkingImagePointer>& SpatialLocationImages);
 
@@ -70,8 +85,8 @@ public:
 
   unsigned int GetInputVectorSize();
 
-  void SetNormalization( const bool doNormalize); // TODO: this method should go away
-  void SetNormalization( const std::string normalizationMethod);
+  void SetNormalizationMethod( const std::string normalizationMethod);
+
 
 
 
@@ -90,13 +105,13 @@ public:
 private:
   int          m_gradientSize;
   unsigned int m_inputVectorSize;
-  bool         m_normalization;     // TODO DELETE
   NormalizationMethodType m_normalizationMethod;
 
   ImageLinearInterpolatorType::Pointer imageInterpolator;
 
   WorkingImageVectorType    imagesOfInterestInOrder;
   DataSet::StringVectorType roiIDsInOrder;
+  DataSet::StringVectorType imageTypesInOrder;
 
   /** deformed rho/phi/theta images*/
   std::map<std::string, WorkingImagePointer> m_spatialLocations;
@@ -114,9 +129,8 @@ private:
   /*  mapping from ROIname to the vector of mean/max
    *  for given serios of imagesOfInterestInOrder
    */
-  std::map<std::string, minmaxPairForEachImageType> m_minmax;
-  std::map<std::string, sigmoidParameterForEachImageType>   m_sigmoidParameters;
-
+  NormalizationParameterPerImageType m_normalizationParametersPerImageType;
+  
   /** private functions */
   void ComputeFeatureInputOfROI( std::string ROIName);
 
@@ -145,8 +159,13 @@ private:
   inline std::map<std::string, scalarType> CalculateUnitDeltaAlongTheGradient(
     std::string ROIName, WorkingImageType::IndexType currentPixelIndex );
 
-  inline std::pair<scalarType, scalarType>  SetMinMaxOfSubject( BinaryImageType::Pointer & labelImage,
-                                                           const WorkingImagePointer & Image );
+  inline LinearNormalizationParameterType GetLinearNormalizationParametersOfSubject ( BinaryImageType::Pointer & labelImage,
+                                                                                      const WorkingImagePointer& Image );
+  inline SigmoidNormalizationParameterType GetSigmoidNormalizationParametersOfSubject ( BinaryImageType::Pointer & labelImage,
+                                                                                      const WorkingImagePointer& Image );
+
+  inline double LinearTransform( double min, double max, double x );
+  inline double Sigmoid( double alpha, double beta, double x );
 
 };
 #endif

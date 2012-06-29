@@ -45,7 +45,7 @@ private:
   BRAINSCutConfiguration::ApplyDataSetListType applyDataSetList;
 
   std::string method;
-  bool        normalization;
+  std::string normalizationMethod;
   bool        computeSSE;
   int         trainIteration;
 

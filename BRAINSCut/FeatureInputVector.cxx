@@ -7,8 +7,7 @@ const scalarType FeatureInputVector::MAX = 1.0F;
 
 FeatureInputVector
 ::FeatureInputVector() :
-  m_gradientSize(-1),
-  m_normalization(false)
+  m_gradientSize(-1)
 {
   m_spatialLocations.clear();
   m_candidateROIs.clear();
@@ -29,6 +28,13 @@ FeatureInputVector
 ::SetImagesOfInterestInOrder( WorkingImageVectorType& images)
 {
   imagesOfInterestInOrder = images;
+}
+
+void
+FeatureInputVector
+::SetImageTypesInOrder( DataSet::StringVectorType & imageList )
+{
+  imageTypesInOrder = imageList;
 }
 
 void
@@ -101,14 +107,7 @@ FeatureInputVector
 
 void
 FeatureInputVector
-::SetNormalization( const bool doNormalize)
-{
-  m_normalization = doNormalize;
-};
-
-void
-FeatureInputVector
-::SetNormalization( const std::string normalizationMethod )
+::SetNormalizationMethod( const std::string normalizationMethod )
 {
   if( normalizationMethod == "NONE" )
     {
@@ -118,9 +117,13 @@ FeatureInputVector
     {
     m_normalizationMethod = LINEAR;
     }
-  else if( normalizationMethod == "SIGMOID" )
+  else if( normalizationMethod == "SIGMOID_NORMAL" )
     {
-    m_normalizationMethod = SIGMOID;
+    m_normalizationMethod = SIGMOID_NORMAL;
+    }
+  else if( normalizationMethod == "SIGMOID_QUANTILES" )
+    {
+    m_normalizationMethod = SIGMOID_QUANTILES;
     }
   else if( normalizationMethod == "ZSCORE" )
     {
@@ -187,11 +190,6 @@ FeatureInputVector
 
   // this variable can be deleted later on
   //
-  if( m_normalization)
-    {
-    m_normalizationMethod=LINEAR;
-    }
-
   SetNormalizationParameters(  ROIName );
   Normalization( currentFeatureVector, ROIName );
 
@@ -215,70 +213,72 @@ FeatureInputVector
   thresholder->SetInsideValue(1);
   thresholder->Update();
 
-  /* get min and max for each image type*/
-
-  minmaxPairForEachImageType currentMinMaxVector;
-  sigmoidParameterForEachImageType currentSigmoidParameter;
-
+  DataSet::StringVectorType::iterator imgTyIt = imageTypesInOrder.begin();
   for( WorkingImageVectorType::const_iterator currentTypeOfImage = imagesOfInterestInOrder.begin();
        currentTypeOfImage != imagesOfInterestInOrder.end();
        ++currentTypeOfImage )
     {
     BinaryImageType::Pointer roiMask = thresholder->GetOutput();
+    std::string currentParameterGroup =  ROIName + *imgTyIt;
+    NormalizationParameterType currentParameter ;
     switch( m_normalizationMethod )
       {
         case LINEAR:
-          minmaxPairType           currentROIMinMax = SetMinMaxOfSubject( roiMask , *currentTypeOfImage );
-          currentMinMaxVector.push_back( currentROIMinMax );
+          currentParameter.linearParameter =
+            GetLinearNormalizationParametersOfSubject( roiMask , *currentTypeOfImage ); 
           break;
+
         case SIGMOID_QUANTILES:
-          sigmoidParameterType     currentROISigmoid = SetSigmoidParametersOfSubject( roiMask, *currentTypeOfImage )
-          currentSigmoidParameter.push_back( currentROISigmoid );
+          currentParameter.sigmoidParameter =
+            GetSigmoidNormalizationParametersOfSubject( roiMask , *currentTypeOfImage ); 
           break;
         default:
+          currentParameter.linearParameter =
+            GetLinearNormalizationParametersOfSubject( roiMask , *currentTypeOfImage ); 
+          break;
       }
+    m_normalizationParametersPerImageType[ currentParameterGroup ] = currentParameter;
+    ++imgTyIt;
     }
-
-  switch( m_normalizationMethod )
-    {
-    case LINEAR:
-      m_minmax[ROIName] = currentMinMaxVector;
-      break;
-    case SIGMOID_QUANTILES:
-      m_sigmoidParameters[ ROIName ] = currentSigmoidParameter;
-      break;
-    }
-
 }
+
 void
 FeatureInputVector
 ::Normalization( InputVectorMapType& currentFeatureVector, std::string ROIName )
 {
-  minmaxPairForEachImageType currentMinmaxPairVector = m_minmax.find(ROIName)->second;
-  // TODO get sigmoid function parameter
-  
+
   for( InputVectorMapType::iterator eachInputVector = currentFeatureVector.begin();
        eachInputVector != currentFeatureVector.end();
        ++eachInputVector )
     {
     InputVectorType::iterator featureElementIterator = (eachInputVector->second).begin();
     featureElementIterator += (roiIDsInOrder.size() + m_spatialLocations.size() );
-    for( minmaxPairForEachImageType::const_iterator minmaxIt = currentMinmaxPairVector.begin();
-         minmaxIt != currentMinmaxPairVector.end();
-         ++minmaxIt )
+
+    for( DataSet::StringVectorType::iterator imgTyIt = imageTypesInOrder.begin(); 
+         imgTyIt != imageTypesInOrder.end();
+         ++imgTyIt ) // imgTyIt = image type iterator
       {
+      std::string currentParameterGroup = ROIName + *imgTyIt ; 
       for(  float i = -m_gradientSize; i <= m_gradientSize; i = i + 1.0F )
         {
         switch( m_normalizationMethod )
         { /* assuming all the ranges to 0-1 */
           case LINEAR:
-            *featureElementIterator  = LinearTransform( minmaxIt->first, minmaxIt->second, *featureElementIterator );
+            *featureElementIterator  = LinearTransform( 
+                                          m_normalizationParametersPerImageType[ currentParameterGroup].linearParameter.min,
+                                          m_normalizationParametersPerImageType[ currentParameterGroup].linearParameter.max,
+                                          *featureElementIterator );
             break;
           case SIGMOID_QUANTILES:
-            // TODO IMPLEMENT
-            *featureElementIterator  = Sigmoid( sigmoid
-
+            *featureElementIterator  = Sigmoid( 
+                                          m_normalizationParametersPerImageType[ currentParameterGroup].sigmoidParameter.alpha,
+                                          m_normalizationParametersPerImageType[ currentParameterGroup].sigmoidParameter.beta,
+                                          *featureElementIterator);
           default:
+            *featureElementIterator  = LinearTransform( 
+                                          m_normalizationParametersPerImageType[ currentParameterGroup].linearParameter.min,
+                                          m_normalizationParametersPerImageType[ currentParameterGroup].linearParameter.max,
+                                          *featureElementIterator );
         }
         featureElementIterator++;
         }
@@ -469,9 +469,10 @@ FeatureInputVector
   return WorkingImageType::IndexType( key );
 }
 
-inline std::pair<scalarType, scalarType>
+inline FeatureInputVector::LinearNormalizationParameterType 
 FeatureInputVector
-::SetMinMaxOfSubject( BinaryImageType::Pointer & labelImage, const WorkingImagePointer& Image )
+::GetLinearNormalizationParametersOfSubject( BinaryImageType::Pointer & labelImage, 
+                                             const WorkingImagePointer& Image )
 {
   typedef itk::LabelStatisticsImageFilter<WorkingImageType, BinaryImageType> StatisticCalculatorType;
   StatisticCalculatorType::Pointer statisticCalculator = StatisticCalculatorType::New();
@@ -484,14 +485,16 @@ FeatureInputVector
   /*std::cout << " * Min : " << statisticCalculator->GetMinimum(1)
             << " * Max : " << statisticCalculator->GetMaximum(1)
             << std::endl; */
-  return minmaxPairType( std::pair<scalarType, scalarType>( statisticCalculator->GetMinimum(1),
-                                                       statisticCalculator->GetMaximum(1) ) );
+  LinearNormalizationParameterType returnParatemer;
+  returnParatemer.min = statisticCalculator->GetMinimum(1);
+  returnParatemer.max = statisticCalculator->GetMaximum(1);
+
+  return returnParatemer;
 }
 
-
-inline sigmoidParameterType
+inline FeatureInputVector::SigmoidNormalizationParameterType 
 FeatureInputVector
-::SetSigmoidParametersOfSubject( BinaryImageType::Pointer & labelImage, const WorkingImagePointer& Image )
+::GetSigmoidNormalizationParametersOfSubject( BinaryImageType::Pointer & labelImage, const WorkingImagePointer& Image )
 {
   typedef itk::LabelStatisticsImageFilter<WorkingImageType, BinaryImageType> StatisticCalculatorType;
   StatisticCalculatorType::Pointer statisticCalculator = StatisticCalculatorType::New();
@@ -506,7 +509,7 @@ FeatureInputVector
   double Quantile_95 = statisticCalculator->GetHistogram( 1 )->Quantile(0, 0.95);
   double median = statisticCalculator->GetHistogram( 1 )->Quantile(0, 0.5);
 
-  sigmoidParameterType sigmoidReturnValue;
+  SigmoidNormalizationParameterType sigmoidReturnValue;
   sigmoidReturnValue.alpha = median;
   sigmoidReturnValue.beta  = ( Quantile_95 - Quantile_05 );
 

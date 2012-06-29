@@ -58,9 +58,12 @@ public:
                                          std::map<std::string, WorkingImagePointer>& warpedSpatialLocationImages,
                                          DataSet& subject );
   void                  GetImagesOfSubjectInOrder( WorkingImageVectorType& subjectImageList, DataSet& subject);
+
+  void                  GetImageTypesInOrder( DataSet::StringVectorType& returnImageTypesInOrder   );
+
   void                  GetDeformedROIs( std::map<std::string, 
                                          WorkingImagePointer>& deformedROIs, DataSet& subject );
-  bool                  GetNormalization();
+  std::string           GetNormalization();
   void                  SetNormalization();
 
   std::string           GetAtlasFilename();
@@ -106,6 +109,7 @@ protected:
   std::string         atlasFilename;
   std::string         atlasBinaryFilename;
   WorkingImagePointer atlasImage;
+   DataSet::StringVectorType imageTypeInOrder; 
 
   /**ProbabilityMaps*/
   ProbabilityMapList *             roiDataList;
@@ -127,7 +131,7 @@ protected:
 
   /** vector file name */
   std::string trainVectorFilename;
-  bool        normalization;
+  std::string normalizationMethod;
 
   /** model name **/
   std::string ANNModelFilename;
@@ -139,7 +143,6 @@ private:
   BRAINSCutConfiguration * myConfiguration;
 
   WorkingImageType GetDeformedImage( WorkingImageType image);
-
 
 };
 #endif

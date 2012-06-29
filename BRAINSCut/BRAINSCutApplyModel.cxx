@@ -77,7 +77,7 @@ BRAINSCutApplyModel
 
   typedef BRAINSCutConfiguration::ApplyDataSetListType::iterator  ApplySubjectIteratorType;
 
-  normalization = myDataHandler.GetNormalization();
+  normalizationMethod = myDataHandler.GetNormalization();
 
   for( ApplySubjectIteratorType subjectIt = applyDataSetList.begin();
        subjectIt != applyDataSetList.end();
@@ -99,6 +99,9 @@ BRAINSCutApplyModel
 
   WorkingImageVectorType imagesOfInterest;
   myDataHandler.GetImagesOfSubjectInOrder(imagesOfInterest, subject);
+
+  DataSet::StringVectorType imageTypesInOrder;
+   myDataHandler.GetImageTypesInOrder( imageTypesInOrder );
 
   /** Warp probability map(ROI) onto the subject*/
   typedef std::map<std::string, WorkingImagePointer> DeformedROIMapType;
@@ -127,7 +130,8 @@ BRAINSCutApplyModel
   inputVectorGenerator.SetCandidateROIs( deformedROIs);
   inputVectorGenerator.SetROIInOrder( myDataHandler.GetROIIDsInOrder());
   inputVectorGenerator.SetInputVectorSize();
-  inputVectorGenerator.SetNormalization( normalization );
+  inputVectorGenerator.SetNormalizationMethod( normalizationMethod );
+  inputVectorGenerator.SetImageTypesInOrder( imageTypesInOrder );
 
   /* now iterate through the roi */
 

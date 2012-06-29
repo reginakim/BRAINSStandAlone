@@ -238,15 +238,32 @@ void
 BRAINSCutDataHandler
 ::GetImagesOfSubjectInOrder( WorkingImageVectorType& subjectImageList, DataSet& subject)
 {
-  DataSet::StringVectorType imageListFromAtlas = atlasDataSet->GetImageTypes(); // T1, T2, SG, ...
-  std::sort( imageListFromAtlas.begin(), imageListFromAtlas.end() );            // SG, T1, T2, ... ascending order
-  for( DataSet::StringVectorType::iterator imgTyIt = imageListFromAtlas.begin();
-       imgTyIt != imageListFromAtlas.end();
+  imageTypeInOrder = atlasDataSet->GetImageTypes(); // T1, T2, SG, ...
+  std::sort( imageTypeInOrder.begin(), imageTypeInOrder.end() );            // SG, T1, T2, ... ascending order
+
+  for( DataSet::StringVectorType::iterator imgTyIt = imageTypeInOrder.begin();
+       imgTyIt != imageTypeInOrder.end();
        ++imgTyIt ) // imgTyIt = image type iterator
     {
     std::cout<< *imgTyIt <<std::endl;
     WorkingImagePointer currentTypeImage = ReadImageByFilename( subject.GetImageFilenameByType( *imgTyIt ) );
     subjectImageList.push_back( currentTypeImage );
+    }
+}
+
+void
+BRAINSCutDataHandler
+::GetImageTypesInOrder( DataSet::StringVectorType& returnImageTypesInOrder )
+{
+  if( !imageTypeInOrder.empty() )
+    {
+    returnImageTypesInOrder = imageTypeInOrder;
+    }
+  else
+    {
+    std::cout<<" Image Type in Order is empty!"
+             << " @ "<< __LINE__<<"::"<<__FILE__<<std::endl;
+    exit( EXIT_FAILURE );
     }
 }
 
@@ -316,28 +333,19 @@ BRAINSCutDataHandler
   std::string normalizationString;
   try
     { 
-    normalizationString = trainingVectorConfiguration->GetAttribute<StringValue>("Normalization");
+    normalizationMethod = trainingVectorConfiguration->GetAttribute<StringValue>("Normalization");
     }catch( BRAINSCutExceptionStringHandler& e)
     {
       std::cout<<e.Error()<<std::endl;
       exit(EXIT_FAILURE);
     }
-
-  if( normalizationString == "true" )
-    {
-    normalization = true;
-    }
-  else
-    {
-    normalization =  false;
-    }
-  std::cout<<"Get Normalization from XML file --> "<<normalization<<std::endl;
+  std::cout<<"Get Normalization from XML file --> "<<normalizationMethod<<std::endl;
 }
-bool
+std::string 
 BRAINSCutDataHandler
 ::GetNormalization()
 {
-  return normalization;
+  return normalizationMethod;
 }
 
 /** model file name */

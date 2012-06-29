@@ -11,7 +11,7 @@ BRAINSCutCreateVector
   myDataHandler.SetRhoPhiTheta();
   myDataHandler.SetTrainingVectorConfiguration();
   myDataHandler.SetGradientSize();
-  myDataHandler.SetNormalization();
+  myDataHandler.SetNormalization(  );
 }
 
 void
@@ -84,6 +84,9 @@ BRAINSCutCreateVector
   WorkingImageVectorType imagesOfInterest;
   myDataHandler.GetImagesOfSubjectInOrder(imagesOfInterest, subject);
 
+  DataSet::StringVectorType imageTypesInOrder;
+   myDataHandler.GetImageTypesInOrder( imageTypesInOrder );
+
   std::map<std::string, WorkingImagePointer> deformedROIs;
   myDataHandler.GetDeformedROIs(deformedROIs, subject);
 
@@ -95,7 +98,8 @@ BRAINSCutCreateVector
   inputVectorGenerator.SetCandidateROIs( deformedROIs);
   inputVectorGenerator.SetROIInOrder( myDataHandler.GetROIIDsInOrder() );
   inputVectorGenerator.SetInputVectorSize();
-  inputVectorGenerator.SetNormalization( myDataHandler.GetNormalization() );
+  inputVectorGenerator.SetNormalizationMethod( myDataHandler.GetNormalization() );
+  inputVectorGenerator.SetImageTypesInOrder( imageTypesInOrder );
 
   inputVectorSize = inputVectorGenerator.GetInputVectorSize(); // TODO
   outputVectorSize = myDataHandler.GetROIIDsInOrder().size();
