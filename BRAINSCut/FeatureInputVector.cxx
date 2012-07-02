@@ -482,9 +482,9 @@ FeatureInputVector
 
   statisticCalculator->Update();
 
-  /*std::cout << " * Min : " << statisticCalculator->GetMinimum(1)
+  std::cout << " * Min : " << statisticCalculator->GetMinimum(1)
             << " * Max : " << statisticCalculator->GetMaximum(1)
-            << std::endl; */
+            << std::endl; 
   LinearNormalizationParameterType returnParatemer;
   returnParatemer.min = statisticCalculator->GetMinimum(1);
   returnParatemer.max = statisticCalculator->GetMaximum(1);
@@ -513,6 +513,10 @@ FeatureInputVector
   sigmoidReturnValue.alpha = median;
   sigmoidReturnValue.beta  = ( Quantile_95 - Quantile_05 );
 
+  std::cout << " * Quantile_05 : " << Quantile_05 << std::endl
+            << " * Quantile_95 : " << Quantile_95 << std::endl  
+            << " * alpha (median)  : " << sigmoidReturnValue.alpha << std::endl  
+            << " * beta : " << sigmoidReturnValue.beta << std::endl  ;
   return  sigmoidReturnValue;
 }
 
