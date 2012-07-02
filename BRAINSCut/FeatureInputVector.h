@@ -24,7 +24,7 @@ public:
   static const scalarType MAX;
 
   /** type definition */
-  enum NormalizationMethodType { NONE, LINEAR, SIGMOID, DOUBLESIGMOID, ZSCORE, TANH };
+  enum NormalizationMethodType { NONE, LINEAR, SIGMOID, DOUBLESIGMOID, ZSCORE, TANH, MAD };
 
   typedef itk::GradientImageFilter<WorkingImageType,
                                    WorkingPixelType,
@@ -55,10 +55,17 @@ public:
     double std;
   };
 
+  // MAD: Median & median absolute deviation
+  struct MADNormalizationParameterType {
+    double median;
+    double MAD;
+  };
+
   struct NormalizationParameterType {
     LinearNormalizationParameterType linearParameter;
     SigmoidNormalizationParameterType sigmoidParameter;
     ZScoreNormalizationParameterType zScoreParameter;
+    MADNormalizationParameterType  madParameter;
   };
 
   typedef std::map<std::string, NormalizationParameterType> NormalizationParameterPerImageType;
@@ -165,8 +172,12 @@ private:
   inline SigmoidNormalizationParameterType GetSigmoidNormalizationParametersOfSubject ( 
       BinaryImageType::Pointer & labelImage,
       const WorkingImagePointer& Image );
+  inline MADNormalizationParameterType GetMADNormalizationParametersOfSubject( 
+      BinaryImageType::Pointer & labelImage, 
+      const WorkingImagePointer& Image );
 
   inline double LinearTransform( double min, double max, double x );
+  inline double StandardTransform( double mu, double sigma, double x );
   inline double Sigmoid( double median, double lowerQuantile, double higherQuantile, double x,
                          NormalizationMethodType whichSigmoid);
 

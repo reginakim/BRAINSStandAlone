@@ -2,6 +2,8 @@
 #include "BRAINSCutExceptionStringHandler.h"
 #include "itkLabelStatisticsImageFilter.h"
 
+#include "itkAbsoluteValueDifferenceImageFilter.h"
+
 const scalarType FeatureInputVector::MIN = -1.0F;
 const scalarType FeatureInputVector::MAX = 1.0F;
 
@@ -133,6 +135,10 @@ FeatureInputVector
     {
     m_normalizationMethod = TANH;
     }
+  else if( normalizationMethod == "MAD" )
+    {
+    m_normalizationMethod = MAD;
+    }
   else
     {
     std::cout<<"Invalid normalization method is given \n";
@@ -234,6 +240,11 @@ FeatureInputVector
             GetSigmoidNormalizationParametersOfSubject( roiMask , 
                                                         *currentTypeOfImage ); 
           break;
+        case MAD:
+          currentParameter.madParameter=
+            GetMADNormalizationParametersOfSubject( roiMask ,
+                                                    *currentTypeOfImage );
+          break;
         default:
           currentParameter.linearParameter =
             GetLinearNormalizationParametersOfSubject( roiMask , *currentTypeOfImage ); 
@@ -280,6 +291,14 @@ FeatureInputVector
                                           *featureElementIterator,
                                           m_normalizationMethod);
 
+          case ZSCORE:
+            *featureElementIterator  = StandardTransform( m_normalizationParametersPerImageType[ currentParameterGroup].zScoreParameter.mean,
+                                                          m_normalizationParametersPerImageType[ currentParameterGroup].zScoreParameter.std,
+                                                          *featureElementIterator );
+          case MAD:
+            *featureElementIterator  = StandardTransform( m_normalizationParametersPerImageType[ currentParameterGroup].madParameter.median,
+                                                          m_normalizationParametersPerImageType[ currentParameterGroup].madParameter.MAD,
+                                                          *featureElementIterator );
           default:
             *featureElementIterator  = LinearTransform( 
                                           m_normalizationParametersPerImageType[ currentParameterGroup].linearParameter.min,
@@ -299,6 +318,18 @@ FeatureInputVector
   double return_value;
 
   return_value = (x-min)/(max-min);
+
+  return return_value;
+}
+
+/* standard function*/
+inline double
+FeatureInputVector
+::StandardTransform( double mu, double sigma, double x )
+{
+  double return_value;
+
+  return_value = (x-mu)/sigma;
 
   return return_value;
 }
@@ -579,4 +610,65 @@ FeatureInputVector
   return  sigmoidReturnValue;
 }
 
+inline FeatureInputVector::MADNormalizationParameterType
+FeatureInputVector
+::GetMADNormalizationParametersOfSubject( BinaryImageType::Pointer & labelImage, 
+                                          const WorkingImagePointer& Image )
+{
+  const unsigned char label = 1;
+
+  typedef itk::LabelStatisticsImageFilter<WorkingImageType, BinaryImageType> StatisticCalculatorType;
+  StatisticCalculatorType::Pointer statisticCalculator = StatisticCalculatorType::New();
+
+  statisticCalculator->SetInput( Image );
+  statisticCalculator->SetLabelInput( labelImage);
+
+  statisticCalculator->Update();
+
+  const double imgMin = statisticCalculator->GetMinimum( label );
+  const double imgMax = statisticCalculator->GetMaximum( label );
+
+  std::cout << " * imgMin :  " << imgMin << std::endl
+            << " * imgMax :  " << imgMax << std::endl;
+
+  // histogram on and set parameters has to be together 
+  // before second update
+  statisticCalculator->UseHistogramsOn();
+  statisticCalculator->SetHistogramParameters( 255, imgMin, imgMax );
+  statisticCalculator->Update();
+
+  StatisticCalculatorType::HistogramType::Pointer histogram;
+  histogram = statisticCalculator->GetHistogram( label );
+
+  if( histogram.IsNull() )
+    {
+    std::cout<<"Histogram is null"<<std::endl;
+    exit( EXIT_FAILURE );
+    }
+  double median =      histogram->Quantile(0, 0.5);
+
+  MADNormalizationParameterType madReturnValue;
+  madReturnValue.median         = median;
+
+  std::cout << " * median : " << median << std::endl  ;
+
+  typedef itk::AbsoluteValueDifferenceImageFilter < WorkingImageType, 
+                                                    WorkingImageType,
+                                                    WorkingImageType > SubtractFilterType;
+  SubtractFilterType::Pointer subtractor = SubtractFilterType::New();
+  subtractor->SetInput( Image );
+  subtractor->SetConstant( median );
+  
+  StatisticCalculatorType::Pointer MADStatCalculator= StatisticCalculatorType::New();
+
+  MADStatCalculator->SetInput( subtractor->GetOutput() );
+  MADStatCalculator->SetLabelInput(labelImage);
+  MADStatCalculator->UseHistogramsOn();
+  MADStatCalculator->SetHistogramParameters( 255, median-imgMin, imgMax-median );
+  MADStatCalculator->Update();
+
+  madReturnValue.MAD = MADStatCalculator->GetHistogram( label )->Quantile(0,0.5);
+          
+  return  madReturnValue ;
+}
 
