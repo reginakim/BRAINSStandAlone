@@ -117,13 +117,13 @@ FeatureInputVector
     {
     m_normalizationMethod = LINEAR;
     }
-  else if( normalizationMethod == "SIGMOID_NORMAL" )
+  else if( normalizationMethod == "SIGMOID" )
     {
-    m_normalizationMethod = SIGMOID_NORMAL;
+    m_normalizationMethod = SIGMOID;
     }
-  else if( normalizationMethod == "SIGMOID_QUANTILES" )
+  else if( normalizationMethod == "DOUBLESIGMOID" )
     {
-    m_normalizationMethod = SIGMOID_QUANTILES;
+    m_normalizationMethod = DOUBLESIGMOID;
     }
   else if( normalizationMethod == "ZSCORE" )
     {
@@ -228,9 +228,11 @@ FeatureInputVector
             GetLinearNormalizationParametersOfSubject( roiMask , *currentTypeOfImage ); 
           break;
 
-        case SIGMOID_QUANTILES:
+        case SIGMOID:        // SIGMOID and DOUBLESIGMOID share same parameters
+        case DOUBLESIGMOID:
           currentParameter.sigmoidParameter =
-            GetSigmoidNormalizationParametersOfSubject( roiMask , *currentTypeOfImage ); 
+            GetSigmoidNormalizationParametersOfSubject( roiMask , 
+                                                        *currentTypeOfImage ); 
           break;
         default:
           currentParameter.linearParameter =
@@ -269,11 +271,15 @@ FeatureInputVector
                                           m_normalizationParametersPerImageType[ currentParameterGroup].linearParameter.max,
                                           *featureElementIterator );
             break;
-          case SIGMOID_QUANTILES:
+          case SIGMOID:               // SIGMOID and DOUBLESIGMOID shares a function 
+          case DOUBLESIGMOID:         // :: functions will be distinquished by 'm_normalizationMethod'
             *featureElementIterator  = Sigmoid( 
-                                          m_normalizationParametersPerImageType[ currentParameterGroup].sigmoidParameter.alpha,
-                                          m_normalizationParametersPerImageType[ currentParameterGroup].sigmoidParameter.beta,
-                                          *featureElementIterator);
+                                          m_normalizationParametersPerImageType[ currentParameterGroup].sigmoidParameter.median,
+                                          m_normalizationParametersPerImageType[ currentParameterGroup].sigmoidParameter.lowerQuantile,
+                                          m_normalizationParametersPerImageType[ currentParameterGroup].sigmoidParameter.higherQuantile,
+                                          *featureElementIterator,
+                                          m_normalizationMethod);
+
           default:
             *featureElementIterator  = LinearTransform( 
                                           m_normalizationParametersPerImageType[ currentParameterGroup].linearParameter.min,
@@ -300,7 +306,8 @@ FeatureInputVector
 /* sigmoid function*/
 inline double
 FeatureInputVector
-::Sigmoid( double alpha, double beta, double x )
+::Sigmoid( double median, double lowerQuantile, double higherQuantile, double x, 
+           NormalizationMethodType whichSigmoid)
 {
   /* Implementation from 
    * http://wwwold.ece.utep.edu/research/webfuzzy/docs/kk-thesis/kk-thesis-html/node72.html 
@@ -308,13 +315,42 @@ FeatureInputVector
   double exp_value;
   double return_value;
 
-  exp_value = exp( (x-beta)/alpha );
+  const double beta = median;
 
-  return_value=-1/(1+exp_value);
+  //                   1
+  // x' = --------------------------------  alpha = (higher-lower )/2, if SIGMOID
+  //                       x - beta               = ( beta-lower ), if DOUBLESIGMOID && x < beta
+  //       1 + exp( -2 ( ------------ ) )         = ( higher-beta, otherwise
+  //                        alpha
 
+  double alpha=0.0F;
+  if( whichSigmoid == SIGMOID )
+    {
+    alpha= (higherQuantile-lowerQuantile) /2.0F;
+    }
+  else if( whichSigmoid == DOUBLESIGMOID )
+    {
+    if( x < beta )
+      {
+      alpha = beta - lowerQuantile;
+      }
+    else
+      {
+      alpha = higherQuantile - beta;
+      }
+    }
+  else
+    {
+    std::cout<<"SIGMOID function should be called only with SIGMOID TYPE function."<<std::endl 
+             <<whichSigmoid << " != " << SIGMOID << " nor " << DOUBLESIGMOID 
+             <<std::endl;
+    exit( EXIT_FAILURE) ;
+    }
+
+  exp_value = exp( -2.0F * (x-beta)/alpha );
+  return_value=1/(1+exp_value);
   return return_value;
 }
-
 
 /** inline functions */
 inline void
@@ -494,29 +530,53 @@ FeatureInputVector
 
 inline FeatureInputVector::SigmoidNormalizationParameterType 
 FeatureInputVector
-::GetSigmoidNormalizationParametersOfSubject( BinaryImageType::Pointer & labelImage, const WorkingImagePointer& Image )
+::GetSigmoidNormalizationParametersOfSubject( BinaryImageType::Pointer & labelImage, 
+                                              const WorkingImagePointer& Image )
 {
+  const unsigned char label = 1;
+
   typedef itk::LabelStatisticsImageFilter<WorkingImageType, BinaryImageType> StatisticCalculatorType;
   StatisticCalculatorType::Pointer statisticCalculator = StatisticCalculatorType::New();
 
   statisticCalculator->SetInput( Image );
   statisticCalculator->SetLabelInput( labelImage);
-  statisticCalculator->UseHistogramsOn();
 
   statisticCalculator->Update();
 
-  double Quantile_05 = statisticCalculator->GetHistogram( 1 )->Quantile(0, 0.05);
-  double Quantile_95 = statisticCalculator->GetHistogram( 1 )->Quantile(0, 0.95);
-  double median = statisticCalculator->GetHistogram( 1 )->Quantile(0, 0.5);
+  const double imgMin = statisticCalculator->GetMinimum( label );
+  const double imgMax = statisticCalculator->GetMaximum( label );
+
+  std::cout << " * imgMin :  " << imgMin << std::endl
+            << " * imgMax :  " << imgMax << std::endl;
+
+  // histogram on and set parameters has to be together 
+  // before second update
+  statisticCalculator->UseHistogramsOn();
+  statisticCalculator->SetHistogramParameters( 255, imgMin, imgMax );
+  statisticCalculator->Update();
+
+  StatisticCalculatorType::HistogramType::Pointer histogram;
+  histogram = statisticCalculator->GetHistogram( label );
+
+  if( histogram.IsNull() )
+    {
+    std::cout<<"Histogram is null"<<std::endl;
+    exit( EXIT_FAILURE );
+    }
+  double Quantile_02 = histogram->Quantile(0, 0.02);
+  double Quantile_98 = histogram->Quantile(0, 0.98);
+  double median =      histogram->Quantile(0, 0.5);
 
   SigmoidNormalizationParameterType sigmoidReturnValue;
-  sigmoidReturnValue.alpha = median;
-  sigmoidReturnValue.beta  = ( Quantile_95 - Quantile_05 );
+  sigmoidReturnValue.lowerQuantile  = Quantile_02;
+  sigmoidReturnValue.median         = median;
+  sigmoidReturnValue.higherQuantile = Quantile_98;
 
-  std::cout << " * Quantile_05 : " << Quantile_05 << std::endl
-            << " * Quantile_95 : " << Quantile_95 << std::endl  
-            << " * alpha (median)  : " << sigmoidReturnValue.alpha << std::endl  
-            << " * beta : " << sigmoidReturnValue.beta << std::endl  ;
+  std::cout << " * Quantile_02 : " << Quantile_02 << std::endl
+            << " * Quantile_98 : " << Quantile_98 << std::endl  
+            << " * median : " << median << std::endl  ;
+
   return  sigmoidReturnValue;
 }
+
 

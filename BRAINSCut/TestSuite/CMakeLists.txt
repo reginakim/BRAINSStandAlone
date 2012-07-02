@@ -4,10 +4,18 @@
 ##
 ## BRAINSCut NetConfiguration(XML) file for testing
 ##
-set( InputNetConfigurationForTesting ${BRAINSCut_SOURCE_DIR}/TestSuite/NetConfigurations/BRAINSCutTest.xml.in)
-set( OutputNetConfigurationForTesting ${CMAKE_CURRENT_BINARY_DIR}/TestSuite/NetConfigurations/BRAINSCutTest.xml )
+set( InputNetConfigurationForTesting 
+     ${BRAINSCut_SOURCE_DIR}/TestSuite/NetConfigurations/BRAINSCutTest.xml.in)
+set( OutputNetConfigurationForTesting 
+     ${CMAKE_CURRENT_BINARY_DIR}/TestSuite/NetConfigurations/BRAINSCutTest.xml )
+set( InputNetConfigurationForSigmoidNormalization 
+     ${BRAINSCut_SOURCE_DIR}/TestSuite/NetConfigurations/BRAINSCutTestSigmoidNormalization.xml.in )
+set( OutputNetConfigurationForSigmoidNormalization 
+     ${CMAKE_CURRENT_BINARY_DIR}/TestSuite/NetConfigurations/BRAINSCutTestSigmoidNormalization.xml )
 
 configure_file( ${InputNetConfigurationForTesting} ${OutputNetConfigurationForTesting}  IMMEDIATE @ONLY)
+configure_file( ${InputNetConfigurationForSigmoidNormalization} 
+                ${OutputNetConfigurationForSigmoidNormalization}  IMMEDIATE @ONLY)
 
 message("TestData_DIR=${TestData_DIR}")
 
@@ -39,6 +47,9 @@ ExternalData_add_test( ${PROJECT_NAME}FetchData NAME FakeTestToDownloadFiles
 ExternalData_add_test( ${PROJECT_NAME}FetchData NAME ANNGenerateProbabilityTest
   COMMAND ${LAUNCH_EXE} $<TARGET_FILE:BRAINSCut>
   --generateProbability --netConfiguration ${OutputNetConfigurationForTesting})
+ExternalData_add_test( ${PROJECT_NAME}FetchData NAME ANNCreateVectorsTestWitNormalization
+  COMMAND ${LAUNCH_EXE} $<TARGET_FILE:BRAINSCut>
+  --createVectors --netConfiguration ${OutputNetConfigurationForSigmoidNormalization})
 ExternalData_add_test( ${PROJECT_NAME}FetchData NAME ANNCreateVectorsTest
   COMMAND ${LAUNCH_EXE} $<TARGET_FILE:BRAINSCut>
   --createVectors --netConfiguration ${OutputNetConfigurationForTesting})

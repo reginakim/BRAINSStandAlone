@@ -2,7 +2,6 @@
 #define FeatureInputVector_h
 
 #include "BRAINSCutDataHandler.h"
-
 #include <itkLinearInterpolateImageFunction.h>
 #include <itkGradientImageFilter.h>
 /*
@@ -25,7 +24,7 @@ public:
   static const scalarType MAX;
 
   /** type definition */
-  enum NormalizationMethodType { NONE, LINEAR, SIGMOID_NORMAL, SIGMOID_QUANTILES, ZSCORE, TANH };
+  enum NormalizationMethodType { NONE, LINEAR, SIGMOID, DOUBLESIGMOID, ZSCORE, TANH };
 
   typedef itk::GradientImageFilter<WorkingImageType,
                                    WorkingPixelType,
@@ -46,8 +45,9 @@ public:
   };
 
   struct SigmoidNormalizationParameterType {
-    double alpha;
-    double beta;
+    double median;
+    double lowerQuantile;
+    double higherQuantile;
   };
 
   struct ZScoreNormalizationParameterType {
@@ -159,13 +159,16 @@ private:
   inline std::map<std::string, scalarType> CalculateUnitDeltaAlongTheGradient(
     std::string ROIName, WorkingImageType::IndexType currentPixelIndex );
 
-  inline LinearNormalizationParameterType GetLinearNormalizationParametersOfSubject ( BinaryImageType::Pointer & labelImage,
-                                                                                      const WorkingImagePointer& Image );
-  inline SigmoidNormalizationParameterType GetSigmoidNormalizationParametersOfSubject ( BinaryImageType::Pointer & labelImage,
-                                                                                      const WorkingImagePointer& Image );
+  inline LinearNormalizationParameterType GetLinearNormalizationParametersOfSubject ( 
+      BinaryImageType::Pointer & labelImage,
+      const WorkingImagePointer& Image );
+  inline SigmoidNormalizationParameterType GetSigmoidNormalizationParametersOfSubject ( 
+      BinaryImageType::Pointer & labelImage,
+      const WorkingImagePointer& Image );
 
   inline double LinearTransform( double min, double max, double x );
-  inline double Sigmoid( double alpha, double beta, double x );
+  inline double Sigmoid( double median, double lowerQuantile, double higherQuantile, double x,
+                         NormalizationMethodType whichSigmoid);
 
 };
 #endif
