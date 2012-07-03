@@ -274,37 +274,46 @@ FeatureInputVector
       std::string currentParameterGroup = ROIName + *imgTyIt ; 
       for(  float i = -m_gradientSize; i <= m_gradientSize; i = i + 1.0F )
         {
+        // debuging 
+        std::cout<<"[ "<< *featureElementIterator << " ]--> ";
         switch( m_normalizationMethod )
         { /* assuming all the ranges to 0-1 */
           case LINEAR:
             *featureElementIterator  = LinearTransform( 
-                                          m_normalizationParametersPerImageType[ currentParameterGroup].linearParameter.min,
-                                          m_normalizationParametersPerImageType[ currentParameterGroup].linearParameter.max,
-                                          *featureElementIterator );
+                m_normalizationParametersPerImageType[ currentParameterGroup].linearParameter.min,
+                m_normalizationParametersPerImageType[ currentParameterGroup].linearParameter.max,
+                *featureElementIterator );
             break;
           case SIGMOID:               // SIGMOID and DOUBLESIGMOID shares a function 
           case DOUBLESIGMOID:         // :: functions will be distinquished by 'm_normalizationMethod'
             *featureElementIterator  = Sigmoid( 
-                                          m_normalizationParametersPerImageType[ currentParameterGroup].sigmoidParameter.median,
-                                          m_normalizationParametersPerImageType[ currentParameterGroup].sigmoidParameter.lowerQuantile,
-                                          m_normalizationParametersPerImageType[ currentParameterGroup].sigmoidParameter.higherQuantile,
-                                          *featureElementIterator,
-                                          m_normalizationMethod);
+                m_normalizationParametersPerImageType[ currentParameterGroup].sigmoidParameter.median,
+                m_normalizationParametersPerImageType[ currentParameterGroup].sigmoidParameter.lowerQuantile,
+                m_normalizationParametersPerImageType[ currentParameterGroup].sigmoidParameter.higherQuantile,
+                *featureElementIterator,
+                m_normalizationMethod);
+            break;
 
           case ZSCORE:
-            *featureElementIterator  = StandardTransform( m_normalizationParametersPerImageType[ currentParameterGroup].zScoreParameter.mean,
-                                                          m_normalizationParametersPerImageType[ currentParameterGroup].zScoreParameter.std,
-                                                          *featureElementIterator );
+            *featureElementIterator  = StandardTransform( 
+                m_normalizationParametersPerImageType[ currentParameterGroup].zScoreParameter.mean,
+                m_normalizationParametersPerImageType[ currentParameterGroup].zScoreParameter.std,
+                *featureElementIterator );
+            break;
           case MAD:
-            *featureElementIterator  = StandardTransform( m_normalizationParametersPerImageType[ currentParameterGroup].madParameter.median,
-                                                          m_normalizationParametersPerImageType[ currentParameterGroup].madParameter.MAD,
-                                                          *featureElementIterator );
+            *featureElementIterator  = StandardTransform( 
+                m_normalizationParametersPerImageType[ currentParameterGroup].madParameter.median,
+                m_normalizationParametersPerImageType[ currentParameterGroup].madParameter.MAD,
+                *featureElementIterator );
+            break;
           default:
             *featureElementIterator  = LinearTransform( 
-                                          m_normalizationParametersPerImageType[ currentParameterGroup].linearParameter.min,
-                                          m_normalizationParametersPerImageType[ currentParameterGroup].linearParameter.max,
-                                          *featureElementIterator );
+                m_normalizationParametersPerImageType[ currentParameterGroup].linearParameter.min,
+                m_normalizationParametersPerImageType[ currentParameterGroup].linearParameter.max,
+                *featureElementIterator );
+            break;
         }
+        std::cout<<"[ "<< *featureElementIterator << " ]"<<std::endl;
         featureElementIterator++;
         }
       }
@@ -315,10 +324,12 @@ inline double
 FeatureInputVector
 ::LinearTransform( double min, double max, double x )
 {
+  std::cout<<" [LINEAR] :";
   double return_value;
 
   return_value = (x-min)/(max-min);
 
+  std::cout<< "( "<<x<<" - "<<min<<" ) / ( "<<max<<" - "<<min <<" ) =";
   return return_value;
 }
 
@@ -327,10 +338,12 @@ inline double
 FeatureInputVector
 ::StandardTransform( double mu, double sigma, double x )
 {
+  std::cout<<" [Standard] :";
   double return_value;
 
   return_value = (x-mu)/sigma;
 
+  std::cout<< "( "<<x<<" - "<<mu<<" ) / ( "<<sigma <<" ) = ";
   return return_value;
 }
 
@@ -340,6 +353,7 @@ FeatureInputVector
 ::Sigmoid( double median, double lowerQuantile, double higherQuantile, double x, 
            NormalizationMethodType whichSigmoid)
 {
+  std::cout<<" [Sigmoid] :";
   /* Implementation from 
    * http://wwwold.ece.utep.edu/research/webfuzzy/docs/kk-thesis/kk-thesis-html/node72.html 
    * */
@@ -380,6 +394,9 @@ FeatureInputVector
 
   exp_value = exp( -2.0F * (x-beta)/alpha );
   return_value=1/(1+exp_value);
+
+  std::cout<< " 1 / ( 1 + exp( -2 * ( "<< x << " - " << beta <<" ) / "<<alpha << " ) ) = "; 
+
   return return_value;
 }
 
@@ -650,7 +667,7 @@ FeatureInputVector
   MADNormalizationParameterType madReturnValue;
   madReturnValue.median         = median;
 
-  std::cout << " * median : " << median << std::endl  ;
+  std::cout << " * median : " << median << std::endl;
 
   typedef itk::AbsoluteValueDifferenceImageFilter < WorkingImageType, 
                                                     WorkingImageType,
@@ -661,13 +678,27 @@ FeatureInputVector
   
   StatisticCalculatorType::Pointer MADStatCalculator= StatisticCalculatorType::New();
 
+  double histMin = median-imgMin ;
+  double histMax = imgMax-median ;
+  if( histMin > histMax )
+  {
+    histMax = histMin;
+    histMin = imgMax-median ;
+  }
+
   MADStatCalculator->SetInput( subtractor->GetOutput() );
   MADStatCalculator->SetLabelInput(labelImage);
   MADStatCalculator->UseHistogramsOn();
-  MADStatCalculator->SetHistogramParameters( 255, median-imgMin, imgMax-median );
+  MADStatCalculator->SetHistogramParameters( 255, histMin , histMax );
   MADStatCalculator->Update();
 
+  std::cout << " * median-imgMin:  " <<median-imgMin <<std::endl;
+  std::cout << " * imgMax-median:  " <<imgMax-median <<std::endl;
+
+
   madReturnValue.MAD = MADStatCalculator->GetHistogram( label )->Quantile(0,0.5);
+
+  std::cout << " * MAD: " << madReturnValue.MAD << std::endl;
           
   return  madReturnValue ;
 }
