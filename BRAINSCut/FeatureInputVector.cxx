@@ -275,7 +275,7 @@ FeatureInputVector
       for(  float i = -m_gradientSize; i <= m_gradientSize; i = i + 1.0F )
         {
         // debuging 
-        std::cout<<"[ "<< *featureElementIterator << " ]--> ";
+        //std::cout<<"[ "<< *featureElementIterator << " ]--> ";
         switch( m_normalizationMethod )
         { /* assuming all the ranges to 0-1 */
           case LINEAR:
@@ -313,7 +313,7 @@ FeatureInputVector
                 *featureElementIterator );
             break;
         }
-        std::cout<<"[ "<< *featureElementIterator << " ]"<<std::endl;
+        //std::cout<<"[ "<< *featureElementIterator << " ]"<<std::endl;
         featureElementIterator++;
         }
       }
@@ -324,12 +324,12 @@ inline double
 FeatureInputVector
 ::LinearTransform( double min, double max, double x )
 {
-  std::cout<<" [LINEAR] :";
+  //std::cout<<" [LINEAR] :";
   double return_value;
 
   return_value = (x-min)/(max-min);
 
-  std::cout<< "( "<<x<<" - "<<min<<" ) / ( "<<max<<" - "<<min <<" ) =";
+  //std::cout<< "( "<<x<<" - "<<min<<" ) / ( "<<max<<" - "<<min <<" ) =";
   return return_value;
 }
 
@@ -338,12 +338,12 @@ inline double
 FeatureInputVector
 ::StandardTransform( double mu, double sigma, double x )
 {
-  std::cout<<" [Standard] :";
+  //std::cout<<" [Standard] :";
   double return_value;
 
   return_value = (x-mu)/sigma;
 
-  std::cout<< "( "<<x<<" - "<<mu<<" ) / ( "<<sigma <<" ) = ";
+  //std::cout<< "( "<<x<<" - "<<mu<<" ) / ( "<<sigma <<" ) = ";
   return return_value;
 }
 
@@ -353,7 +353,7 @@ FeatureInputVector
 ::Sigmoid( double median, double lowerQuantile, double higherQuantile, double x, 
            NormalizationMethodType whichSigmoid)
 {
-  std::cout<<" [Sigmoid] :";
+  //std::cout<<" [Sigmoid] :";
   /* Implementation from 
    * http://wwwold.ece.utep.edu/research/webfuzzy/docs/kk-thesis/kk-thesis-html/node72.html 
    * */
@@ -395,7 +395,7 @@ FeatureInputVector
   exp_value = exp( -2.0F * (x-beta)/alpha );
   return_value=1/(1+exp_value);
 
-  std::cout<< " 1 / ( 1 + exp( -2 * ( "<< x << " - " << beta <<" ) / "<<alpha << " ) ) = "; 
+  //std::cout<< " 1 / ( 1 + exp( -2 * ( "<< x << " - " << beta <<" ) / "<<alpha << " ) ) = "; 
 
   return return_value;
 }
@@ -573,6 +573,10 @@ FeatureInputVector
   returnParatemer.min = statisticCalculator->GetMinimum(1);
   returnParatemer.max = statisticCalculator->GetMaximum(1);
 
+  std::cout<< "Linear paramters: "
+           << "[ min  = " << returnParatemer.min << " ] "
+           << "[ max  = " << returnParatemer.max << " ] "
+           <<std::endl;
   return returnParatemer;
 }
 
@@ -593,9 +597,6 @@ FeatureInputVector
 
   const double imgMin = statisticCalculator->GetMinimum( label );
   const double imgMax = statisticCalculator->GetMaximum( label );
-
-  std::cout << " * imgMin :  " << imgMin << std::endl
-            << " * imgMax :  " << imgMax << std::endl;
 
   // histogram on and set parameters has to be together 
   // before second update
@@ -620,9 +621,10 @@ FeatureInputVector
   sigmoidReturnValue.median         = median;
   sigmoidReturnValue.higherQuantile = Quantile_98;
 
-  std::cout << " * Quantile_02 : " << Quantile_02 << std::endl
-            << " * Quantile_98 : " << Quantile_98 << std::endl  
-            << " * median : " << median << std::endl  ;
+  std::cout<< "Sigmoid paramters: "
+           <<  "[ lower quantile (0.02) = " << sigmoidReturnValue.lowerQuantile << " ] "
+           <<  "[ higher quantile (0.02) = " << sigmoidReturnValue.higherQuantile << " ] "
+           <<  "[ median = " << sigmoidReturnValue.median  << " ] " <<std::endl;
 
   return  sigmoidReturnValue;
 }
@@ -645,9 +647,6 @@ FeatureInputVector
   const double imgMin = statisticCalculator->GetMinimum( label );
   const double imgMax = statisticCalculator->GetMaximum( label );
 
-  std::cout << " * imgMin :  " << imgMin << std::endl
-            << " * imgMax :  " << imgMax << std::endl;
-
   // histogram on and set parameters has to be together 
   // before second update
   statisticCalculator->UseHistogramsOn();
@@ -666,8 +665,6 @@ FeatureInputVector
 
   MADNormalizationParameterType madReturnValue;
   madReturnValue.median         = median;
-
-  std::cout << " * median : " << median << std::endl;
 
   typedef itk::AbsoluteValueDifferenceImageFilter < WorkingImageType, 
                                                     WorkingImageType,
@@ -692,14 +689,17 @@ FeatureInputVector
   MADStatCalculator->SetHistogramParameters( 255, histMin , histMax );
   MADStatCalculator->Update();
 
-  std::cout << " * median-imgMin:  " <<median-imgMin <<std::endl;
-  std::cout << " * imgMax-median:  " <<imgMax-median <<std::endl;
+  //std::cout << " * median-imgMin:  " <<median-imgMin <<std::endl;
+  //std::cout << " * imgMax-median:  " <<imgMax-median <<std::endl;
 
 
   madReturnValue.MAD = MADStatCalculator->GetHistogram( label )->Quantile(0,0.5);
 
-  std::cout << " * MAD: " << madReturnValue.MAD << std::endl;
-          
+  std::cout<< "MAD paramters: "
+           <<  "[ median = " << madReturnValue.median << " ] "
+           <<  "[ MAD = " << madReturnValue.MAD << " ] " <<std::endl
+           <<  "[ (x - median) / MAD ] " <<std::endl; 
+           << std::endl;
   return  madReturnValue ;
 }
 
