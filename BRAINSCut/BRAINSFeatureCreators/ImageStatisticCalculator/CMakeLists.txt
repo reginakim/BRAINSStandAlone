@@ -1,4 +1,4 @@
-project(BRAINSFeatureCreators)
+project(ImageStatisticCalculator)
 
 ## Build all the programs
 ##

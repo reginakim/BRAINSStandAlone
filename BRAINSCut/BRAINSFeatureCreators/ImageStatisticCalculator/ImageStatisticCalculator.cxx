@@ -2,7 +2,7 @@
 #include "itkImageFileReader.h"
 #include "itkSubtractConstantFromImageFilter.h"
 #include "itkAbsImageFilter.h"
-#include "itkLabelStatisticsImageFilter.h"
+#include "itkLabelStatisticsImageFilter.h"`
 #include "itkCastImageFilter.h"
 #include "itkBinaryThresholdImageFilter.h"
 
@@ -29,13 +29,12 @@ int main(int argc, char *argv[])
 
   // grey scale image 
   typedef double GreyScalePixelType;
-  typedef itk::Volume<GreyScalePixelType,  Dimension> GreyScaleVolumeType;
+  typedef itk::Image<GreyScalePixelType,  Dimension> GreyScaleVolumeType;
 
   typedef itk::ImageFileReader<GreyScaleVolumeType>   GreyScaleVolumeReaderType;
-  GreyScaleVolumeReaderType::Pointer greyScaleImageReader = GreyScaleVolumeReaderType::New();
 
   // read in multiple grey scale volumes
-  std::map< std::string, GreyScaleVolumeType > greyScaleVolumes;
+  std::map< std::string, GreyScaleVolumeType::Pointer > greyScaleVolumes;
   for( std::vector< std::string>::const_iterator it = inputVolume.begin();
        it < inputVolume.end();
        it++)
@@ -44,7 +43,7 @@ int main(int argc, char *argv[])
     greyScaleImageReader->SetFileName( *it );
     greyScaleImageReader->Update();
 
-    greyScaleVolumes[ *it ] =  greyScaleImageReader->Update();
+    greyScaleVolumes[ *it ] =  greyScaleImageReader->GetOutput();
     }
 
   // binary image definition
@@ -58,7 +57,7 @@ int main(int argc, char *argv[])
   typedef itk::CastImageFilter < GreyScaleVolumeType, BinaryVolumeType >
           CasterImageFilterType;
 
-  std::map< std::string, BinaryVolumeType > binaryVolumes;
+  std::map< std::string, BinaryVolumeType::Pointer > binaryVolumes;
   for( std::vector< std::string >::const_iterator it = inputBinaryVolumes.begin();
        it < inputBinaryVolumes.end();
        it++)
@@ -81,7 +80,7 @@ int main(int argc, char *argv[])
     }
 
   // Label statistic calculator
-  typedef itk::LabelStatisticImageFilter<GreyScaleVolumeType, BinaryVolumeType> LabelStatisticFilterType;
+  typedef itk::LabelStatisticsImageFilter<GreyScaleVolumeType, BinaryVolumeType> LabelStatisticFilterType;
 
   // MAD calculator
   // Median & median absolute deviation 
@@ -92,21 +91,21 @@ int main(int argc, char *argv[])
   typedef itk::AbsImageFilter< GreyScaleVolumeType, GreyScaleVolumeType > 
           AbsoluteImageFilterType;
 
-  for( std::map< GreyScaleVolumeType >::const_iterator imgIt = greyScaleVolumes.begin();
-       imgIt < greyScaleVolumes.end();
+  for( std::map< std::string, GreyScaleVolumeType::Pointer >::const_iterator imgIt = greyScaleVolumes.begin();
+       imgIt != greyScaleVolumes.end();
        imgIt++ )
     {
     // statistical calculation should be re-created for each grey scale images
     LabelStatisticFilterType::Pointer statCalculator= LabelStatisticFilterType::New();
-    for( std::map< BinaryVolumeType >::const_iterator mskIt = binaryVolumes.begin();
-         mskIt < binaryVolumes.end();
+    for( std::map< std::string, BinaryVolumeType::Pointer >::const_iterator mskIt = binaryVolumes.begin();
+         mskIt != binaryVolumes.end();
          mskIt++)
       {
       std::cout<<"Img, "<< imgIt->first <<", "
                <<"Msk, "<< mskIt->first <<", ";
       statCalculator->SetInput( imgIt->second );
       statCalculator->SetLabelInput( mskIt->second );
-      statCalculator->UseHistogramOn();
+      statCalculator->UseHistogramsOn();
       statCalculator->Update();
 
       std::cout<<"Mean, "<<statCalculator->GetMean( label )<<", ";
@@ -126,7 +125,7 @@ int main(int argc, char *argv[])
         }
 
       // MAD calculation
-      SubtractConstantFromImageFilter::Pointer subtractor = SubtractConstantFromImageFilterType::New();
+      SubtractConstantFromImageFilterType::Pointer subtractor = SubtractConstantFromImageFilterType::New();
       subtractor->SetInput( imgIt->second );
       subtractor->SetConstant( statCalculator->GetMedian( label ) );
 
@@ -135,7 +134,7 @@ int main(int argc, char *argv[])
 
       LabelStatisticFilterType::Pointer MADCalculator= LabelStatisticFilterType::New();
       MADCalculator->SetInput( absoluteFilter->GetOutput() );
-      MADCalculator->UseHistogramOn();
+      MADCalculator->UseHistogramsOn();
       MADCalculator->Update();
 
       std::cout<<"MAD, "<<MADCalculator->GetMedian( label )<<", ";

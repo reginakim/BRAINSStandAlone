@@ -22,9 +22,9 @@
       <channel>input</channel>
     </image>
 
-    <image>
-      <name>inputBinaryVolume</name>
-      <longflag>--inputBinaryVolume</longflag>
+    <image multiple="true">
+      <name>inputBinaryVolumes</name>
+      <longflag>--inputBinaryVolumes</longflag>
       <description>Required: input binary volume</description>
       <label>Input Brain Mask Volume</label>
       <channel>input</channel>
