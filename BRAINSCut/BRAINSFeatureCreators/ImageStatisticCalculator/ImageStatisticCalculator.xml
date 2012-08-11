@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+  <executable>
+  <category>Utilities</category>
+  <title>ImageStatisticCalculator</title>
+
+  <description>ImageStatisticCalculator calculate mean, standrad deviation, quantiles, and more from the given grey scale image(s). If binary image is given, statistics calculated in the binary image.</description>
+  <version>0.1.0.$Revision: 1 $(alpha)</version>
+  <documentation-url>http:://www.na-mic.org/</documentation-url>
+  <license>https://www.nitrc.org/svn/brains/BuildScripts/trunk/License.txt </license>
+  <contributor>This tool was developed by Regina Kim.</contributor>
+
+
+  <parameters>
+    <label>Input Parameters</label>
+    <description>Input parameters for analysis.</description>
+
+    <image multiple="true">
+      <name>inputVolume</name>
+      <longflag>--inputVolume</longflag>
+      <description>Required: input image</description>
+      <label>Input Volume</label>
+      <channel>input</channel>
+    </image>
+
+    <image>
+      <name>inputBinaryVolume</name>
+      <longflag>--inputBinaryVolume</longflag>
+      <description>Required: input binary volume</description>
+      <label>Input Brain Mask Volume</label>
+      <channel>input</channel>
+    </image>
+
+    <integer>
+      <name>inputRadius</name>
+      <longflag>--inputRadius</longflag>
+      <description>Required: input neighborhood radius</description>
+      <label>Input neighborhood radius</label>
+      <channel>input</channel>
+      <default>2</default>
+    </integer>
+
+  </parameters>
+
+  </executable>
