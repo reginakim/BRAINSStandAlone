@@ -101,46 +101,60 @@ int main(int argc, char *argv[])
          mskIt != binaryVolumes.end();
          mskIt++)
       {
-      std::cout<<"Img, "<< imgIt->first <<", "
-               <<"Msk, "<< mskIt->first <<", ";
+      std::cout<<"Img, "<< imgIt->first <<", "<<std::endl
+               <<"Msk, "<< mskIt->first <<", "<<std::endl;
       statCalculator->SetInput( imgIt->second );
       statCalculator->SetLabelInput( mskIt->second );
-      statCalculator->UseHistogramsOn();
       statCalculator->Update();
 
-      std::cout<<"Mean, "<<statCalculator->GetMean( label )<<", ";
-      std::cout<<"Maximum, "<<statCalculator->GetMaximum( label )<<", ";
-      std::cout<<"Median, "<<statCalculator->GetMedian( label )<<", ";
-      std::cout<<"Minimum, "<<statCalculator->GetMinimum( label )<<", ";
-      std::cout<<"Count, "<<statCalculator->GetCount( label )<<", ";
-      std::cout<<"Sigma, "<<statCalculator->GetSigma( label )<<", ";
-      std::cout<<"Sum, "<<statCalculator->GetSum( label )<<", ";
-      std::cout<<"Variance, "<<statCalculator->GetVariance( label )<<", ";
-      std::cout<<"Mean, "<<statCalculator->GetMean( label )<<", ";
+      statCalculator->UseHistogramsOn();
+      statCalculator->SetHistogramParameters(255, statCalculator->GetMinimum( label ), 
+                                                  statCalculator->GetMaximum( label ) );
+      statCalculator->Update();
 
+      std::cout<<"Median, "  <<statCalculator->GetHistogram( label) ->Quantile( 0, 0.5 )<<", "<<std::endl;
+
+
+      std::cout<<"Mean, "    <<statCalculator->GetMean( label )    <<", "<<std::endl;
+      std::cout<<"Maximum, " <<statCalculator->GetMaximum( label ) <<", "<<std::endl;
+      std::cout<<"Minimum, " <<statCalculator->GetMinimum( label ) <<", "<<std::endl;
+      std::cout<<"Count, "   <<statCalculator->GetCount( label )   <<", "<<std::endl;
+      std::cout<<"Sigma, "   <<statCalculator->GetSigma( label )   <<", "<<std::endl;
+      std::cout<<"Sum, "     <<statCalculator->GetSum( label )     <<", "<<std::endl;
+      std::cout<<"Variance, "<<statCalculator->GetVariance( label )<<", "<<std::endl;
+      std::cout<<"Mean, "    <<statCalculator->GetMean( label )    <<", "<<std::endl;
+
+
+      LabelStatisticFilterType::HistogramPointer histogram = statCalculator->GetHistogram( label );
       for( double quantile=0.05; quantile <1.0F; quantile= quantile+0.05)
         {
         std::cout<<quantile*100<<"th Quantile, "
-                 <<statCalculator->GetHistogram( label )->Quantile( 0, quantile )<<", ";
+                 <<histogram->Quantile( 0, quantile )<<", "<<std::endl;
         }
+
+      double median = statCalculator->GetHistogram( label) ->Quantile( 0, 0.5 );
 
       // MAD calculation
       SubtractConstantFromImageFilterType::Pointer subtractor = SubtractConstantFromImageFilterType::New();
       subtractor->SetInput( imgIt->second );
-      subtractor->SetConstant( statCalculator->GetMedian( label ) );
+      subtractor->SetConstant( median );
 
       AbsoluteImageFilterType::Pointer absoluteFilter = AbsoluteImageFilterType::New();
       absoluteFilter->SetInput( subtractor->GetOutput() );
 
       LabelStatisticFilterType::Pointer MADCalculator= LabelStatisticFilterType::New();
       MADCalculator->SetInput( absoluteFilter->GetOutput() );
-      MADCalculator->UseHistogramsOn();
+      MADCalculator->SetLabelInput( mskIt->second );
       MADCalculator->Update();
 
-      std::cout<<"MAD, "<<MADCalculator->GetMedian( label )<<", ";
-      }
+      MADCalculator->UseHistogramsOn();   /* IMPORTANT:: UseHistogramOn should be called BEFORE SetHistogramParameters */
+      MADCalculator->SetHistogramParameters(255, MADCalculator->GetMinimum( label ), 
+                                                 MADCalculator->GetMaximum( label ) );
+      MADCalculator->Update();
 
-    std::cout<<"END"<<std::endl;
+      std::cout<<"MAD, "<<MADCalculator->GetHistogram( label )->Quantile( 0, 0.5 ) <<", ";
+      std::cout<<"END"<<std::endl;
+      }
     }
 
   return EXIT_SUCCESS;
