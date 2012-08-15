@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
     thresholder->SetInput( binaryVolumeReader->GetOutput() );
     thresholder->SetInsideValue( label ); 
     thresholder->SetOutsideValue( 0 );
-    thresholder->SetLowerThreshold( 0.5F );
+    thresholder->SetLowerThreshold( inputBinaryThreshold );
 
     CasterImageFilterType::Pointer casterToBinaryVolume = CasterImageFilterType::New();
     casterToBinaryVolume->SetInput( thresholder->GetOutput() );

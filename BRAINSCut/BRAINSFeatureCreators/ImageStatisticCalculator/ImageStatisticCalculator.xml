@@ -30,14 +30,14 @@
       <channel>input</channel>
     </image>
 
-    <integer>
-      <name>inputRadius</name>
-      <longflag>--inputRadius</longflag>
-      <description>Required: input neighborhood radius</description>
-      <label>Input neighborhood radius</label>
+    <float>
+      <name>inputBinaryThreshold</name>
+      <longflag>--inputBinaryThreshold</longflag>
+      <description>Input binary volume threshold value.</description>
+      <label>Input binary threshold</label>
       <channel>input</channel>
-      <default>2</default>
-    </integer>
+      <default>0.5</default>
+    </float>
 
   </parameters>
 
