@@ -128,6 +128,50 @@ def LabelStatistics ( inputLabel,
   import sys
   returnFile = os.path.realpath( outputCSVFilename )
 
+  returnDict = { 'outputStatDictionary': outputDictionary,
+                 'outputCSVFilename': returnFile }
+  return  returnDict
+
+# --------------------------------------------------------------------------------------- #
+def NormalizeInputVolume ( inputMethod, 
+                           inputStats,
+                           outputVolume ):
+  import SimpleITK as sitk
+  
+  inImg = sitk.Cast( sitk.ReadImage( inputVolume ),
+                     sitk.sitkFloat32 )
+
+  IQR = inputStats['Quantile75']-inputStats['Quantile25']
+
+  if inputMethod == 'zScore':
+    print "zScore Normalization"
+    outImg = (inImg - inputStats['Mean']) / inputStats['Sigma']
+  elif inputMethod == 'MAD':
+    print "MAD Normalization"
+    outImg = (inImg - inputStats['Median']) / inputStats['MAD']
+  elif inputMethod == 'Sigmoid':
+    print "Sigmoid Normalization"
+    outImg = 1 / ( 1 + exp( -2 * ( inImg - inputStats['Median'] )/IQR ) )
+  elif inputMethod == 'QEstimator':
+    print "QEstimator Normalization"
+    outImg = (inImg - inputStats['Median']) / IQR
+  elif inputMethod == 'Linear':
+    print "Linear Normalization"
+    outImg = ( inImg - inputStats['Min'] ) / ( inputStats['Max']  - inputStats['Min'] )
+  elif inputMethod == 'DoubleSigmoid':
+    print "Double Sigmoid Normalization"
+    temp1 = sitk.Threshold( inImg, inputStats['Min'], inputStats['Median'] )
+    outImg1 = 1 / ( 1 + exp( -2 * ( temp1 - inputStats['Median'] )/ 
+                        ( inputStats['Median']- inputStats['Quantile25']) ) )
+    temp2 = sitk.Threshold( inImg, ( inputStats['Median']+0.00001) , inputStats['Max'] )
+    outImg2 = 1 / ( 1 + exp( -2 * ( temp2 - ( inputStats['Median'] +0.00001) )/ 
+                        ( inputStats['Quantile75']- (inputStats['Median']+0.00001  )) ) )
+    outImg = outImg1 + outImg2 
+
+  sitk.WriteImage( outImg, outVolume )
+  returnFile = os.path.realpath( outVolume )
+
   return returnFile
 
 
+    

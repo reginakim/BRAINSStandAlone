@@ -124,19 +124,19 @@ myWF.add_nodes( [findRestInputsFromT1] )
 findRestInputsFromT1.iterables = ('inputT1', results.outputs.t1)
 
 # if cluster
-BAWSrcDir="/ipldev/scratch/eunyokim/src/BRAINSStandAlone/BRAINSStandAlone/"
-BAWBuildDir="/ipldev/scratch/eunyokim/src/BRAINSStandAlone/build20121015/"
-
-pythonPath = BAWSrcDir+"/BRAINSCut/BRAINSFeatureCreators/RobustStatisticComputations:"+BAWSrcDir+"/AutoWorkup/:"+BAWSrcDir+"/AutoWorkup/BRAINSTools/:"+BAWBuildDir+"/SimpleITK-build/bin/"+BAWBuildDir+"/SimpleITK-build/lib:"
-
-binPath = BAWBuildDir + "/bin:" + BAWBuildDir + "/lib"
-binPath=binPath.split(':')
-binPath.extend(os.environ['PATH'].split(':'))
-os.environ['PATH']=':'.join(binPath)
-
-Cluster_Script = get_global_sge_script( pythonPath, 
-                                        binPath
-                                      )
+#BAWSrcDir="/ipldev/scratch/eunyokim/src/BRAINSStandAlone/BRAINSStandAlone/"
+#BAWBuildDir="/ipldev/scratch/eunyokim/src/BRAINSStandAlone/build20121015/"
+#
+#pythonPath = BAWSrcDir+"/BRAINSCut/BRAINSFeatureCreators/RobustStatisticComputations:"+BAWSrcDir+"/AutoWorkup/:"+BAWSrcDir+"/AutoWorkup/BRAINSTools/:"+BAWBuildDir+"/SimpleITK-build/bin/"+BAWBuildDir+"/SimpleITK-build/lib:"
+#
+#binPath = BAWBuildDir + "/bin:" + BAWBuildDir + "/lib"
+#binPath=binPath.split(':')
+#binPath.extend(os.environ['PATH'].split(':'))
+#os.environ['PATH']=':'.join(binPath)
+#
+#Cluster_Script = get_global_sge_script( pythonPath, 
+#                                        binPath
+#                                      )
 myWF.run( plugin='SGE',
           plugin_args = dict( template = Cluster_Script, 
                               qsub_args = "-S /bin/bash -pe smp1 4-8 -o /dev/null -q all.q "))
