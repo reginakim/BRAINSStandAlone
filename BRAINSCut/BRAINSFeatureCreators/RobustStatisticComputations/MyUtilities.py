@@ -40,10 +40,13 @@ def SmoothProbabilityMap ( inputVolume,
 
   normalizeAcrossScale = False
 
-  smoother = sitk.SmoothingRecursiveGaussianImageFilter()
-  outImg = smoother.Execute( inImg, 
-                             sigma,
-                             normalizeAcrossScale )
+  if sigma <= 0:
+    outImg = inImg
+  else :
+    smoother = sitk.SmoothingRecursiveGaussianImageFilter()
+    outImg = smoother.Execute( inImg, 
+                               sigma,
+                               normalizeAcrossScale )
 
   sitk.WriteImage( outImg, outputVolume )
   returnFile = os.path.realpath( outputVolume )
@@ -94,7 +97,7 @@ def LabelStatistics ( inputLabel,
   print "################################################## Variance:: " + str(Variance)
 
   ## TODO 25/75 quantiles
-  LowerHalfMsk = sitk.BinaryThreshold( inImg, 0, Median )
+  LowerHalfMsk = sitk.BinaryThreshold( inImg, Minimum, Median )
   Quantile25Calculator = sitk.LabelStatisticsImageFilter()
   Quantile25Calculator.Execute( inImg, inMsk*LowerHalfMsk  )
   Quantile25 = Quantile25Calculator.GetMedian( labelValue )
@@ -112,11 +115,11 @@ def LabelStatistics ( inputLabel,
   AbsoluteFilter = sitk.AbsImageFilter()
   AbsImg = AbsoluteFilter.Execute( inImg-Median )
 
-  MEDCalculator = sitk.LabelStatisticsImageFilter()
-  MEDCalculator.Execute( AbsImg, inMsk )
-  MED = MEDCalculator.GetMedian( labelValue )
-  outputDictionary[ 'MED' ] = MED
-  print "################################################## MED:: " + str(MED)
+  MADCalculator = sitk.LabelStatisticsImageFilter()
+  MADCalculator.Execute( AbsImg, inMsk )
+  MAD = MADCalculator.GetMedian( labelValue )
+  outputDictionary[ 'MAD' ] = MAD
+  print "################################################## MAD:: " + str(MAD)
 
   import csv
   csvFile = open( outputCSVFilename, 'w')
@@ -128,20 +131,33 @@ def LabelStatistics ( inputLabel,
   import sys
   returnFile = os.path.realpath( outputCSVFilename )
 
-  returnDict = { 'outputStatDictionary': outputDictionary,
-                 'outputCSVFilename': returnFile }
-  return  returnDict
+  outputDictionarySet = dict( volume = inputVolume,
+                              labelVolume = inputLabel , 
+                              statDict = outputDictionary )
+  #returnDict = { 'outputStatDictionary': outputDictionary,
+  #               'outputCSVFilename': returnFile }
+  #return  returnDict
+  return returnFile, outputDictionarySet
 
 # --------------------------------------------------------------------------------------- #
-def NormalizeInputVolume ( inputMethod, 
+def NormalizeInputVolume ( inputVolume,
+                           inputMethod, 
                            inputStats,
                            outputVolume ):
   import SimpleITK as sitk
+  import os
+  from math import e
   
   inImg = sitk.Cast( sitk.ReadImage( inputVolume ),
                      sitk.sitkFloat32 )
 
   IQR = inputStats['Quantile75']-inputStats['Quantile25']
+
+  # create exp image
+  expImg = sitk.Image ( inImg.GetSize(), sitk.sitkFloat32 );
+  expImg.CopyInformation( inImg )
+  expImg = expImg * 0 # make zero image
+  expImg = expImg + e # make exp. image
 
   if inputMethod == 'zScore':
     print "zScore Normalization"
@@ -151,27 +167,45 @@ def NormalizeInputVolume ( inputMethod,
     outImg = (inImg - inputStats['Median']) / inputStats['MAD']
   elif inputMethod == 'Sigmoid':
     print "Sigmoid Normalization"
-    outImg = 1 / ( 1 + exp( -2 * ( inImg - inputStats['Median'] )/IQR ) )
+    outImg = 1 / ( 1 + expImg ** ( -2 * ( inImg - inputStats['Median'] )/IQR ) )
   elif inputMethod == 'QEstimator':
     print "QEstimator Normalization"
     outImg = (inImg - inputStats['Median']) / IQR
   elif inputMethod == 'Linear':
     print "Linear Normalization"
-    outImg = ( inImg - inputStats['Min'] ) / ( inputStats['Max']  - inputStats['Min'] )
+    outImg = ( inImg - inputStats['Minimum'] ) / ( inputStats['Maximum']  - inputStats['Minimum'] )
   elif inputMethod == 'DoubleSigmoid':
     print "Double Sigmoid Normalization"
-    temp1 = sitk.Threshold( inImg, inputStats['Min'], inputStats['Median'] )
-    outImg1 = 1 / ( 1 + exp( -2 * ( temp1 - inputStats['Median'] )/ 
-                        ( inputStats['Median']- inputStats['Quantile25']) ) )
-    temp2 = sitk.Threshold( inImg, ( inputStats['Median']+0.00001) , inputStats['Max'] )
-    outImg2 = 1 / ( 1 + exp( -2 * ( temp2 - ( inputStats['Median'] +0.00001) )/ 
-                        ( inputStats['Quantile75']- (inputStats['Median']+0.00001  )) ) )
-    outImg = outImg1 + outImg2 
 
-  sitk.WriteImage( outImg, outVolume )
-  returnFile = os.path.realpath( outVolume )
+
+    outMsk1 = sitk.BinaryThreshold( inImg, inputStats['Minimum'], inputStats['Median'] )
+    outImg1 = 1 / ( 1 + expImg  ** ( -2 * ( inImg - ( inputStats['Median'] ) )/ 
+                        (  inputStats['Median'] - inputStats['Quantile25'] ) ) )
+
+    outMsk2 = sitk.BinaryThreshold( inImg, ( inputStats['Median']+0.00001) , inputStats['Maximum'] )
+    outImg2 = 1 / ( 1 + expImg  ** ( -2 * ( inImg - inputStats['Median']  )/ 
+                        ( inputStats['Quantile75']- (inputStats['Median']+0.00001  )) ) )
+    outImg = outImg1*outMsk1 + outImg2*outMsk2
+
+  sitk.WriteImage( outImg, outputVolume )
+  returnFile = os.path.realpath( outputVolume )
 
   return returnFile
 
+# --------------------------------------------------------------------------------------- #
+def NormalizeAndComputeStatOfROI( inputSet_LabelStat,
+                                  inputMethod,
+                                  outputVolume,
+                                  outputCSVFilename ):
+  from MyUtilities import NormalizeInputVolume 
+  m_outputVolume = NormalizeInputVolume( inputSet_LabelStat['volume'], 
+                                         inputMethod, 
+                                         inputSet_LabelStat['statDict'],
+                                         outputVolume )
 
-    
+  from MyUtilities import LabelStatistics
+  m_outputCSV, m_outputDictSet = LabelStatistics( inputSet_LabelStat['labelVolume'], 
+                                                  m_outputVolume, 
+                                                  outputCSVFilename )
+  return m_outputCSV, m_outputVolume
+

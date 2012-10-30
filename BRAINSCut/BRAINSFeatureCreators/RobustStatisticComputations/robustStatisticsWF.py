@@ -103,7 +103,7 @@ dataSrc =  nio.DataGrabber( outfields = ['t1'])
 
 dataSrc.inputs.base_directory = "/hjohnson/TrackOn/Experiments/TrackOn_2012_Results/"
 dataSrc.inputs.template = '*'
-dataSrc.inputs.field_template = dict( t1 = 'HDNI*/*/*/TissueClassify/BABC//t1_average_BRAINSABC.nii.gz' )
+dataSrc.inputs.field_template = dict( t1 = 'HDNI_004/479821083/*/TissueClassify/BABC//t1_average_BRAINSABC.nii.gz' )
 results=dataSrc.run()
 
 print results.outputs.t1
@@ -137,8 +137,8 @@ findRestInputsFromT1.iterables = ('inputT1', results.outputs.t1)
 #Cluster_Script = get_global_sge_script( pythonPath, 
 #                                        binPath
 #                                      )
-myWF.run( plugin='SGE',
-          plugin_args = dict( template = Cluster_Script, 
-                              qsub_args = "-S /bin/bash -pe smp1 4-8 -o /dev/null -q all.q "))
+#myWF.run( plugin='SGE',
+#          plugin_args = dict( template = Cluster_Script, 
+#                              qsub_args = "-S /bin/bash -pe smp1 4-8 -o /dev/null -q all.q "))
 # else        
 myWF.run()

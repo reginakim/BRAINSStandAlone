@@ -20,7 +20,10 @@ def WFPerSubjectDef ( inputListOfSubjectVolumes,
   
   datasink.inputs.regexp_substitutions = [ ('_inputVolume.*BABC..', '') ,
                                            ('_Cache',''),
-                                           ('.nii.gz', '') ]
+                                           ('.nii.gz/', ''),
+                                           ('_inputMethod_',''),
+                                           ('/Normalized','_Normalized'),
+                                           ('_inputROI_',''),]
   
   # --------------------------------------------------------------------------------------- #
   # 1. Deform atlas to subject with really gross transform
@@ -150,8 +153,8 @@ def WFPerSubjectDef ( inputListOfSubjectVolumes,
                              interface = Function( input_names = ["inputLabel",
                                                                   "inputVolume",
                                                                   "outputCSVFilename"],
-                                                   output_names = ["outputStatDictionary",
-                                                                   "outputCSVFilename"],
+                                                   output_names = ["outputCSVFilename",
+                                                                   "outputDictionarySet"],
                                                    function = MyUtilities.LabelStatistics ),
                              iterfield = ["inputVolume"]
                             )
@@ -165,16 +168,25 @@ def WFPerSubjectDef ( inputListOfSubjectVolumes,
   WFPerSubject.connect( CreateMask_Node, "outputMask",
                         LabelStatistics_Node, "inputLabel" )
   
-  
   WFPerSubject.connect( LabelStatistics_Node, 'outputCSVFilename',
                         datasink, 'labelStatistics')
 
-
+   
+  print LabelStatistics_Node.outputs.outputCSVFilename
+  print LabelStatistics_Node.outputs.outputCSVFilename
+  print LabelStatistics_Node.outputs.outputCSVFilename
+  print LabelStatistics_Node.outputs.outputCSVFilename
+  print LabelStatistics_Node.outputs.outputCSVFilename
+  print LabelStatistics_Node.outputs.outputCSVFilename
+  print LabelStatistics_Node.outputs.outputCSVFilename
+  print LabelStatistics_Node.outputs.outputCSVFilename
   #return LabelStatistics_Node.outputs.outputCSVFilename
 
   # --------------------------------------------------------------------------------------- #
-  # 5. Linear Transform based on local statistics 
+  # 5. Linear Transform based on local statistics  and get statistics 
   #
+  # Statistics has to be computed only for the ROI that applies 
+
   NormalizationMethods = ['zScore', 
                           'MAD',
                           'DoubleSigmoid',
@@ -182,46 +194,31 @@ def WFPerSubjectDef ( inputListOfSubjectVolumes,
                           'QEstimator',
                           'Linear']
 
-  Normalization_Node = pe.Node( name = "05_LinearTransform",
-                           interface = Function( input_names = [ 'inputMethod',
-                                                                 'inputStats'],
-                                                 output_names = ['outputVolume'],
-                                                 function = MyUtilities.NormalizeInputVolume ),
-                           iterfield = ['inputMethod']
-                           )
-  Normalization_Node.iterables = ('inputMethod', NormalizationMethods )
+  NormalizeAndGetStatofROI_Node  = pe.Node( name = "05_NormalizeStats",
+                                            interface = Function( input_names = ['inputSet_LabelStat',
+                                                                                 'inputMethod',
+                                                                                 'outputVolume',
+                                                                                 'outputCSVFilename' ],
+                                                                  output_names = ['outputCSV',
+                                                                                  'outputVolume'],
+                                                        function = MyUtilities.NormalizeAndComputeStatOfROI ),
+                                            iterfield = ['inputMethod']
+                                          )
+  # inputs
+  NormalizeAndGetStatofROI_Node.iterables = ('inputMethod', NormalizationMethods )
+  NormalizeAndGetStatofROI_Node.inputs.outputVolume = "NormalizedVolume.nii.gz"
+  NormalizeAndGetStatofROI_Node.inputs.outputCSVFilename = "NormalizedVolumeStats.csv"
+  # connect to the work flow
+  WFPerSubject.add_nodes( [NormalizeAndGetStatofROI_Node] )
+  WFPerSubject.connect( LabelStatistics_Node, 'outputDictionarySet',
+                        NormalizeAndGetStatofROI_Node, 'inputSet_LabelStat')
   
-  WFPerSubject.connect( LabelStatistics_Node, 'outputStatDictionary',
-                        Normalization_Node, 'inputStats' )
+  # datasink
+  WFPerSubject.connect( NormalizeAndGetStatofROI_Node, 'outputCSV',
+                        datasink, 'labelStatistics.@Stat')
 
-  WFPerSubject.connect( Normalization_Node, 'outputVolume',
-                        datasink, 'NormalizedVolume' )
-
-
-  # --------------------------------------------------------------------------------------- #
-  # 6. Compute Mean/Std/Max/Min for the linearly transofromed ROIs 
-  #
-  ResultStatistic_Node = pe.Node( name = "ResultStatistic",
-                                  interface = Function( input_names = ["inputLabel",
-                                                                       "inputVolume",
-                                                                       "outputCSVFilename"],
-                                                        output_names = ["outputStatDictionary",
-                                                                        "outputCSVFilename"],
-                                                        function = MyUtilities.LabelStatistics ),
-                                 )
-
-  ResultStatistic_Node.inputs.outputCSVFilename = "labelStatistics.csv"
-  
-  WFPerSubject.add_nodes( [ResultStatistic_Node] )
-  
-  WFPerSubject.connect( Normalization_Node, "outputVolume",
-                        ResultStatistic_Node, "inputVolume" )
-  WFPerSubject.connect( CreateMask_Node, "outputMask",
-                        ResultStatistic_Node, "inputLabel" )
-  
-  
-  WFPerSubject.connect( ResultStatistic_Node, 'outputCSVFilename',
-                        datasink, 'ResultStatistics')
+  WFPerSubject.connect( NormalizeAndGetStatofROI_Node, 'outputVolume',
+                        datasink, 'labelStatistics.@Volume')
 
 
   WFPerSubject.run()
