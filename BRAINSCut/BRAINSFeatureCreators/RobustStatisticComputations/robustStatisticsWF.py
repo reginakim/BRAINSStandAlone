@@ -103,7 +103,7 @@ dataSrc =  nio.DataGrabber( outfields = ['t1'])
 
 dataSrc.inputs.base_directory = "/hjohnson/TrackOn/Experiments/TrackOn_2012_Results/"
 dataSrc.inputs.template = '*'
-dataSrc.inputs.field_template = dict( t1 = 'HDNI_004/479821083/*/TissueClassify/BABC//t1_average_BRAINSABC.nii.gz' )
+dataSrc.inputs.field_template = dict( t1 = 'HDNI_*/*/*/TissueClassify/BABC//t1_average_BRAINSABC.nii.gz' )
 results=dataSrc.run()
 
 print results.outputs.t1
