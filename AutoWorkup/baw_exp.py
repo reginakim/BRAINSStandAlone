@@ -99,10 +99,14 @@ def main(argv=None):
 
     # Platform specific information
     #     Prepend the python search paths
-    PYTHON_AUX_PATHS=expConfig.get(input_arguments.processingEnvironment,'PYTHON_AUX_PATHS')
-    PYTHON_AUX_PATHS=PYTHON_AUX_PATHS.split(':')
+    try:
+        PYTHON_AUX_PATHS = expConfig.get(input_arguments.processingEnvironment,'PYTHON_AUX_PATHS')
+    except TypeError, err:
+        print expConfig.items(input_arguments.processingEnvironment)
+        raise err
+    PYTHON_AUX_PATHS = PYTHON_AUX_PATHS.split(':')
     PYTHON_AUX_PATHS.extend(sys.path)
-    sys.path=PYTHON_AUX_PATHS
+    sys.path = PYTHON_AUX_PATHS
     ######################################################################################
     ###### Now ensure that all the required packages can be read in from this custom path
     #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
@@ -168,9 +172,9 @@ def main(argv=None):
         if BCDModelFile[-2:] == 'h5':
             BCDModelFile = os.path.join('Transforms_h5', BCDModelFile)
             if not os.path.exists(os.path.join(CACHE_BCDMODELPATH, 'Transforms_h5')):
-            os.mkdir(os.path.join(CACHE_BCDMODELPATH, 'Transforms_h5'))
+                os.mkdir(os.path.join(CACHE_BCDMODELPATH, 'Transforms_h5'))
         orig = os.path.join(BCDMODELPATH, BCDModelFile)
-        new = os.path.join(CACHE_BCDMODELPATH, BCDModelFiles)
+        new = os.path.join(CACHE_BCDMODELPATH, BCDModelFile)
         if not os.path.exists(CACHE_BCDMODELPATH):
             os.mkdir(CACHE_BCDMODELPATH)
         if not os.path.exists(new):

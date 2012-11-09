@@ -28,6 +28,7 @@ modules_list = [
   'BRAINSMultiModeSegment',
   'BRAINSROIAuto',
   'BRAINSResample',
+  'BRAINSSnapShotWriter',
   'BRAINSTrimForegroundInDirection',
   'ESLR',
   'VBRAINSDemonWarp',
