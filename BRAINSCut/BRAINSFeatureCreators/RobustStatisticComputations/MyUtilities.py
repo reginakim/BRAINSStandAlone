@@ -29,7 +29,7 @@ def ThresholdProbabilityMap ( inputVolume,
 
 # --------------------------------------------------------------------------------------- #
 def SmoothProbabilityMap ( inputVolume, 
-                           sigma,
+                           inputSigma,
                            outputVolume):
   import os
   import sys
@@ -40,10 +40,13 @@ def SmoothProbabilityMap ( inputVolume,
 
   normalizeAcrossScale = False
 
-  smoother = sitk.SmoothingRecursiveGaussianImageFilter()
-  outImg = smoother.Execute( inImg, 
-                             sigma,
-                             normalizeAcrossScale )
+  if inputSigma <= 0:
+    outImg = inImg
+  else :
+    smoother = sitk.SmoothingRecursiveGaussianImageFilter()
+    outImg = smoother.Execute( inImg,
+                               inputSigma,
+                               normalizeAcrossScale )
 
   sitk.WriteImage( outImg, outputVolume )
   returnFile = os.path.realpath( outputVolume )

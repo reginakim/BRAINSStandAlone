@@ -6,171 +6,181 @@ def WFPerSubjectDef ( inputListOfSubjectVolumes,
                       outputCacheDir,
                       outputResultsDir):
 
-  #
-  # workflow definition
-  #
-  import nipype.pipeline.engine as pe
-  
-  WFPerSubject = pe.Workflow(name="subject")
-  WFPerSubject.base_dir = outputCacheDir
-  
-  import nipype.interfaces.io as nio
-  datasink = pe.Node( nio.DataSink(), name = 'sinker' )
-  datasink.inputs.base_directory = ( outputResultsDir ) 
-  
-  datasink.inputs.regexp_substitutions = [ ('_inputVolume.*BABC..', '') ,
-                                           ('_Cache',''),
-                                           ('.nii.gz', '') ]
-  
-  # --------------------------------------------------------------------------------------- #
-  # 1. Deform atlas to subject with really gross transform
-  #
-  from BRAINSFit import BRAINSFit
-  
-  inputTemplateT1 = inputTemplateDir + "/template_t1.nii.gz"
-  
-  BFitAtlasToSubject = pe.Node( interface=BRAINSFit(),
-                                name="01_AtlasToSubjectRegistration")
-  
-  BFitAtlasToSubject.inputs.fixedVolume           = inputListOfSubjectVolumes['t1']
-  BFitAtlasToSubject.inputs.movingVolume          = inputTemplateT1
-  BFitAtlasToSubject.inputs.outputVolume          = "atlas_to_subject_warped.nii.gz"  
-  BFitAtlasToSubject.inputs.initialTransform      = inputListOfSubjectVolumes['transform']
-  BFitAtlasToSubject.inputs.outputTransform       = "atlas_to_subject.h5"  
-  
-  ## fixed parameter specification
-  BFitAtlasToSubject.inputs.costMetric = "MMI"
-  BFitAtlasToSubject.inputs.maskProcessingMode = "ROIAUTO"
-  BFitAtlasToSubject.inputs.numberOfSamples = 100000
-  BFitAtlasToSubject.inputs.numberOfIterations = [1500,1500,1500,1500]
-  BFitAtlasToSubject.inputs.numberOfHistogramBins = 50
-  BFitAtlasToSubject.inputs.maximumStepLength = 0.2
-  BFitAtlasToSubject.inputs.minimumStepLength = [0.005,0.005,0.005,0.005]
-  BFitAtlasToSubject.inputs.transformType = "ScaleVersor3D,ScaleSkewVersor3D,Affine,BSpline" 
-  BFitAtlasToSubject.inputs.relaxationFactor = 0.5  
-  BFitAtlasToSubject.inputs.translationScale = 1000
-  BFitAtlasToSubject.inputs.reproportionScale = 1  
-  BFitAtlasToSubject.inputs.skewScale = 1
-  BFitAtlasToSubject.inputs.useExplicitPDFDerivativesMode = "AUTO"  
-  BFitAtlasToSubject.inputs.useCachingOfBSplineWeightsMode = "ON"  
-  BFitAtlasToSubject.inputs.maxBSplineDisplacement = 7 
-  BFitAtlasToSubject.inputs.projectedGradientTolerance = 1e-05 
-  BFitAtlasToSubject.inputs.costFunctionConvergenceFactor = 1e+09 
-  BFitAtlasToSubject.inputs.backgroundFillValue = 0 
-  BFitAtlasToSubject.inputs.maskInferiorCutOffFromCenter = 65  
-  BFitAtlasToSubject.inputs.splineGridSize = [56,40,48] 
-  
-  ## add to workflow
-  WFPerSubject.add_nodes( [BFitAtlasToSubject])
-  
-  WFPerSubject.connect( BFitAtlasToSubject, 'outputTransform',
-                        datasink, '01_BFitAtlasToSubject')
-  
-  
-  # --------------------------------------------------------------------------------------- #
-  # 2. Warp Probability Maps
-  #
-  
-  rois     = [ "l_accumben" , "l_caudate" ,"l_putamen" ,"l_globus" ,"l_thalamus" ,"l_hippocampus",
-               "r_accumben" , "r_caudate" ,"r_putamen" ,"r_globus" ,"r_thalamus" ,"r_hippocampus" ]
-  
-  import MyUtilities  
-  from nipype.interfaces.utility import Function
-  GetProbabilityMapFilename = pe.Node( name = "utilGetProbabilityMapFilename", 
-                         interface = Function( input_names = ["inputROI", "inputDir"],
-                                               output_names = ["outputFilename"],
-                                               function = MyUtilities.GetProbabilityFilename ),
-                         iterfield = ["inputROI"]
-                        )
-  GetProbabilityMapFilename.iterables = ( "inputROI", rois )                        
-  GetProbabilityMapFilename.inputs.inputDir  = inputTemplateDir
-  
-  from BRAINSResample import BRAINSResample 
-  WarpProbabilityMap = pe.Node( interface=BRAINSResample(), 
-                                name = "02_WarpProabilityMap",
+    #
+    # workflow definition
+    #
+    import nipype.pipeline.engine as pe
+    
+    WFPerSubject = pe.Workflow(name="subject")
+    WFPerSubject.base_dir = outputCacheDir
+    
+    import nipype.interfaces.io as nio
+    datasink = pe.Node( nio.DataSink(), name = 'sinker' )
+    datasink.inputs.base_directory = ( outputResultsDir ) 
+    
+    datasink.inputs.regexp_substitutions = [ ('_inputVolume.*BABC..', '') ,
+                                             ('_Cache',''),
+                                             ('.nii.gz', '') ]
+    
+    # --------------------------------------------------------------------------------------- #
+    # 1. Deform atlas to subject with really gross transform
+    #
+    from BRAINSFit import BRAINSFit
+    
+    inputTemplateT1 = inputTemplateDir + "/template_t1.nii.gz"
+    
+    BFitAtlasToSubject = pe.Node( interface=BRAINSFit(),
+                                  name="01_AtlasToSubjectRegistration")
+    
+    BFitAtlasToSubject.inputs.fixedVolume           = inputListOfSubjectVolumes['t1']
+    BFitAtlasToSubject.inputs.movingVolume          = inputTemplateT1
+    BFitAtlasToSubject.inputs.outputVolume          = "atlas_to_subject_warped.nii.gz"  
+    BFitAtlasToSubject.inputs.initialTransform      = inputListOfSubjectVolumes['transform']
+    BFitAtlasToSubject.inputs.outputTransform       = "atlas_to_subject.h5"  
+    
+    ## fixed parameter specification
+    BFitAtlasToSubject.inputs.costMetric = "MMI"
+    BFitAtlasToSubject.inputs.maskProcessingMode = "ROIAUTO"
+    BFitAtlasToSubject.inputs.numberOfSamples = 100000
+    BFitAtlasToSubject.inputs.numberOfIterations = [1500,1500,1500,1500]
+    BFitAtlasToSubject.inputs.numberOfHistogramBins = 50
+    BFitAtlasToSubject.inputs.maximumStepLength = 0.2
+    BFitAtlasToSubject.inputs.minimumStepLength = [0.005,0.005,0.005,0.005]
+    BFitAtlasToSubject.inputs.transformType = "ScaleVersor3D,ScaleSkewVersor3D,Affine,BSpline" 
+    BFitAtlasToSubject.inputs.relaxationFactor = 0.5  
+    BFitAtlasToSubject.inputs.translationScale = 1000
+    BFitAtlasToSubject.inputs.reproportionScale = 1  
+    BFitAtlasToSubject.inputs.skewScale = 1
+    BFitAtlasToSubject.inputs.useExplicitPDFDerivativesMode = "AUTO"  
+    BFitAtlasToSubject.inputs.useCachingOfBSplineWeightsMode = "ON"  
+    BFitAtlasToSubject.inputs.maxBSplineDisplacement = 7 
+    BFitAtlasToSubject.inputs.projectedGradientTolerance = 1e-05 
+    BFitAtlasToSubject.inputs.costFunctionConvergenceFactor = 1e+09 
+    BFitAtlasToSubject.inputs.backgroundFillValue = 0 
+    BFitAtlasToSubject.inputs.maskInferiorCutOffFromCenter = 65  
+    BFitAtlasToSubject.inputs.splineGridSize = [56,40,48] 
+    
+    ## add to workflow
+    WFPerSubject.add_nodes( [BFitAtlasToSubject])
+    
+    WFPerSubject.connect( BFitAtlasToSubject, 'outputTransform',
+                          datasink, '01_BFitAtlasToSubject')
+    
+    
+    # --------------------------------------------------------------------------------------- #
+    # 2. Warp Probability Maps
+    #
+    
+    rois     = [ "l_accumben" , "l_caudate" ,"l_putamen" ,"l_globus" ,"l_thalamus" ,"l_hippocampus",
+                 "r_accumben" , "r_caudate" ,"r_putamen" ,"r_globus" ,"r_thalamus" ,"r_hippocampus" ]
+    
+    import MyUtilities  
+    from nipype.interfaces.utility import Function
+    GetProbabilityMapFilename = pe.Node( name = "utilGetProbabilityMapFilename", 
+                           interface = Function( input_names = ["inputROI", "inputDir"],
+                                                 output_names = ["outputFilename"],
+                                                 function = MyUtilities.GetProbabilityFilename )
+                          )
+    GetProbabilityMapFilename.iterables = ( "inputROI", rois )                        
+    GetProbabilityMapFilename.inputs.inputDir  = inputTemplateDir
+    
+    from BRAINSResample import BRAINSResample 
+    WarpProbabilityMap = pe.Node( interface=BRAINSResample(), 
+                                  name = "02_WarpProabilityMap",
+                                )
+    
+    WarpProbabilityMap.inputs.outputVolume    = "outputTemplateWarpedToSubject.nii.gz"
+    WarpProbabilityMap.inputs.referenceVolume = inputListOfSubjectVolumes['t1']
+    
+    ## add to the workflow and connect
+    WFPerSubject.add_nodes([ WarpProbabilityMap])
+    WFPerSubject.connect( GetProbabilityMapFilename , 'outputFilename',
+                          WarpProbabilityMap,'inputVolume' )
+    WFPerSubject.connect( BFitAtlasToSubject, 'outputTransform',
+                          WarpProbabilityMap,'warpTransform' )
+    WFPerSubject.connect( WarpProbabilityMap, 'outputVolume',
+                          datasink, '02_WarpedProbability' )
+
+    # --------------------------------------------------------------------------------------- #
+    # Smoothing 
+    #
+
+    # dummy node for sigmal iteration
+    from nipype.interfaces.utility import IdentityInterface
+    sigmaInputNode = pe.Node( interface = IdentityInterface( fields = ['sigma'] ),
+                              name="sigmaInput" )
+    sigmaInputNode.iterables = ( 'sigma' ,[0,0.5,1,1.5,2])
+    WFPerSubject.add_nodes([ sigmaInputNode] )
+
+
+    SmoothingProbMap = pe.Node( name = "SmoothingProbMap",
+                                interface = Function( input_names = ["inputVolume",
+                                                                     "inputSigma",
+                                                                     "outputVolume"],
+                                                      output_names = ["outputSmoothProbabilityMap"],
+                                                      function = MyUtilities.SmoothProbabilityMap )
                               )
-  
-  WarpProbabilityMap.inputs.outputVolume    = "outputTemplateWarpedToSubject.nii.gz"
-  WarpProbabilityMap.inputs.referenceVolume = inputListOfSubjectVolumes['t1']
-  
-  ## add to the workflow and connect
-  WFPerSubject.add_nodes([ WarpProbabilityMap])
-  WFPerSubject.connect( GetProbabilityMapFilename , 'outputFilename',
-                        WarpProbabilityMap,'inputVolume' )
-  WFPerSubject.connect( BFitAtlasToSubject, 'outputTransform',
-                        WarpProbabilityMap,'warpTransform' )
-  WFPerSubject.connect( WarpProbabilityMap, 'outputVolume',
-                        datasink, '02_WarpedProbability' )
+    WFPerSubject.add_nodes([ SmoothingProbMap ] )
+    WFPerSubject.connect( sigmaInputNode, 'sigma' ,
+                          SmoothingProbMap, 'inputSigma' )
+    WFPerSubject.connect( WarpProbabilityMap, 'outputVolume' ,
+                          SmoothingProbMap, 'inputVolume' )
 
-  # --------------------------------------------------------------------------------------- #
-  # Smoothing 
-  #
-  SmoothingProbMap = pe.Node( name = "SmoothProbabilityMap",
-                              interface = Function( input_names = ["inputVolume",
-                                                                   "inputSigma",
-                                                                   "outputVolume"],
-                                                    output_names = ["outputSmoothProbabilityMap"],
-                                                    function = MyUtilities.SmoothProbabilityMap ),
-                              iterfield = ["sigma"]
-                            )
-  SmoothingProbMap.iterables = ("sigma",[0,0.5,1,1.5,2,2.5,3])
-  SmoothingProbMap.inputs.outputVolume = "outputSmoothProbabilityMap"
-
-  WFPerSubject.connect( WarpProbabilityMap, 'outputVolume' ,
-                        SmoothingProbMap, 'inputVolume')
+    SmoothingProbMap.inputs.outputVolume= "outputSmoothProbabilityMap.nii.gz"
 
 
-  # --------------------------------------------------------------------------------------- #
-  # 3. Create Mask by Threshold
-  #
-  CreateMask = pe.Node( name = "03_CreateMask",
-                        interface = Function( input_names = ["inputVolume",
-                                                             "lowerThreshold",
-                                                             "upperThreshold",
-                                                             "outputFilename"],
-                                              output_names = ["outputMask"],
-                                              function =  MyUtilities.ThresholdProbabilityMap )
-                        )
-  
-  CreateMask.inputs.lowerThreshold = 0.05
-  CreateMask.inputs.upperThreshold = 0.95
-  CreateMask.inputs.outputFilename = "roiMask.nii.gz"
-  
-  WFPerSubject.add_nodes( [CreateMask ] )
-  WFPerSubject.connect( SmoothingProbMap, 'outputSmoothProbabilityMap',
-                        CreateMask, 'inputVolume')
-  
-  WFPerSubject.connect( CreateMask, 'outputMask',
-                        datasink, '03_ROI' )
-#  
-  # --------------------------------------------------------------------------------------- #
-  # 4. Compute Statistice 
-  #
-  LabelStatistics = pe.Node( name = "04_LabelStatistics",
-                             interface = Function( input_names = ["inputLabel",
-                                                                  "inputVolume",
-                                                                  "outputCSVFilename"],
-                                                   output_names = ["outputCSVFilename"],
-                                                   function = MyUtilities.LabelStatistics ),
-                             iterfield = ["inputVolume"]
-                            )
-  LabelStatistics.iterables  = ("inputVolume", [ inputListOfSubjectVolumes['t1'], 
-                                                 inputListOfSubjectVolumes['t2']]
-                               )
-  LabelStatistics.inputs.outputCSVFilename = "labelStatistics.csv"
-  
-  WFPerSubject.add_nodes( [LabelStatistics] )
-  
-  WFPerSubject.connect( CreateMask, "outputMask",
-                        LabelStatistics, "inputLabel" )
-  
-  
-  WFPerSubject.connect( LabelStatistics, 'outputCSVFilename',
-                        datasink, 'labelStatistics')
-  WFPerSubject.run()
-  WFPerSubject.write_graph(graph2use='orig')
 
-  return LabelStatistics.outputs.outputCSVFilename
+
+
+
+
+    # --------------------------------------------------------------------------------------- #
+    # 3. Create Mask by Threshold
+    #
+    CreateMask = pe.Node( name = "03_CreateMask",
+                          interface = Function( input_names = ["inputVolume",
+                                                               "lowerThreshold",
+                                                               "upperThreshold",
+                                                               "outputFilename"],
+                                                output_names = ["outputMask"],
+                                                function =  MyUtilities.ThresholdProbabilityMap )
+                          )
+    
+    CreateMask.inputs.lowerThreshold = 0.05
+    CreateMask.inputs.upperThreshold = 0.95
+    CreateMask.inputs.outputFilename = "roiMask.nii.gz"
+    
+    WFPerSubject.add_nodes( [CreateMask ] )
+    WFPerSubject.connect( SmoothingProbMap, 'outputSmoothProbabilityMap',
+                          CreateMask, 'inputVolume')
+    
+    WFPerSubject.connect( CreateMask, 'outputMask',
+                          datasink, '03_ROI' )
+#    
+    # --------------------------------------------------------------------------------------- #
+    # 4. Compute Statistice 
+    #
+    LabelStatistics = pe.Node( name = "04_LabelStatistics",
+                               interface = Function( input_names = ["inputLabel",
+                                                                    "inputVolume",
+                                                                    "outputCSVFilename"],
+                                                     output_names = ["outputCSVFilename"],
+                                                     function = MyUtilities.LabelStatistics ),
+                              )
+    LabelStatistics.iterables  = ("inputVolume", [ inputListOfSubjectVolumes['t1'], 
+                                                   inputListOfSubjectVolumes['t2']]
+                                 )
+    LabelStatistics.inputs.outputCSVFilename = "labelStatistics.csv"
+    
+    WFPerSubject.add_nodes( [LabelStatistics] )
+    WFPerSubject.connect( CreateMask, "outputMask",
+                          LabelStatistics, "inputLabel" )
+    WFPerSubject.connect( LabelStatistics, 'outputCSVFilename',
+                          datasink, 'labelStatistics')
+    WFPerSubject.run()
+    WFPerSubject.write_graph(graph2use='orig')
+
+    return LabelStatistics.outputs.outputCSVFilename
   ## end }
 
 
