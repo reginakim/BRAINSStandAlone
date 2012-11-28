@@ -11,6 +11,7 @@
 #include <itkSigmoidImageFilter.h>
 #include <itkImageDuplicator.h>
 #include <itkLabelStatisticsImageFilter.h>
+#include <itkStatisticsImageFilter.h>
 #include <itkBinaryFillholeImageFilter.h>
 
 
@@ -412,7 +413,7 @@ BRAINSCutApplyModel
       maskVolume = ThresholdImageAtLower( continuousImage, threshold);
 
       /* Get One label */
-      maskVolume = GetOneConnectedRegion( maskVolume );
+      maskVolume = GetOneConnectedRegion( maskVolume , 1);
 
       /* opening and closing to get rid of island and holes */
       maskVolume = Closing( maskVolume );
@@ -447,6 +448,7 @@ BRAINSCutApplyModel
   resultLabel -> FillBuffer( 0 );
  
   int labelNumber=1;
+  float openingSize = 0.1;
 
 
   for( ValidLableValuesType::const_iterator vIt = labelStat->GetValidLabelValues().begin();
@@ -460,13 +462,24 @@ BRAINSCutApplyModel
     if( labelStat->HasLabel( *vIt) && *vIt )  // ignore label zero
       {
       LabelImagePointerType tempExtractedBinaryImage = ExtractLabel( labelImage, *vIt );
-      itkUtil::WriteImage< LabelImageType > ( tempExtractedBinaryImage, "TempBinaryImage_Extracted.nii.gz");
+      //itkUtil::WriteImage< LabelImageType > ( tempExtractedBinaryImage, "TempBinaryImage_Extracted.nii.gz");
+      typedef itk::StatisticsImageFilter< LabelImageType > StatFilterType;
+      StatFilterType::Pointer nCounter = StatFilterType::New();
+      nCounter->SetInput( tempExtractedBinaryImage );
+      nCounter->Update();
 
       LabelImagePointerType tempBinaryImage;
+      if( nCounter->GetSum() < 1000 ) { openingSize = 0.5; }
+      else { openingSize = 0.9; }
 
       tempBinaryImage = FillHole( tempExtractedBinaryImage );
-      tempBinaryImage = GetOneConnectedRegion( tempBinaryImage );
-      tempBinaryImage = Closing( tempBinaryImage );
+
+      tempBinaryImage = GetOneConnectedRegion( tempBinaryImage,
+                                               openingSize );
+      tempBinaryImage = GetOneConnectedRegion( tempBinaryImage,
+                                               openingSize );
+      tempBinaryImage = Closing( tempBinaryImage);
+
 
       resultLabel = CombineLabel( resultLabel, tempBinaryImage, *vIt );
       }
@@ -548,19 +561,21 @@ BRAINSCutApplyModel
 
 LabelImagePointerType
 BRAINSCutApplyModel
-::GetOneConnectedRegion( LabelImagePointerType& image )
+::GetOneConnectedRegion( LabelImagePointerType& image, float openingSize )
 {
+  std::cout<<"openingsize::"<<openingSize<<std::endl;
   LabelImagePointerType resultMask;
   try
     {
     /*  Opening */
     //#include <itkBinaryOpeningByReconstructionImageFilter.h> consider this
-    typedef itk::BinaryBallStructuringElement<LabelImageType::PixelType, DIMENSION> KernelType;
+    typedef itk::BinaryBallStructuringElement< float, DIMENSION> KernelType;
+    //typedef itk::BinaryBallStructuringElement<LabelImageType::PixelType, DIMENSION> KernelType;
     KernelType           ball;
     KernelType::SizeType ballSize;
 
     /* Create the structuring element- a disk of radius 2 */
-    ballSize.Fill(0.2);
+    ballSize.Fill( openingSize );
     ball.SetRadius( ballSize );
     ball.CreateStructuringElement();
     typedef itk::BinaryMorphologicalOpeningImageFilter<LabelImageType,
@@ -627,7 +642,7 @@ BRAINSCutApplyModel
   KernelType::SizeType ballSize;
 
   /* Create the structuring element- a disk of radius 2 */
-  ballSize.Fill(2);
+  ballSize.Fill(1);
   ball.SetRadius( ballSize );
   ball.CreateStructuringElement();
 

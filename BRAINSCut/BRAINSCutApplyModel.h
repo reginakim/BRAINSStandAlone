@@ -4,7 +4,8 @@
 #include "BRAINSCutDataHandler.h"
 #include "FeatureInputVector.h"
 
-typedef itk::Image<unsigned char, DIMENSION> LabelImageType;
+typedef unsigned char LabelPixelType;
+typedef itk::Image<LabelPixelType, DIMENSION> LabelImageType;
 typedef LabelImageType::Pointer             LabelImagePointerType;
 
 class BRAINSCutApplyModel
@@ -50,7 +51,7 @@ public:
 
   LabelImagePointerType ExtractLabel( const LabelImagePointerType& image, unsigned char thresholdValue );
 
-  LabelImagePointerType GetOneConnectedRegion( LabelImagePointerType& image );
+  LabelImagePointerType GetOneConnectedRegion( LabelImagePointerType& image, float openingSize );
 
   LabelImagePointerType FillHole( LabelImagePointerType& mask);
 
