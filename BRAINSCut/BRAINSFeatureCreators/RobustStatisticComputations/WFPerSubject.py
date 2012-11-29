@@ -128,12 +128,6 @@ def WFPerSubjectDef ( inputListOfSubjectVolumes,
 
     SmoothingProbMap.inputs.outputVolume= "outputSmoothProbabilityMap.nii.gz"
 
-
-
-
-
-
-
     # --------------------------------------------------------------------------------------- #
     # 3. Create Mask by Threshold
     #
@@ -164,7 +158,8 @@ def WFPerSubjectDef ( inputListOfSubjectVolumes,
                                interface = Function( input_names = ["inputLabel",
                                                                     "inputVolume",
                                                                     "outputCSVFilename"],
-                                                     output_names = ["outputCSVFilename"],
+                                                     output_names = ["outputCSVFilename",
+                                                                     "outputDictionarySet"],
                                                      function = MyUtilities.LabelStatistics ),
                               )
     LabelStatistics.iterables  = ("inputVolume", [ inputListOfSubjectVolumes['t1'], 
@@ -177,13 +172,56 @@ def WFPerSubjectDef ( inputListOfSubjectVolumes,
                           LabelStatistics, "inputLabel" )
     WFPerSubject.connect( LabelStatistics, 'outputCSVFilename',
                           datasink, 'labelStatistics')
+    # --------------------------------------------------------------------------------------- #
+    # 5. Linear Transform based on local statistics  and get statistics 
+    #
+    # Statistics has to be computed only for the ROI that applies 
+
+    # dummy node for normalization iteration
+    from nipype.interfaces.utility import IdentityInterface
+    normalizationListNode= pe.Node( interface = IdentityInterface( fields = ['normalization'] ),
+                              name="normalization" )
+    NormalizationMethods = ['zScore', 
+                            'MAD',
+                            'DoubleSigmoid',
+                            'Sigmoid',
+                            'QEstimator',
+                            'Linear']
+    normalizationListNode.iterables = ( 'normalization' , NormalizationMethods)
+    WFPerSubject.add_nodes([ normalizationListNode ] )
+
+
+    NormalizeAndGetStatofROI_Node  = pe.Node( name = "05_NormalizeStats",
+                                              interface = Function( input_names = ['inputSet_LabelStat',
+                                                                                   'inputMethod',
+                                                                                   'outputVolume',
+                                                                                   'outputCSVFilename' ],
+                                                                    output_names = ['outputCSV',
+                                                                                    'outputVolume'],
+                                                          function = MyUtilities.NormalizeAndComputeStatOfROI )
+                                            )
+    # inputs
+
+    NormalizeAndGetStatofROI_Node.inputs.outputVolume = "NormalizedVolume.nii.gz"
+    NormalizeAndGetStatofROI_Node.inputs.outputCSVFilename = "NormalizedVolumeStats.csv"
+    # connect to the work flow
+    WFPerSubject.add_nodes( [NormalizeAndGetStatofROI_Node] )
+    WFPerSubject.connect( LabelStatistics, 'outputDictionarySet',
+                          NormalizeAndGetStatofROI_Node, 'inputSet_LabelStat')
+    WFPerSubject.connect( normalizationListNode, 'normalization',
+                          NormalizeAndGetStatofROI_Node, 'inputMethod')
+    
+    # datasink
+    WFPerSubject.connect( NormalizeAndGetStatofROI_Node, 'outputCSV',
+                          datasink, 'labelStatistics.@Stat')
+
+    WFPerSubject.connect( NormalizeAndGetStatofROI_Node, 'outputVolume',
+                          datasink, 'labelStatistics.@Volume')
     WFPerSubject.run()
     WFPerSubject.write_graph(graph2use='orig')
 
     return LabelStatistics.outputs.outputCSVFilename
-  ## end }
-
-
+    ## end }
 
 
 

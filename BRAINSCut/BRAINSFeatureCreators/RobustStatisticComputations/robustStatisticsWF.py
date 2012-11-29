@@ -110,6 +110,9 @@ def main(argv=None):
     argParser = argparse.ArgumentParser( description = 'Run Statistical Analysis')
     group = argParser.add_argument_group('Required')
 
+    group.add_argument( '--runOption', action="store", 
+                        dest='runOption', required=True,
+                            help='Basic will run on your local machine while cluster uses OsX')
     group.add_argument( '--inputBAWDir', action="store", 
                             dest='inputBAWDir', required=True,
                             help='The input BAW directory to look for t1/t2 average images')
@@ -234,14 +237,16 @@ def main(argv=None):
 
     ###########################################
     
-    Cluster_Script = get_global_sge_script( PYTHON_AUX_PATHS, 
-                                            PROGRAM_PATHS,
-                                            {}
-                                          )
-    #myWF.run( plugin='SGE',
-    #          plugin_args = dict( template = Cluster_Script, 
-    #                              qsub_args = "-S /bin/bash -pe smp1 4-8 -o /dev/null -q OSX "))
-    myWF.run()
+    if inputArg.runOption == "cluster":
+        Cluster_Script = get_global_sge_script( PYTHON_AUX_PATHS, 
+                                                PROGRAM_PATHS,
+                                                {}
+                                              )
+        myWF.run( plugin='SGE',
+                  plugin_args = dict( template = Cluster_Script, 
+                                      qsub_args = "-S /bin/bash -pe smp1 4-8 -o /dev/null -q OSX "))
+    else:
+        myWF.run()
 #--------------------------------------------------------------------------------------- }#
 
 if __name__ == "__main__":
