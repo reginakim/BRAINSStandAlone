@@ -64,7 +64,7 @@ FeatureInputVector
   this->imagesOfInterestInOrder.clear();
   this->spatialLocations.clear();
   this->gradientOfROI.clear();
-  this->minmax.clear();
+  this->m_minmax.clear();
   this->candidateROIs.clear();
 
 }
@@ -239,6 +239,7 @@ void
 FeatureInputVector
 ::SetNormalizationParameters( std::string ROIName )
 {
+  const unsigned char defaultLabel = 1;
   /* threshold roi */
   typedef itk::BinaryThresholdImageFilter<WorkingImageType,
                                           BinaryImageType> ThresholdType;
@@ -247,12 +248,13 @@ FeatureInputVector
 
   thresholder->SetInput( candidateROIs.find( ROIName)->second );
   thresholder->SetLowerThreshold( 0.0F + FLOAT_TOLERANCE );
-  thresholder->SetInsideValue(1);
+  thresholder->SetInsideValue( defaultLabel );
   thresholder->Update();
 
   /* get min and max for each image type*/
 
   minmaxPairVectorType currentMinMaxVector;
+  normParamROIMapType currentROIParameter;
   for( WorkingImageVectorType::const_iterator eachTypeOfImage = imagesOfInterestInOrder.begin();
        eachTypeOfImage != imagesOfInterestInOrder.end();
        ++eachTypeOfImage )
@@ -260,10 +262,32 @@ FeatureInputVector
     BinaryImageType::Pointer binaryImage = thresholder->GetOutput();
     minmaxPairType           eachMinMax = SetMinMaxOfSubject( binaryImage, *eachTypeOfImage );
     currentMinMaxVector.push_back( eachMinMax );
+
+    // 
+    // better do here
+    typedef itk::LabelStatisticsImageFilter<WorkingImageType, BinaryImageType> StatisticCalculatorType;
+    StatisticCalculatorType::Pointer statisticCalculator = StatisticCalculatorType::New();
+
+    statisticCalculator->SetInput( *eachTypeOfImage );
+    statisticCalculator->SetLabelInput( binaryImage );
+
+    statisticCalculator->Update();
+    currentROIParameter[ "Minimum" ] =  statisticCalculator->GetMinimum( defaultLabel );
+    currentROIParameter[ "Maximum" ] =  statisticCalculator->GetMaximum( defaultLabel );
+    currentROIParameter[ "Mean" ] =  statisticCalculator->GetMean( defaultLabel );
+    currentROIParameter[ "Median" ] =  statisticCalculator->GetMedian( defaultLabel );
+
+    statisticCalculator->SetUseHistograms( true);
+    statisticCalculator->Update();
+    StatisticCalculatorType::HistogramPointer histogram = statisticCalculator->GetHistogram( defaultLabel );
+    currentROIParameter[ "Q_25" ] = histogram->Quantile( 0, 0.25 ); 
+    currentROIParameter[ "Q_75" ] = histogram->Quantile( 0, 0.75 ); 
+    currentROIParameter[ "Q_95" ] = histogram->Quantile( 0, 0.95 ); 
+    currentROIParameter[ "Q_05" ] = histogram->Quantile( 0, 0.05 ); 
     }
 
-  minmax[ROIName] = currentMinMaxVector;
-
+  m_minmax[ROIName] = currentMinMaxVector;
+  m_statistics[ ROIName ] = currentROIParameter ;
 }
 
 /** inline functions */
@@ -441,7 +465,7 @@ void
 FeatureInputVector
 ::NormalizationOfVector( InputVectorMapType& currentFeatureVector, std::string ROIName )
 {
-  minmaxPairVectorType currentMinmaxPairVector = minmax.find(ROIName)->second;
+  minmaxPairVectorType currentMinmaxPairVector = m_minmax.find(ROIName)->second;
 
   for( InputVectorMapType::iterator eachInputVector = currentFeatureVector.begin();
        eachInputVector != currentFeatureVector.end();

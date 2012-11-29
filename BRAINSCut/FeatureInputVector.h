@@ -44,6 +44,10 @@ public:
   typedef std::pair<scalarType, scalarType> minmaxPairType;
   typedef std::vector<minmaxPairType>       minmaxPairVectorType;
 
+  /* normalizationParameters */
+  typedef std::map<std::string, scalarType>            normParamROIMapType; // ( 'min', v1),('max',v2),..
+  typedef std::map<std::string, normParamROIMapType >  normParamType;
+
   /** set functions */
   void SetGradientSize( unsigned int length);
 
@@ -102,7 +106,8 @@ private:
   /*  mapping from ROIname to the vector of mean/max
    *  for given serios of imagesOfInterestInOrder
    */
-  std::map<std::string, minmaxPairVectorType> minmax;
+  std::map<std::string, minmaxPairVectorType> m_minmax;
+  normParamType m_statistics;
 
   /** private functions */
   //void ComputeFeatureInputOfROI( std::string ROIName);
