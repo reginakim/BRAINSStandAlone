@@ -61,11 +61,19 @@ FeatureInputVector
 FeatureInputVector
 ::~FeatureInputVector() 
 {
+<<<<<<< HEAD
   this->m_imagesOfInterestInOrder.clear();
   this->m_spatialLocations.clear();
   this->m_gradientOfROI.clear();
   this->m_minmax.clear();
   this->m_candidateROIs.clear();
+=======
+  this->imagesOfInterestInOrder.clear();
+  this->spatialLocations.clear();
+  this->gradientOfROI.clear();
+  this->m_minmax.clear();
+  this->candidateROIs.clear();
+>>>>>>> ac2e6bf... ENH: Normalization Parameter
 
 }
 void
@@ -253,16 +261,25 @@ FeatureInputVector
 
   /* get min and max for each image type*/
 
+<<<<<<< HEAD
+  m_minmaxPairVectorType currentMinMaxVector;
+  for( WorkingImageVectorType::const_iterator eachTypeOfImage = m_imagesOfInterestInOrder.begin();
+       eachTypeOfImage != m_imagesOfInterestInOrder.end();
+=======
   minmaxPairVectorType currentMinMaxVector;
   normParamROIMapType currentROIParameter;
   for( WorkingImageVectorType::const_iterator eachTypeOfImage = imagesOfInterestInOrder.begin();
        eachTypeOfImage != imagesOfInterestInOrder.end();
+>>>>>>> ac2e6bf... ENH: Normalization Parameter
        ++eachTypeOfImage )
     {
     BinaryImageType::Pointer binaryImage = thresholder->GetOutput();
     m_minmaxPairType           eachMinMax = SetMinMaxOfSubject( binaryImage, *eachTypeOfImage );
     currentMinMaxVector.push_back( eachMinMax );
 
+<<<<<<< HEAD
+  m_minmax[ROIName] = currentMinMaxVector;
+=======
     // 
     // better do here
     typedef itk::LabelStatisticsImageFilter<WorkingImageType, BinaryImageType> StatisticCalculatorType;
@@ -285,6 +302,7 @@ FeatureInputVector
     currentROIParameter[ "Q_95" ] = histogram->Quantile( 0, 0.95 ); 
     currentROIParameter[ "Q_05" ] = histogram->Quantile( 0, 0.05 ); 
     }
+>>>>>>> ac2e6bf... ENH: Normalization Parameter
 
   m_minmax[ROIName] = currentMinMaxVector;
   m_statistics[ ROIName ] = currentROIParameter ;
@@ -465,7 +483,11 @@ void
 FeatureInputVector
 ::NormalizationOfVector( InputVectorMapType& currentFeatureVector, std::string ROIName )
 {
+<<<<<<< HEAD
   m_minmaxPairVectorType currentMinmaxPairVector = m_minmax.find(ROIName)->second;
+=======
+  minmaxPairVectorType currentMinmaxPairVector = m_minmax.find(ROIName)->second;
+>>>>>>> ac2e6bf... ENH: Normalization Parameter
 
   for( InputVectorMapType::iterator eachInputVector = currentFeatureVector.begin();
        eachInputVector != currentFeatureVector.end();

@@ -239,7 +239,6 @@ void
 FeatureInputVector
 ::SetNormalizationParameters( std::string ROIName )
 {
-  const unsigned char defaultLabel = 1;
   /* threshold roi */
   typedef itk::BinaryThresholdImageFilter<WorkingImageType,
                                           BinaryImageType> ThresholdType;
@@ -248,46 +247,23 @@ FeatureInputVector
 
   thresholder->SetInput( m_candidateROIs.find( ROIName)->second );
   thresholder->SetLowerThreshold( 0.0F + FLOAT_TOLERANCE );
-  thresholder->SetInsideValue( defaultLabel );
+  thresholder->SetInsideValue(1);
   thresholder->Update();
 
   /* get min and max for each image type*/
 
-  minmaxPairVectorType currentMinMaxVector;
-  normParamROIMapType currentROIParameter;
-  for( WorkingImageVectorType::const_iterator eachTypeOfImage = imagesOfInterestInOrder.begin();
-       eachTypeOfImage != imagesOfInterestInOrder.end();
+  m_minmaxPairVectorType currentMinMaxVector;
+  for( WorkingImageVectorType::const_iterator eachTypeOfImage = m_imagesOfInterestInOrder.begin();
+       eachTypeOfImage != m_imagesOfInterestInOrder.end();
        ++eachTypeOfImage )
     {
     BinaryImageType::Pointer binaryImage = thresholder->GetOutput();
     m_minmaxPairType           eachMinMax = SetMinMaxOfSubject( binaryImage, *eachTypeOfImage );
     currentMinMaxVector.push_back( eachMinMax );
-
-    // 
-    // better do here
-    typedef itk::LabelStatisticsImageFilter<WorkingImageType, BinaryImageType> StatisticCalculatorType;
-    StatisticCalculatorType::Pointer statisticCalculator = StatisticCalculatorType::New();
-
-    statisticCalculator->SetInput( *eachTypeOfImage );
-    statisticCalculator->SetLabelInput( binaryImage );
-
-    statisticCalculator->Update();
-    currentROIParameter[ "Minimum" ] =  statisticCalculator->GetMinimum( defaultLabel );
-    currentROIParameter[ "Maximum" ] =  statisticCalculator->GetMaximum( defaultLabel );
-    currentROIParameter[ "Mean" ] =  statisticCalculator->GetMean( defaultLabel );
-    currentROIParameter[ "Median" ] =  statisticCalculator->GetMedian( defaultLabel );
-
-    statisticCalculator->SetUseHistograms( true);
-    statisticCalculator->Update();
-    StatisticCalculatorType::HistogramPointer histogram = statisticCalculator->GetHistogram( defaultLabel );
-    currentROIParameter[ "Q_25" ] = histogram->Quantile( 0, 0.25 ); 
-    currentROIParameter[ "Q_75" ] = histogram->Quantile( 0, 0.75 ); 
-    currentROIParameter[ "Q_95" ] = histogram->Quantile( 0, 0.95 ); 
-    currentROIParameter[ "Q_05" ] = histogram->Quantile( 0, 0.05 ); 
     }
 
   m_minmax[ROIName] = currentMinMaxVector;
-  m_statistics[ ROIName ] = currentROIParameter ;
+
 }
 
 /** inline functions */

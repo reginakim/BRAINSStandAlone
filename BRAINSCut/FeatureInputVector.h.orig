@@ -106,8 +106,12 @@ private:
   /*  mapping from ROIname to the vector of mean/max
    *  for given serios of m_imagesOfInterestInOrder
    */
+<<<<<<< HEAD
+  std::map<std::string, m_minmaxPairVectorType> m_minmax;
+=======
   std::map<std::string, minmaxPairVectorType> m_minmax;
   normParamType m_statistics;
+>>>>>>> ac2e6bf... ENH: Normalization Parameter
 
   /** private functions */
   //void ComputeFeatureInputOfROI( std::string ROIName);
