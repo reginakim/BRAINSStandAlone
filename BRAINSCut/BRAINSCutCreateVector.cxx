@@ -95,7 +95,7 @@ BRAINSCutCreateVector
   inputVectorGenerator.SetCandidateROIs( deformedROIs);
   inputVectorGenerator.SetROIInOrder( m_myDataHandler.GetROIIDsInOrder() );
   inputVectorGenerator.SetInputVectorSize();
-  inputVectorGenerator.SetNormalization( m_myDataHandler.GetNormalization() );
+  inputVectorGenerator.SetNormalizationMethod( m_myDataHandler.GetNormalizationMethod() );
 
   m_inputVectorSize = inputVectorGenerator.GetInputVectorSize(); // TODO
   m_outputVectorSize = m_myDataHandler.GetROIIDsInOrder().size();

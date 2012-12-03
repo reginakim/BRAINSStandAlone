@@ -33,6 +33,14 @@ struct pairedTrainingSetType
   unsigned int size;
   };
 
+/* normalization type */
+enum FeatureNormalizationMethodEnum
+  {
+  Linear,
+  Sigmoid,
+  DoubleSigmoid,
+  zScore
+  };
 /*
  * constant
  */

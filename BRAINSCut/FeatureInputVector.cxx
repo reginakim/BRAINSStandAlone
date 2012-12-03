@@ -50,12 +50,19 @@ FeatureInputVector
 FeatureInputVector
 ::FeatureInputVector() :
   m_gradientSize(-1),
-  m_normalization(false)
+  m_normalizationMethod("None")
 {
   m_spatialLocations.clear();
   m_candidateROIs.clear();
   m_gradientOfROI.clear();
   m_imageInterpolator = ImageLinearInterpolatorType::New();
+
+  m_featureNormalizationMap[ "None" ] = None;
+  m_featureNormalizationMap[ "Linear" ] = Linear;
+  m_featureNormalizationMap[ "Sigmoid" ] = Sigmoid;
+  m_featureNormalizationMap[ "DoubleSigmoid" ] = DoubleSigmoid;
+  m_featureNormalizationMap[ "zScore" ] = zScore;
+
 }
 
 FeatureInputVector
@@ -164,9 +171,29 @@ FeatureInputVector
 
 void
 FeatureInputVector
-::SetNormalization( const bool doNormalize)
+::SetLinearNormalizationOn( )
 {
-  m_normalization = doNormalize;
+  SetNormalizationMethod ( "Linear" );
+}
+
+void
+FeatureInputVector
+::SetNormalizationMethod( const std::string normalizationMethod )
+{
+    switch( m_featureNormalizationMap[ normalizationMethod ] )
+        {
+        case Linear:
+        case Sigmoid:
+        case DoubleSigmoid:
+        case zScore:
+          m_normalizationMethod = normalizationMethod;
+          break;
+        default:
+          std::cout<<"ERROR: No normalization method type support of "
+                   << normalizationMethod <<std::endl;
+          std::exit( EXIT_FAILURE );
+        }
+    return;
 };
 /*
 InputVectorMapType
@@ -222,11 +249,8 @@ FeatureInputVector
     }
 
   /* m_normalization */
-  if( m_normalization )
-    {
-    SetNormalizationParameters( ROIName );
-    NormalizationOfVector( currentFeatureVector, ROIName );
-    }
+  SetNormalizationParameters( ROIName );
+  NormalizationOfVector( currentFeatureVector, ROIName );
 
   /* insert computed vector */
   featureInputOfROI.insert(std::pair<std::string, InputVectorMapType>( ROIName, currentFeatureVector) );
@@ -255,12 +279,12 @@ FeatureInputVector
 
   minmaxPairVectorType currentMinMaxVector;
   normParamROIMapType currentROIParameter;
-  for( WorkingImageVectorType::const_iterator eachTypeOfImage = imagesOfInterestInOrder.begin();
-       eachTypeOfImage != imagesOfInterestInOrder.end();
+  for( WorkingImageVectorType::const_iterator eachTypeOfImage = m_imagesOfInterestInOrder.begin();
+       eachTypeOfImage != m_imagesOfInterestInOrder.end();
        ++eachTypeOfImage )
     {
     BinaryImageType::Pointer binaryImage = thresholder->GetOutput();
-    m_minmaxPairType           eachMinMax = SetMinMaxOfSubject( binaryImage, *eachTypeOfImage );
+    minmaxPairType           eachMinMax = SetMinMaxOfSubject( binaryImage, *eachTypeOfImage );
     currentMinMaxVector.push_back( eachMinMax );
 
     // 
@@ -271,19 +295,29 @@ FeatureInputVector
     statisticCalculator->SetInput( *eachTypeOfImage );
     statisticCalculator->SetLabelInput( binaryImage );
 
+    statisticCalculator->SetHistogramParameters( 100, 
+                                                 0.0F,
+                                                 1.0F );
+    statisticCalculator->SetUseHistograms( true);
     statisticCalculator->Update();
     currentROIParameter[ "Minimum" ] =  statisticCalculator->GetMinimum( defaultLabel );
     currentROIParameter[ "Maximum" ] =  statisticCalculator->GetMaximum( defaultLabel );
     currentROIParameter[ "Mean" ] =  statisticCalculator->GetMean( defaultLabel );
     currentROIParameter[ "Median" ] =  statisticCalculator->GetMedian( defaultLabel );
 
-    statisticCalculator->SetUseHistograms( true);
-    statisticCalculator->Update();
+
     StatisticCalculatorType::HistogramPointer histogram = statisticCalculator->GetHistogram( defaultLabel );
     currentROIParameter[ "Q_25" ] = histogram->Quantile( 0, 0.25 ); 
     currentROIParameter[ "Q_75" ] = histogram->Quantile( 0, 0.75 ); 
     currentROIParameter[ "Q_95" ] = histogram->Quantile( 0, 0.95 ); 
     currentROIParameter[ "Q_05" ] = histogram->Quantile( 0, 0.05 ); 
+
+    for( normParamROIMapType::iterator it = currentROIParameter.begin();
+         it != currentROIParameter.end();
+         it++)
+      {
+      std::cout<< (*it).first << " => " << (*it).second <<std::endl;
+      }
     }
 
   m_minmax[ROIName] = currentMinMaxVector;
@@ -457,7 +491,7 @@ FeatureInputVector
   /*std::cout << " * Min : " << statisticCalculator->GetMinimum(1)
             << " * Max : " << statisticCalculator->GetMaximum(1)
             << std::endl; */
-  return m_minmaxPairType( std::pair<scalarType, scalarType>( statisticCalculator->GetMinimum(1),
+  return minmaxPairType( std::pair<scalarType, scalarType>( statisticCalculator->GetMinimum(1),
                                                             statisticCalculator->GetMaximum(1) ) );
 }
 
@@ -465,7 +499,8 @@ void
 FeatureInputVector
 ::NormalizationOfVector( InputVectorMapType& currentFeatureVector, std::string ROIName )
 {
-  m_minmaxPairVectorType currentMinmaxPairVector = m_minmax.find(ROIName)->second;
+  minmaxPairVectorType currentMinmaxPairVector = m_minmax.find(ROIName)->second;
+  normParamROIMapType currentNormParameter = m_statistics[ROIName];
 
   for( InputVectorMapType::iterator eachInputVector = currentFeatureVector.begin();
        eachInputVector != currentFeatureVector.end();
@@ -473,17 +508,108 @@ FeatureInputVector
     {
     InputVectorType::iterator featureElementIterator = (eachInputVector->second).begin();
     featureElementIterator += (m_roiIDsInOrder.size() + m_spatialLocations.size() );
-    for( m_minmaxPairVectorType::const_iterator m_minmaxIt = currentMinmaxPairVector.begin();
+    for( minmaxPairVectorType::const_iterator m_minmaxIt = currentMinmaxPairVector.begin();
          m_minmaxIt != currentMinmaxPairVector.end();
          ++m_minmaxIt )
       {
       for(  float i = -m_gradientSize; i <= m_gradientSize; i = i + 1.0F )
         {
-        scalarType normalizedValue = ( *featureElementIterator - m_minmaxIt->first );
-        normalizedValue = normalizedValue / ( m_minmaxIt->second - m_minmaxIt->first );
-        *featureElementIterator = normalizedValue;
+        if( m_normalizationMethod == "Linear" )
+        {
+            scalarType normalizedValue = ( *featureElementIterator - m_minmaxIt->first );
+            normalizedValue = normalizedValue / ( m_minmaxIt->second - m_minmaxIt->first );
+            *featureElementIterator = normalizedValue;
+        }
+        else if ( m_normalizationMethod == "Sigmoid" )
+        {
+            // sigmoid
+            *featureElementIterator = sigmoid( *featureElementIterator,
+                                               currentNormParameter[ "Median" ],
+                                               currentNormParameter[ "Q_95" ] - currentNormParameter[ "Q_05"] );
+        }
+        else if ( m_normalizationMethod == "DoubleSigmoid" )
+        {
+            *featureElementIterator= doubleSigmoid( *featureElementIterator,
+                                                    currentNormParameter[ "Median" ],
+                                                    currentNormParameter[ "Median" ] - currentNormParameter[ "Q_05"],
+                                                    currentNormParameter[ "Q_95" ] - currentNormParameter[ "Median"] );
+        }
+        else if ( m_normalizationMethod == "zScore" )
+        {
+          std::cout<<"Not implemented yet" <<std::endl;
+        }
+        else if ( m_normalizationMethod == "None")
+        {
+          // do nothing
+        }
+        else
+        {
+          std::cout<<"In valid normalization type of "<< m_normalizationMethod <<std::endl;
+          std::exit( EXIT_FAILURE);
+        }
         featureElementIterator++;
+        
         }
       }
     }
+}
+/* normalization is all to zero to one range */
+float
+FeatureInputVector
+::sigmoid( const float x , 
+           const float t, 
+           const float r)
+{
+     //    1
+     //_____________
+     //1 + exp( -2x )
+     float exp_value;
+     float return_value;
+
+     /*** Exponential calculation ***/
+     exp_value = exp((double) -2* ( x - t ) / r);
+
+     /*** Final sigmoid value ***/
+     return_value = 1 / (1 + exp_value);
+
+     return return_value;
+}
+
+float 
+FeatureInputVector
+::linearScalining( const float x, 
+                   const float min, 
+                   const float max )
+{
+    float range;
+    float return_value;
+    range = max-min;
+    return_value = ( x - min )/ range ;
+
+    return return_value;
+}
+
+float
+FeatureInputVector
+::doubleSigmoid( const float x, 
+                 const float t, 
+                 const float r1, 
+                 const float r2)
+{
+     //           1
+     //________________________
+     //1 + exp( -2 * (s-t)/r )
+     float exp_value;
+     float return_value;
+     float r;
+     if( x > t) { r =r2; }
+     else { r = r1; }
+
+     /*** Exponential calculation ***/
+     exp_value = exp((double) -2 *( x - t )/r);
+
+     /*** Final sigmoid value ***/
+     return_value = 1 / (1 + exp_value);
+
+     return return_value;
 }

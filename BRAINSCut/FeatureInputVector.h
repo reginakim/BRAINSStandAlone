@@ -18,10 +18,21 @@ typedef unsigned int hashKeyType;
 class FeatureInputVector
 {
 public:
-
   FeatureInputVector();
   ~FeatureInputVector();
+
   int DoUnitTests() const; // A series of unit tests to verify results.
+
+  /* normalization type */
+  enum FeatureNormalizationMethodEnum
+    {
+    None,
+    Linear,
+    Sigmoid,
+    DoubleSigmoid,
+    zScore
+    };
+  
 
   /** constants definition */
   static const scalarType MIN;
@@ -41,8 +52,8 @@ public:
                                               WorkingPixelType> ImageLinearInterpolatorType;
 
   /* min/max */
-  typedef std::pair<scalarType, scalarType> m_minmaxPairType;
-  typedef std::vector<m_minmaxPairType>       m_minmaxPairVectorType;
+  typedef std::pair<scalarType, scalarType> minmaxPairType;
+  typedef std::vector<minmaxPairType>       minmaxPairVectorType;
 
   /* normalizationParameters */
   typedef std::map<std::string, scalarType>            normParamROIMapType; // ( 'min', v1),('max',v2),..
@@ -65,7 +76,9 @@ public:
 
   unsigned int GetInputVectorSize();
 
-  void SetNormalization( const bool doNormalize);
+  void SetLinearNormalizationOn(); // deprecated soon
+
+  void SetNormalizationMethod( const std::string normalizationMethod );
 
   void NormalizationOfVector( InputVectorMapType& currentFeatureVector, std::string ROIName );
 
@@ -83,7 +96,7 @@ public:
 private:
   int          m_gradientSize;
   unsigned int m_inputVectorSize;
-  bool         m_normalization;
+  std::string  m_normalizationMethod;
 
   ImageLinearInterpolatorType::Pointer m_imageInterpolator;
 
@@ -108,6 +121,8 @@ private:
    */
   std::map<std::string, minmaxPairVectorType> m_minmax;
   normParamType m_statistics;
+
+  std::map< std::string, FeatureNormalizationMethodEnum > m_featureNormalizationMap;
 
   /** private functions */
   //void ComputeFeatureInputOfROI( std::string ROIName);
@@ -137,5 +152,9 @@ private:
 
   inline std::pair<scalarType, scalarType>  SetMinMaxOfSubject( BinaryImageType::Pointer & labelImage,
                                                                 const WorkingImagePointer & Image );
+  inline float sigmoid( const float x, const float t, const float r );
+  inline float linearScalining( float x, float min, float max );
+  inline float doubleSigmoid( const float x, const float t, 
+                              const float r1, const float r2);
 };
 #endif
