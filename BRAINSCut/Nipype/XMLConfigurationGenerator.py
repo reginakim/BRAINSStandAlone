@@ -139,7 +139,7 @@ def xmlGenerator( p_templateDict,
     outStream.write( "   <NeuralNetParams MaskSmoothingValue     = \"0.0\"\n")
     outStream.write( "          GradientProfileSize    = \"1\"\n")
     outStream.write( "          TrainingVectorFilename = \"{vectorFN}\"\n".format( vectorFN = p_inputVectorFilename ))
-    outStream.write( "          TrainingModelFilename  = \"modelFN\"\n".format( modelFN = p_modelFilename ))
+    outStream.write( "          TrainingModelFilename  = \"{modelFN}\"\n".format( modelFN = p_modelFilename ))
     outStream.write( "          TestVectorFilename     = \"na\"\n")
     outStream.write( "          Normalization          = \"{str}\"\n".format( str = p_normalization) )
     outStream.write( "   />\n")

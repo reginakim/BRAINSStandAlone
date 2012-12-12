@@ -50,12 +50,15 @@ def ConfigurationSectionMap( configurationFilename ):
 
 #########################################################################################
 def BRAINSCutCMDFromConfigFile( configurationFilename,
+                                xmlFilename, 
+                                probabilityMapDict, 
+                                vectorFilename,
+                                modelFilename, 
                                 generateProbabilityMap,
                                 createVectors,
                                 trainModel, 
                                 applyModel,
-                                rfTreeNumber,
-                                rfTreeDepth):
+                                methodParameter):
     from ConfigurationParser import ConfigurationSectionMap
     configurationMap = ConfigurationSectionMap( configurationFilename )
     
@@ -71,25 +74,36 @@ def BRAINSCutCMDFromConfigFile( configurationFilename,
     ## all the options are converted to lower case with ConfigParser xOptions
     listFiles = configurationMap[ 'ListFiles' ]
     optionsDict = configurationMap[ 'Options' ]
-    ROIDict = configurationMap[ 'ROI' ] 
-    m_fileDescriptions = configurationMap[ 'FileDescriptions' ]
+    #ROIDict = configurationMap[ 'ROI' ] 
 
-    #for key in m_fileDescriptions.iterkeys():
+    #for key in outputXmlFilenameiterkeys():
     #    print ("{key} ==> {value}".format( key=key, value=m_fileDescriptions[key] ) )
     
     from XMLConfigurationGenerator import xmlGenerator
+
+    import os
+    p_probMapDict = {}
+    for roi in probabilityMapDict.iterkeys():
+        p_probMapDict[ roi ] = os.path.abspath( probabilityMapDict[ roi ] )
     
+    p_vectorFilename = os.path.abspath( vectorFilename )
+    p_modelFilename = os.path.abspath( modelFilename )
+
+    p_xmlFilename = os.path.abspath( xmlFilename )
     returnList= xmlGenerator( m_templateDict,
                   m_spatialDescriptionDict,
-                  m_fileDescriptions[ 'vectorFilename'.lower() ],
+                  p_vectorFilename, 
                   optionsDict[ 'roiBooleanCreator'.lower() ] ,
-                  m_fileDescriptions[ 'modelFilename'.lower() ],
-                  ROIDict[ 'roiList'.lower() ],
+                  p_modelFilename, 
+                  p_probMapDict,
                   optionsDict[ 'imageTypeToUse'.lower() ],
                   listFiles[ 'subjectListFilename'.lower() ],
-                  m_fileDescriptions[ 'xmlFilename'.lower() ],
+                  p_xmlFilename,
                   optionsDict[ 'normalization' ] ,
                   listFiles['featureListFileDictionary'.lower()])
+    optionStr = ""
+    for option in methodParameter.iterkeys():
+        optionStr = optionStr + " {option} {value} ".format(option=option, value=methodParameter[ option ] )
 
     import subprocess
     if generateProbabilityMap:
@@ -97,31 +111,27 @@ def BRAINSCutCMDFromConfigFile( configurationFilename,
         print ("generateProbabilityMap")
         print ("generateProbabilityMap")
         BRAINSCutCommand=["BRAINSCut" + " --generateProbability" +
-                          " --netConfiguration " + m_fileDescriptions[ 'xmlFilename'.lower() ] 
+                          " --netConfiguration " + p_xmlFilename 
                          ]
         print("HACK:  BRAINCUT COMMAND: {0}".format(BRAINSCutCommand))
         subprocess.call(BRAINSCutCommand, shell=True)
     if createVectors:
         BRAINSCutCommand=["BRAINSCut" + " --createVectors" +
-                          " --netConfiguration " + m_fileDescriptions[ 'xmlFilename'.lower() ] 
+                          " --netConfiguration " + p_xmlFilename 
                          ]
         print("HACK:  BRAINCUT COMMAND: {0}".format(BRAINSCutCommand))
         subprocess.call(BRAINSCutCommand, shell=True)
     if trainModel:
         BRAINSCutCommand=["BRAINSCut" + " --trainModel" +
-                          " --netConfiguration " + m_fileDescriptions[ 'xmlFilename'.lower()] +
-                          " --method RandomForest " +
-                          " --numberOfTrees " + rfTreeNumber + 
-                          " --randomTreeDepth " + rfTreeDepth  
+                          " --netConfiguration " + p_xmlFilename +
+                          optionStr
                          ]
         print("HACK:  BRAINCUT COMMAND: {0}".format(BRAINSCutCommand))
         subprocess.call(BRAINSCutCommand, shell=True)
     if applyModel:
         BRAINSCutCommand=["BRAINSCut" + " --applyModel" +
-                          " --netConfiguration " + m_fileDescriptions[ 'xmlFilename'.lower()] +
-                          " --method RandomForest " +
-                          " --numberOfTrees " + rfTreeNumber + 
-                          " --randomTreeDepth " + rfTreeDepth 
+                          " --netConfiguration " + p_xmlFilename +
+                          optionStr
                          ]
         print("HACK:  BRAINCUT COMMAND: {0}".format(BRAINSCutCommand))
         subprocess.call(BRAINSCutCommand, shell=True)
@@ -130,100 +140,143 @@ def BRAINSCutCMDFromConfigFile( configurationFilename,
     
 #########################################################################################
 def BRAINSCutGenerateProbabilityMap( configurationFilename,
-                                     probabilityMapList):
+                                     probabilityMapDict,
+                                     outputXmlFilename):
     generateProbabilityMap = True
     createVectors = False
     trainModel = False
     applyModel = False
-    rfTreeNumber = 0
-    rfTreeDepth = 0
+    dummyMethodParameter= {}
 
     print( """generate probability map
            {str}
-           """.format( str=probabilityMapList) )
+           """.format( str=probabilityMapDict) )
 
+    import os
+    for roi in probabilityMapDict.iterkeys():
+        probDir = os.path.dirname( os.path.abspath( probabilityMapDict[ roi ] ) )
+        if not os.path.exists( probDir ):
+            os.mkdirs( probDir )
+    dummyFilename = "na"
     from ConfigurationParser import BRAINSCutCMDFromConfigFile
     returnList= BRAINSCutCMDFromConfigFile( configurationFilename,
+                                outputXmlFilename,
+                                probabilityMapDict,
+                                dummyFilename,
+                                dummyFilename,
                                 generateProbabilityMap,
                                 createVectors,
                                 trainModel,
                                 applyModel,
-                                rfTreeNumber,
-                                rfTreeDepth)
+                                dummyMethodParameter)
     returnProbMapList = returnList[ 'probabilityMap' ]
-    if returnProbMapList != probabilityMapList:
+    import sys
+    if returnProbMapList.keys() != probabilityMapDict.keys():
         print("""ERROR
-              returnProbMapList has to match probabilityMapList
+              returnProbMapList has to match probabilityMapDict
               in BRAINSCutGenerateProbabilityMap
               """)
         sys.exit()
           
+    print ( returnList[ 'probabilityMap' ] )
+    print ( returnList[ 'probabilityMap' ] )
+    print ( returnList[ 'probabilityMap' ] )
+    print ( returnList[ 'probabilityMap' ] )
+    print ( returnList[ 'probabilityMap' ] )
+    print ( returnList[ 'probabilityMap' ] )
+    print ( returnList[ 'probabilityMap' ] )
     return returnList[ 'probabilityMap' ] 
                                 
 #########################################################################################
 def BRAINSCutCreateVector( configurationFilename, 
-                           probabilityMapList ):
+                           probabilityMapDict,
+                           outputXmlFilename,
+                           outputVectorFilename):
+    print( BRAINSCutCreateVector )
+    print( BRAINSCutCreateVector )
+    print( BRAINSCutCreateVector )
+    print( BRAINSCutCreateVector )
+    print( BRAINSCutCreateVector )
+    print( BRAINSCutCreateVector )
     import os.path
     import sys
-    for roi in probabilityMapList.iterkeys():
-        if not os.path.exists( probabilityMapList[ roi ]  ):
+    for roi in probabilityMapDict.iterkeys():
+        if not os.path.exists( probabilityMapDict[ roi ]  ):
             print( """ ERROR   
                    {fn}  does not exist.
-                   """.format( fn=probabilityMapList[roi]) )
+                   """.format( fn=probabilityMapDict[roi]) )
             sys.exit()
 
     generateProbabilityMap = False
     createVectors = True
     trainModel = False
     applyModel = False
-    rfTreeNumber = 0
-    rfTreeDepth = 0
+    dummyMethodParameter = {}
+    dummyModelFilename = "na"
     from ConfigurationParser import BRAINSCutCMDFromConfigFile
     returnList= BRAINSCutCMDFromConfigFile( configurationFilename,
+                                outputXmlFilename, 
+                                probabilityMapDict,
+                                outputVectorFilename,
+                                dummyModelFilename, 
                                 generateProbabilityMap,
                                 createVectors,
                                 trainModel,
                                 applyModel,
-                                rfTreeNumber,
-                                rfTreeDepth)
+                                dummyMethodParameter)
     outputVectorFilename = returnList[ 'inputVectorFilename' ]    
     outputVectorHdrFilename = outputVectorFilename + ".hdr"
     return outputVectorFilename, outputVectorHdrFilename 
 
 #########################################################################################
 def BRAINSCutTrainModel( configurationFilename, 
-                         inputVectorFilename,
-                         rfTreeNumber, 
-                         rfTreeDepth):
+                         inputVectorFilename, 
+                         outputModelFilenamePrefix, 
+                         outputXmlFilename,
+                         methodParameter
+                       ):
     import os.path
     import sys
-    for roi in probabilityMapList.iterkeys():
-        if not os.path.exists( probabilityMapList[ roi ] ):
-            print( """ ERROR   
-                   probabilityMapList[ roi ]  does not exist.
-                   """ )
-            sys.exit()
 
     generateProbabilityMap = False
     createVectors = False
     trainModel = True
     applyModel = False
+    dummyProbMapDict = {}
+
+    p_inputVectorFilename = os.path.abspath( inputVectorFilename )
+    p_inputVectorFilename = p_inputVectorFilename[:-3] # truncate ANN
+    print( p_inputVectorFilename )
+    print( p_inputVectorFilename )
+    print( p_inputVectorFilename )
+    print( p_inputVectorFilename )
+    print( p_inputVectorFilename )
+    print( p_inputVectorFilename )
+    print( p_inputVectorFilename )
+
+    p_outputModelFilenamePrefix = os.path.abspath( outputModelFilenamePrefix )
     from ConfigurationParser import BRAINSCutCMDFromConfigFile
     returnList= BRAINSCutCMDFromConfigFile( configurationFilename,
+                                outputXmlFilename,
+                                dummyProbMapDict,
+                                p_inputVectorFilename, 
+                                p_outputModelFilenamePrefix, 
                                 generateProbabilityMap,
                                 createVectors,
                                 trainModel,
                                 applyModel,
-                                rfTreeNumber,
-                                rfTreeDepth)
-    outputVectorFilename = returnList[ 'inputVectorFilename' ]    
-    return outputVectorFilename 
+                                methodParameter )
+
+    outputModelFileSearchStr=p_outputModelFilenamePrefix + "*" + str(methodParameter['--numberOfTrees']) + "*" + "*gz"
+    import glob
+    trainedModelFile = glob.glob( outputModelFileSearchStr ) 
+    return trainedModelFile[0]
 
 #########################################################################################
 def BRAINSCutApplyModel( configurationFilename, 
                          trainModelFilename,
-                         rfTreeNumber, 
-                         rfTreeDepth):
+                         outputXmlFilename, 
+                         methodParameter):
     import os.path
     import sys
     for roi in probabilityMapList.iterkeys():
@@ -239,12 +292,15 @@ def BRAINSCutApplyModel( configurationFilename,
     applyModel = False
     from ConfigurationParser import BRAINSCutCMDFromConfigFile
     returnList= BRAINSCutCMDFromConfigFile( configurationFilename,
+                                outputXmlFilename, 
+                                p_probMapDict,
+                                dummyInputVectorFilename, 
+                                p_inputModelFilename,
                                 generateProbabilityMap,
                                 createVectors,
                                 trainModel,
                                 applyModel,
-                                rfTreeNumber,
-                                rfTreeDepth)
+                                methodParameter)
     outputVectorFilename = returnList[ 'inputVectorFilename' ]    
     return outputVectorFilename 
      
@@ -278,18 +334,16 @@ def updating(originalFilename,
 #########################################################################################
 def ConfigurationFileEditor( originalFilename, 
                              editedFilenamePrefix ):
-    varToChange= ['xmlFilename'.lower(), 
-                  'vectorFilename'.lower(), 
-                  'roiBooleanCreator'.lower()]
+    print( ConfigurationFileEditor )
+    print( ConfigurationFileEditor )
+    print( ConfigurationFileEditor )
+    print( ConfigurationFileEditor )
+    varToChange= [ 'roiBooleanCreator'.lower()]
 
     from ConfigurationParser import ConfigurationSectionMap
     from ConfigurationParser import updating 
     Options = ConfigurationSectionMap( originalFilename )['Options']
     roiDict = Options[ 'roiBooleanCreator'.lower() ]
-
-    FileDescriptions =  ConfigurationSectionMap( originalFilename )['FileDescriptions' ]
-    xmlFilename = FileDescriptions[ 'xmlFilename'.lower() ]
-    vectorFilename = FileDescriptions[ 'vectorFilename'.lower() ]
 
     new_ROIDictTemplate = roiDict.copy()
     for key in new_ROIDictTemplate:
@@ -302,10 +356,8 @@ def ConfigurationFileEditor( originalFilename,
         #print( "{roi} set to {boolean}".format( roi=roi, boolean=new_ROIDict[roi]))
         #print( new_ROIDict )
         new_ConfigFilename = editedFilenamePrefix + "_" + roi + ".config"
-        new_XMLFilename = xmlFilename + "_" + roi + ".xml"
-        new_VectorFilename = vectorFilename + "_" + roi + ".txt"
         
-        newValues = [ new_XMLFilename, new_VectorFilename, new_ROIDict ]
+        newValues = [ new_ROIDict ]
         whatToChange = dict( zip( varToChange, newValues ))
         editedFilenames[ roi ] = updating( originalFilename, 
                                            new_ConfigFilename, 
@@ -375,28 +427,17 @@ def CombineInputVectors( inputVectorFilenames,
     TVC = getTVCs( inputVectorFilenames )
     newTVC = sum( TVC.values() )
 
-    print( inputVectorFilenames[1] + ".hdr" )
-    print( inputVectorFilenames[1] + ".hdr" )
-    print( inputVectorFilenames[1] + ".hdr" )
-    print( inputVectorFilenames[1] + ".hdr" )
-    print( inputVectorFilenames[1] + ".hdr" )
     inHdrFile = open ( inputVectorFilenames[1] + ".hdr", "r")
     import os
     outHdrFilename = os.path.abspath( outputVectorFilename ) + ".hdr"
     outHdrFile = open ( outHdrFilename, "w")
      
-    firstline = inHdrFile.readline() 
-    print (firstline)
-    print (firstline)
-    print (firstline)
-    print (firstline)
-    print (firstline)
-    outHdrFile.write( firstline )
+    outHdrFile.write( inHdrFile.readline() )
     outHdrFile.write( inHdrFile.readline() )
     outHdrFile.write( "TVC {value}".format( value=newTVC))
     outHdrFile.close()
 
-    return outputVectorFilename, outHdrFilename 
+    return os.path.abspath( outputVectorFilename ), outHdrFilename 
 
 configFileTestStr="""[AtlasDescription]
 t1 =       /ipldev/scratch/eunyokim/src/BRAINSStandAlone/build_LongitudinalSegmentationPipelineTrial/ReferenceAtlas-build/Atlas/Atlas_20121120/template_t1.nii.gz

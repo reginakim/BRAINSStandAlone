@@ -25,20 +25,26 @@ args = argParser.parse_args()
 # TODO: Add Config File Generator basedon on Exp Dir
 #
 configurationMap = ConfigurationParser.ConfigurationSectionMap( args.configurationFilename) 
-ROIDict = configurationMap[ 'ROI' ]
-roiList = ROIDict[ 'roiList'.lower() ]
+OptionsDict      = configurationMap[ 'Options' ]
+roiDict          = OptionsDict[ 'roiBooleanCreator'.lower() ]
 #
 #--------------------------------  start from generate probability
 #
 probabilityMapGeneratorND = pe.Node( name = "probabilityMapGeneratorND",
                                      interface = Function( 
                                          input_names = ['configurationFilename',
-                                                        'probabilityMapList'],
-                                         output_names = [ 'probabilityMapList' ],
+                                                        'probabilityMapDict',
+                                                        'outputXmlFilename'],
+                                         output_names = [ 'probabilityMapDict'],
                                          function     = ConfigurationParser.BRAINSCutGenerateProbabilityMap )
                                    )
+myProbDict = {}
+for roi in roiDict.iterkeys():
+    myProbDict[ roi ] = roi + '_probabilityMap.nii.gz'
+
+probabilityMapGeneratorND.inputs.outputXmlFilename = 'netConfiguration.xml'
 probabilityMapGeneratorND.inputs.configurationFilename = args.configurationFilename 
-probabilityMapGeneratorND.inputs.probabilityMapList = roiList.values()
+probabilityMapGeneratorND.inputs.probabilityMapDict = myProbDict
 
 workflow.add_nodes( [probabilityMapGeneratorND] )
 
@@ -60,19 +66,23 @@ workflow.add_nodes( [ configFileND ] )
 vectorCreatorND = pe.MapNode( name = "vectorCreatorND", 
                               interface = Function(
                                   input_names = ['configurationFilename',
-                                                 'probabilityMapList'],
+                                                 'probabilityMapDict',
+                                                 'outputXmlFilename',
+                                                 'outputVectorFilename'],
                                   output_names = ['outputVectorFilename',
                                                   'outputVectorHdrFilename'],
                                   function     = ConfigurationParser.BRAINSCutCreateVector ),
                               iterfield = [ 'configurationFilename']
                             )
+vectorCreatorND.inputs.outputVectorFilename = 'oneROIVectorFile.txt'
+vectorCreatorND.inputs.outputXmlFilename = 'oneROICreateVectorNetConfiguration.txt'
 #
 #--------------------------------  workflow connections
 #
 workflow.connect( configFileND, 'editiedFilenames',
                   vectorCreatorND, 'configurationFilename' )
-workflow.connect( probabilityMapGeneratorND, 'probabilityMapList',
-                  vectorCreatorND, 'probabilityMapList' )
+workflow.connect( probabilityMapGeneratorND, 'probabilityMapDict',
+                  vectorCreatorND, 'probabilityMapDict' )
 
 #
 #--------------------------------  balance and combine each ROI vectors
@@ -98,6 +108,32 @@ workflow.connect( balaceND, 'outputVectorFilenames',
                   combineND, 'inputVectorFilenames')
 
 combineND.inputs.outputVectorFilename = 'allCombinedVector.txtANN'
+
+#
+#--------------------------------  train
+#
+trainND = pe.Node( name = "trainND", 
+                   interface = Function( 
+                       input_names = ['configurationFilename',
+                                      'inputVectorFilename',
+                                      'outputModelFilenamePrefix',
+                                      'outputXmlFilename',
+                                      'methodParameter'],
+                       output_names = ['outputTrainedModelFilename'],
+                       function = ConfigurationParser.BRAINSCutTrainModel )
+                 )
+methodParameter = { '--method': 'RandomForest',
+                    '--numberOfTrees': 60,
+                    '--randomTreeDepth ': 60 }
+trainND.inputs.methodParameter = methodParameter
+trainND.inputs.outputXmlFilename = 'trianNetConfiguration.xml'
+trainND.inputs.configurationFilename = args.configurationFilename
+trainND.inputs.outputModelFilenamePrefix = 'trainModelFile.txt'
+
+workflow.connect( combineND, 'outputVectorFilename',
+                  trainND, 'inputVectorFilename')
+
+
 #
 #
 ##workflow.run(updatehash=True)
