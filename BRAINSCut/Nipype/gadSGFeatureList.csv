@@ -1,4 +1,4 @@
-siteID, subjectID, sessionID, featureImageList
+siteID, subjectID, sessionID, featureImage
 054, 0284, 20715, "{'GadSG':'/hjohnson/HDNI/PREDICT_TRAINING/regina_ann/TrainingModels/AW_20120801.SubjectOrganized_Results/BAW_20120801.SubjectOrganized_Results/FeatureImages/GadSG/20715_average_GAD_SG.nii.gz'}"
 024, 0644, 84123, "{'GadSG':'/hjohnson/HDNI/PREDICT_TRAINING/regina_ann/TrainingModels/AW_20120801.SubjectOrganized_Results/BAW_20120801.SubjectOrganized_Results/FeatureImages/GadSG/84123_average_GAD_SG.nii.gz'}"
 024, 0326, 10335, "{'GadSG':'/hjohnson/HDNI/PREDICT_TRAINING/regina_ann/TrainingModels/AW_20120801.SubjectOrganized_Results/BAW_20120801.SubjectOrganized_Results/FeatureImages/GadSG/10335_average_GAD_SG.nii.gz'}"
@@ -16,8 +16,6 @@ siteID, subjectID, sessionID, featureImageList
 120, 2528, 36274, "{'GadSG':'/hjohnson/HDNI/PREDICT_TRAINING/regina_ann/TrainingModels/AW_20120801.SubjectOrganized_Results/BAW_20120801.SubjectOrganized_Results/FeatureImages/GadSG/36274_average_GAD_SG.nii.gz'}"
 028, 0822, 74352, "{'GadSG':'/hjohnson/HDNI/PREDICT_TRAINING/regina_ann/TrainingModels/AW_20120801.SubjectOrganized_Results/BAW_20120801.SubjectOrganized_Results/FeatureImages/GadSG/74352_average_GAD_SG.nii.gz'}"
 024, 0705, 24641, "{'GadSG':'/hjohnson/HDNI/PREDICT_TRAINING/regina_ann/TrainingModels/AW_20120801.SubjectOrganized_Results/BAW_20120801.SubjectOrganized_Results/FeatureImages/GadSG/24641_average_GAD_SG.nii.gz'}"
-028, 0592, 43873, "{'GadSG':'/hjohnson/HDNI/PREDICT_TRAINING/regina_ann/TrainingModels/AW_20120801.SubjectOrganized_Results/BAW_20120801.SubjectOrganized_Results/FeatureImages/GadSG/43873_average_GAD_SG.nii.gz'}"
-048, 0647, 45592, "{'GadSG':'/hjohnson/HDNI/PREDICT_TRAINING/regina_ann/TrainingModels/AW_20120801.SubjectOrganized_Results/BAW_20120801.SubjectOrganized_Results/FeatureImages/GadSG/45592_average_GAD_SG.nii.gz'}"
 027, 0839, 84201, "{'GadSG':'/hjohnson/HDNI/PREDICT_TRAINING/regina_ann/TrainingModels/AW_20120801.SubjectOrganized_Results/BAW_20120801.SubjectOrganized_Results/FeatureImages/GadSG/84201_average_GAD_SG.nii.gz'}"
 024, 0506, 75080, "{'GadSG':'/hjohnson/HDNI/PREDICT_TRAINING/regina_ann/TrainingModels/AW_20120801.SubjectOrganized_Results/BAW_20120801.SubjectOrganized_Results/FeatureImages/GadSG/75080_average_GAD_SG.nii.gz'}"
 024, 0514, 63973, "{'GadSG':'/hjohnson/HDNI/PREDICT_TRAINING/regina_ann/TrainingModels/AW_20120801.SubjectOrganized_Results/BAW_20120801.SubjectOrganized_Results/FeatureImages/GadSG/63973_average_GAD_SG.nii.gz'}"

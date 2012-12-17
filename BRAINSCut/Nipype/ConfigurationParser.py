@@ -1,8 +1,9 @@
 
 #########################################################################################
 def ConfigurationSectionMap( configurationFilename ):
-    print( """"Executing 
-           ConfigurationSectionMap""")
+    print( """Executing 
+           ConfigurationSectionMap ::: {fn}
+           """.format( fn=configurationFilename) )
     import sys
     import os
     import ConfigParser
@@ -18,13 +19,15 @@ def ConfigurationSectionMap( configurationFilename ):
               
     dictionaryListSet = set( ["roilist", 
                               "roibooleancreator",
-                              "featurelistfiledictionary"] )
+                              "featurelistfiledictionary",
+                              "applyFeatureListFileDictionary".lower(),
+                              'numberOfElementInSubset'.lower() ]
+                              )
 
     m_configuration = ConfigParser.ConfigParser()
+    print( """READ
+           {fn}.""".format( fn = configurationFilename ))
     m_configuration.read ( configurationFilename );
-
-    print( """ * read
-           {fn}""".format( fn=configurationFilename ))
 
     returnDict= {}
 
@@ -58,14 +61,14 @@ def BRAINSCutCMDFromConfigFile( configurationFilename,
                                 createVectors,
                                 trainModel, 
                                 applyModel,
+                                applyModelOutputDirDict,
                                 methodParameter):
     from ConfigurationParser import ConfigurationSectionMap
     configurationMap = ConfigurationSectionMap( configurationFilename )
     
     ## parse dictionary and list
     atlasDict = configurationMap[ 'AtlasDescription' ]
-    m_templateDict = { 't1':atlasDict['t1'],
-                       't2':'na' }
+    m_templateDict = { 't1':atlasDict['t1'] }
     m_spatialDescriptionDict = { 'rho':   atlasDict['rho'],
                                  'phi':   atlasDict['phi'], 
                                  'theta': atlasDict['theta'] }
@@ -73,6 +76,17 @@ def BRAINSCutCMDFromConfigFile( configurationFilename,
     ## note on *lower()*
     ## all the options are converted to lower case with ConfigParser xOptions
     listFiles = configurationMap[ 'ListFiles' ]
+    if applyModel:
+        subjectListFilename = listFiles[ 'applySubjectListFilename'.lower()]
+        featureListFileDict = listFiles['applyFeatureListFileDictionary'.lower()]
+    else:
+        subjectListFilename = listFiles[ 'subjectListFilename'.lower() ]
+        featureListFileDict = listFiles['featureListFileDictionary'.lower()]
+        print ( """featureListFileDict:::
+                {fn}
+                """.format( fn=featureListFileDict))
+
+
     optionsDict = configurationMap[ 'Options' ]
     #ROIDict = configurationMap[ 'ROI' ] 
 
@@ -88,19 +102,24 @@ def BRAINSCutCMDFromConfigFile( configurationFilename,
     
     p_vectorFilename = os.path.abspath( vectorFilename )
     p_modelFilename = os.path.abspath( modelFilename )
-
     p_xmlFilename = os.path.abspath( xmlFilename )
+    p_applyModelOutputDirDict = {}
+    for sessionID in applyModelOutputDirDict.iterkeys():
+        p_applyModelOutputDirDict[ sessionID ] = os.path.abspath( applyModelOutputDirDict[ sessionID ] )
+
     returnList= xmlGenerator( m_templateDict,
-                  m_spatialDescriptionDict,
-                  p_vectorFilename, 
-                  optionsDict[ 'roiBooleanCreator'.lower() ] ,
-                  p_modelFilename, 
-                  p_probMapDict,
-                  optionsDict[ 'imageTypeToUse'.lower() ],
-                  listFiles[ 'subjectListFilename'.lower() ],
-                  p_xmlFilename,
-                  optionsDict[ 'normalization' ] ,
-                  listFiles['featureListFileDictionary'.lower()])
+                              m_spatialDescriptionDict,
+                              p_vectorFilename, 
+                              optionsDict[ 'roiBooleanCreator'.lower() ] ,
+                              p_modelFilename, 
+                              p_probMapDict,
+                              optionsDict[ 'imageTypeToUse'.lower() ],
+                              subjectListFilename,
+                              p_xmlFilename,
+                              optionsDict[ 'normalization' ] ,
+                              featureListFileDict,
+                              applyModel,
+                              p_applyModelOutputDirDict)
     optionStr = ""
     for option in methodParameter.iterkeys():
         optionStr = optionStr + " {option} {value} ".format(option=option, value=methodParameter[ option ] )
@@ -131,7 +150,8 @@ def BRAINSCutCMDFromConfigFile( configurationFilename,
     if applyModel:
         BRAINSCutCommand=["BRAINSCut" + " --applyModel" +
                           " --netConfiguration " + p_xmlFilename +
-                          optionStr
+                          optionStr +
+                          " --modelFilename " + p_modelFilename
                          ]
         print("HACK:  BRAINCUT COMMAND: {0}".format(BRAINSCutCommand))
         subprocess.call(BRAINSCutCommand, shell=True)
@@ -154,10 +174,12 @@ def BRAINSCutGenerateProbabilityMap( configurationFilename,
 
     import os
     for roi in probabilityMapDict.iterkeys():
+        print( os.path.abspath( probabilityMapDict[ roi ] ) )
         probDir = os.path.dirname( os.path.abspath( probabilityMapDict[ roi ] ) )
         if not os.path.exists( probDir ):
             os.mkdirs( probDir )
     dummyFilename = "na"
+    dummyDict = {}
     from ConfigurationParser import BRAINSCutCMDFromConfigFile
     returnList= BRAINSCutCMDFromConfigFile( configurationFilename,
                                 outputXmlFilename,
@@ -168,6 +190,7 @@ def BRAINSCutGenerateProbabilityMap( configurationFilename,
                                 createVectors,
                                 trainModel,
                                 applyModel,
+                                dummyDict,
                                 dummyMethodParameter)
     returnProbMapList = returnList[ 'probabilityMap' ]
     import sys
@@ -178,14 +201,8 @@ def BRAINSCutGenerateProbabilityMap( configurationFilename,
               """)
         sys.exit()
           
-    print ( returnList[ 'probabilityMap' ] )
-    print ( returnList[ 'probabilityMap' ] )
-    print ( returnList[ 'probabilityMap' ] )
-    print ( returnList[ 'probabilityMap' ] )
-    print ( returnList[ 'probabilityMap' ] )
-    print ( returnList[ 'probabilityMap' ] )
-    print ( returnList[ 'probabilityMap' ] )
-    return returnList[ 'probabilityMap' ] 
+    outputXmlFilename = os.path.abspath( outputXmlFilename   )
+    return returnProbMapList, outputXmlFilename 
                                 
 #########################################################################################
 def BRAINSCutCreateVector( configurationFilename, 
@@ -212,6 +229,7 @@ def BRAINSCutCreateVector( configurationFilename,
     trainModel = False
     applyModel = False
     dummyMethodParameter = {}
+    dummyOutputDirDict = {}
     dummyModelFilename = "na"
     from ConfigurationParser import BRAINSCutCMDFromConfigFile
     returnList= BRAINSCutCMDFromConfigFile( configurationFilename,
@@ -223,10 +241,12 @@ def BRAINSCutCreateVector( configurationFilename,
                                 createVectors,
                                 trainModel,
                                 applyModel,
+                                dummyOutputDirDict, 
                                 dummyMethodParameter)
     outputVectorFilename = returnList[ 'inputVectorFilename' ]    
     outputVectorHdrFilename = outputVectorFilename + ".hdr"
-    return outputVectorFilename, outputVectorHdrFilename 
+    outputXmlFilename = os.path.abspath( outputXmlFilename )
+    return outputVectorFilename, outputVectorHdrFilename, outputXmlFilename
 
 #########################################################################################
 def BRAINSCutTrainModel( configurationFilename, 
@@ -255,6 +275,7 @@ def BRAINSCutTrainModel( configurationFilename,
     print( p_inputVectorFilename )
 
     p_outputModelFilenamePrefix = os.path.abspath( outputModelFilenamePrefix )
+    dummyOutputDirDict = {}
     from ConfigurationParser import BRAINSCutCMDFromConfigFile
     returnList= BRAINSCutCMDFromConfigFile( configurationFilename,
                                 outputXmlFilename,
@@ -265,6 +286,7 @@ def BRAINSCutTrainModel( configurationFilename,
                                 createVectors,
                                 trainModel,
                                 applyModel,
+                                dummyOutputDirDict,
                                 methodParameter )
 
     outputModelFileSearchStr=p_outputModelFilenamePrefix + "*" + str(methodParameter['--numberOfTrees']) + "*" + "*gz"
@@ -274,35 +296,42 @@ def BRAINSCutTrainModel( configurationFilename,
 
 #########################################################################################
 def BRAINSCutApplyModel( configurationFilename, 
-                         trainModelFilename,
+                         probabilityMapDict,
+                         inputModelFilename,
                          outputXmlFilename, 
+                         outputDirDict,
                          methodParameter):
     import os.path
     import sys
-    for roi in probabilityMapList.iterkeys():
-        if not os.path.exists( probabilityMapList[ roi ] ):
+    p_probMapDict = {}
+    for roi in probabilityMapDict.iterkeys():
+        if not os.path.exists( probabilityMapDict[ roi ] ):
             print( """ ERROR   
-                   probabilityMapList[ roi ]  does not exist.
+                   probabilityMapDict[ roi ]  does not exist.
                    """ )
             sys.exit()
+        p_probMapDict[ roi ] = os.path.abspath( probabilityMapDict[ roi ] )
 
     generateProbabilityMap = False
     createVectors = False
-    trainModel = True
-    applyModel = False
+    trainModel = False
+    applyModel = True
+    dummyInputVectorFilename =""
     from ConfigurationParser import BRAINSCutCMDFromConfigFile
     returnList= BRAINSCutCMDFromConfigFile( configurationFilename,
                                 outputXmlFilename, 
                                 p_probMapDict,
                                 dummyInputVectorFilename, 
-                                p_inputModelFilename,
+                                inputModelFilename,
                                 generateProbabilityMap,
                                 createVectors,
                                 trainModel,
                                 applyModel,
+                                outputDirDict,
                                 methodParameter)
-    outputVectorFilename = returnList[ 'inputVectorFilename' ]    
-    return outputVectorFilename 
+    outputLabelDict = returnList[ 'outputLabelDict' ] 
+
+    return outputLabelDict 
      
 #########################################################################################
 def updating(originalFilename, 
@@ -378,7 +407,6 @@ def getTVCs ( inputVectorFilenames ):
                 if col == "TVC":
                     TVC[ file ] = int( row[ row.index(col)+1 ] )
                     #print( "{file} = {tvc}".format( file=file, tvc=TVC[file]))
-                    exit
     return TVC
 
 #########################################################################################
@@ -386,7 +414,14 @@ def BalanceInputVectors( inputVectorFilenames ):
     ## read header file
     from ConfigurationParser import getTVCs 
     TVC = getTVCs( inputVectorFilenames )
-    maxFile = max(TVC)
+    print( TVC )
+    print( TVC )
+    print( TVC )
+    print( TVC )
+    print( TVC )
+    import operator
+    maxFile = max(TVC.iteritems(), key=operator.itemgetter(1))[0]
+    #maxFile = max(TVC)
     print ( maxFile )
     print ( maxFile )
     print ( maxFile )
@@ -396,8 +431,10 @@ def BalanceInputVectors( inputVectorFilenames ):
     #print( "{file} = {tvc}".format( file=maxFile, tvc=TVC[maxFile])) 
 
     outputVectorFilenames = {}
+    outputVectorHdrFilenames = {}
     for inFile in inputVectorFilenames:
         outputVectorFilenames[ inFile ]  = inFile + "_upsampled.txtANN"
+        outputVectorHdrFilenames[ inFile ]  = inFile + "_upsampled.txtANN.hdr"
     ## upsample all other files
     import subprocess
     import os
@@ -412,7 +449,7 @@ def BalanceInputVectors( inputVectorFilenames ):
         outputVectorFilenames[ inFile ]  = os.path.abspath( outputVectorFilenames[ inFile ] )
     
     ## return list of upsampled file names
-    return outputVectorFilenames.values()
+    return outputVectorFilenames.values(), outputVectorHdrFilenames.values()
 
 #########################################################################################
 def CombineInputVectors( inputVectorFilenames,
