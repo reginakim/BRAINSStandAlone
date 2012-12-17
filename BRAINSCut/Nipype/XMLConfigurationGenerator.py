@@ -1,7 +1,7 @@
 import sys
 #########################################################################################
 #{#######################################################################################
-def combineCSVs( dataFile, featureFileiList):
+def combineCSVs( dataFile, featureFileList):
     import csv
     returnDictionary = {}
     with open( dataFile, "r") as dataListFile:
@@ -14,23 +14,23 @@ def combineCSVs( dataFile, featureFileiList):
             for ( name, value) in sessionWithHeader:
                 sessionDict[ name ] = value.strip()
             returnDictionary[ sessionDict[ 'sessionID' ] ] = sessionDict
+            returnDictionary[ sessionDict[ 'sessionID' ] ]['featureImageDict'] = {} # initialize
 
-
-    for featureKey in featureFileiList.iterkeys():
-        with open( featureFileiList[ featureKey ], "r") as featureListFile:
+    import ast
+    for ft in featureFileList.iterkeys():
+        with open( featureFileList[ ft ], "r") as featureListFile:
             featureListReader = csv.reader( featureListFile, delimiter=",", skipinitialspace=True)
             featureListHeader = featureListReader.next()
-            for session in featureListReader:
-                sessionWithHeader = zip( featureListHeader, session )
-                sessionFeatureDict = {}
-                for ( name, value) in sessionWithHeader:
-                    sessionFeatureDict[ name ] = value.strip()
-                currSessionDict = returnDictionary[ sessionFeatureDict[ 'sessionID' ] ] 
-                currSessionDict[ 'featureImageList' ] = sessionFeatureDict[ 'featureImageList' ]
-                returnDictionary[ sessionFeatureDict[ 'sessionID' ] ] = currSessionDict
-                #print( returnDictionary[ sessionFeatureDict[ 'sessionID' ] ] )
-                #print("^^^^^^^^^^^^^^^^^^^")
+            for row in featureListReader:
+                rowWithHeader = zip( featureListHeader, row)
+                rowFeatureDict= {}
+                for ( name, value) in rowWithHeader:
 
+                    rowFeatureDict[ name ] = value.strip()
+                currSessionDict = returnDictionary[ rowFeatureDict['sessionID'] ] 
+                print( rowFeatureDict )
+                currSessionDict[ 'featureImageDict' ][ft] = ast.literal_eval( rowFeatureDict[ 'featureImage' ] )[ft]
+                returnDictionary[ rowFeatureDict[ 'sessionID' ] ] = currSessionDict
     return returnDictionary
 
 #}---------------------------------------------------------------------------------------
@@ -61,9 +61,10 @@ def addSession( subjectID,
 
     outStream.write( "    <Mask  Type=\"RegistrationROI\" Filename=\"{fn}\" />\n".format(fn="na"))
 
-    for roiID in roiDict.iterkeys():
-        outStream.write( "    <Mask Type=\"{str}\" ".format( str=roiID ))
-        outStream.write( " Filename=\"{str}\" />\n".format( str=roiDict[ roiID] ))
+    if dataType == "Train":
+        for roiID in roiDict.iterkeys():
+            outStream.write( "    <Mask Type=\"{str}\" ".format( str=roiID ))
+            outStream.write( " Filename=\"{str}\" />\n".format( str=roiDict[ roiID] ))
 
     outStream.write( "    <Registration ")
     outStream.write( '   SubjToAtlasRegistrationFilename="{str}"\n'.format( str=deformationDict['subjectToAtlas']))
@@ -82,7 +83,7 @@ def addProbabilityMapElement( probabilityMapFilename,
                               outStream,
                               roiCreateVector="true"):
     outStream.write( "  <ProbabilityMap StructureID    = \"{str}\"\n".format( str = roiID) )
-    outStream.write( "      Gaussian       = \"0.5\"\n")
+    outStream.write( "      Gaussian       = \"2\"\n")
     outStream.write( "      GenerateVector = \"{str}\"\n".format( str=roiCreateVector ) )
     outStream.write( "      Filename       = \"{str}\"\n".format( str =  probabilityMapFilename ))
     outStream.write( "   />\n")
@@ -100,7 +101,9 @@ def xmlGenerator( p_templateDict,
                   p_dataListFilename ,
                   p_outputXMLFilename,
                   p_normalization,
-                  p_featureImageFilenames = {} ):
+                  p_featureImageFilenames = {},
+                  p_applyModel='False',
+                  p_applyModelOutputDirDict={}):
     returnList = {}
     outStream = open( p_outputXMLFilename, 'w')
     m_registrationID = "SyN"
@@ -112,8 +115,7 @@ def xmlGenerator( p_templateDict,
 
     #####################################################################################
     # template
-    # :: p_templateDict { t1:t1Filename, 
-    #                   t2:t2Filename }
+    # :: p_templateDict { t1:t1Filename }
     outStream.write( "  <DataSet Name=\"template\" Type=\"Atlas\" >\n" )
     for imgType in p_templateDict.iterkeys():
         outStream.write( "      <Image Type=\"{tp}\" Filename=\"{fn}\" />\n".format(tp=imgType, 
@@ -201,22 +203,42 @@ def xmlGenerator( p_templateDict,
     #####################################################################################
     # add session images
     #
+    outputLabelDict={}
+    imgType = 'Train'
+    if p_applyModel == True:
+        imgType = 'Apply'
     import ast
+    import glob
+    import os
+
     for sessionKey  in dataDictionary.iterkeys():
         session = dataDictionary[ sessionKey ]
-        if session.has_key( 'featureImageList' ) :
-            featureImageDict =  ast.literal_eval( session[ 'featureImageList' ] )
+        if session.has_key( 'featureImageDict' ) :
+            featureImageDict =  session[ 'featureImageDict' ] 
         else:
             featureImageDict = {}
 
+        if p_applyModel:
+            outputDir = p_applyModelOutputDirDict[ session[ 'sessionID' ] ]
+        else:
+            outputDir = ""
+
         addSession( session[ 'sessionID' ], 
-                    'Train',
+                    imgType,
                     ast.literal_eval( session[ 'imageList' ] ),
                     ast.literal_eval( session[ 'roiList' ] ),
                     ast.literal_eval( session[ 'deformationList' ] ),
                     featureImageDict,
-                    outStream  )
+                    outStream,
+                    outputDir)
+        outputSessionLabelDict = {}
+        if p_applyModel:
+            outputSessionLabelDict[ 'label' ] = glob.glob(  os.path.abspath( outputDir +"/*_ANNLabel_seg.nii.gz" ) )
+            outputSessionLabelDict[ 'ambigiousLabel' ] = glob.glob(  os.path.abspath( outputDir +"/*AmbiguousMap.nii.gz" ) )
+            outputSessionLabelDict[ 'defPrior' ] = glob.glob(  os.path.abspath( outputDir +"/*def.nii.gz" ) )
+            outputLabelDict[ sessionKey ] = outputSessionLabelDict 
         
+    returnList[ 'outputLabelDict' ] = outputLabelDict 
     #####################################################################################
     # closer 
     #
@@ -225,6 +247,14 @@ def xmlGenerator( p_templateDict,
     return returnList
 #}---------------------------------------------------------------------------------------
 
+#########################################################################################
+#{#######################################################################################
+def main():
+    # unit test
+    combineCSVs( "trainingBAW20120801List.csv",
+                 {'t2':'t2FeatureList.csv',
+                  'gadSG':'gadSGFeatureList.csv'})
+#}---------------------------------------------------------------------------------------
 #########################################################################################
 #{#######################################################################################
 # TEST

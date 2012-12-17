@@ -48,7 +48,7 @@ static const float        HundredPercentValue = 1.0F;
 static const float        ZeroPercentValue = 0.0F;
 static const unsigned int LineGuardSize = 1;
 static const scalarType   LineGuard = 1234567.0;
-static const float        FLOAT_TOLERANCE = 0.01;
+static const float        FLOAT_TOLERANCE = 0.001;
 
 /*
 * Image Definitions
