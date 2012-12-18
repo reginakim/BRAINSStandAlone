@@ -73,9 +73,6 @@ FeatureInputVector
   m_gradientSize(-1),
   m_normalizationMethod("None")
 {
-  m_spatialLocations.clear();
-  m_candidateROIs.clear();
-  m_gradientOfROI.clear();
   m_imageInterpolator = ImageLinearInterpolatorType::New();
 
   m_featureNormalizationMap[ "None" ] = None;
@@ -93,7 +90,7 @@ FeatureInputVector
 ::~FeatureInputVector() 
 {
   this->m_imagesOfInterestInOrder.clear();
-  this->m_spatialLocations.clear();
+  this->m_sphericalCoordinates.clear();
   this->m_gradientOfROI.clear();
   this->m_minmax.clear();
   this->m_candidateROIs.clear();
@@ -117,17 +114,23 @@ void
 FeatureInputVector
 ::SetImagesOfSpatialLocation( std::map<std::string, WorkingImagePointer>& SpatialLocationImages)
 {
+  std::cout<<"Add images of spatial location"<<std::endl;
   if( SpatialLocationImages.size() != 3 ||
-      SpatialLocationImages.find("rho") == SpatialLocationImages.end() ||
-      SpatialLocationImages.find("phi") == SpatialLocationImages.end()  ||
-      SpatialLocationImages.find("theta") == SpatialLocationImages.end()  )
+      ( SpatialLocationImages.find("rho") == SpatialLocationImages.end() && m_sphericalCoordinateBooleanMap["addRho"] )||
+      ( SpatialLocationImages.find("phi") == SpatialLocationImages.end()  && m_sphericalCoordinateBooleanMap["addPhi"] )||
+      ( SpatialLocationImages.find("theta") == SpatialLocationImages.end() && m_sphericalCoordinateBooleanMap["addTheta"] ) )
     {
-    itkGenericExceptionMacro(<< "::number of images for spatial location should be 3 not "
+    std::string errMsg = "::Not all of spherical coordiate images are given. Please check one of rho, phi, and theta. ";
+                        
+    std::cout<< errMsg <<std::endl;
+    itkGenericExceptionMacro(<< errMsg 
                              << SpatialLocationImages.size() );
     }
+  std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
   //Ensure that images are sufficiently small to process correctly.
   WorkingImageType::SizeType testSize=
     SpatialLocationImages.find("rho")->second->GetLargestPossibleRegion().GetSize();
+  std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
   for(unsigned int q=0;q<3;q++)
     {
     if(testSize[q] > MAX_IMAGE_SIZE )
@@ -137,13 +140,53 @@ FeatureInputVector
       exit(-1);
       }
     }
-  m_spatialLocations = SpatialLocationImages;
+  std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
+  std::cout<<m_sphericalCoordinateBooleanMap[ "addRho" ]<<std::endl;
+  if ( m_sphericalCoordinateBooleanMap[ "addRho" ] )
+    {
+    m_sphericalCoordinates[ "rho" ] = SpatialLocationImages["rho"] ;
+    std::cout<<" * add rho to the feature "<<std::endl;
+    }
+  std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
+  std::cout<<m_sphericalCoordinateBooleanMap[ "addPhi" ]<<std::endl;
+  if ( m_sphericalCoordinateBooleanMap[ "addPhi" ] )
+    {
+    m_sphericalCoordinates[ "phi" ] = SpatialLocationImages["phi"];
+    std::cout<<" * add phi to the feature "<<std::endl;
+    }
+  std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
+  std::cout<<m_sphericalCoordinateBooleanMap[ "addTheta" ]<<std::endl;
+  if ( m_sphericalCoordinateBooleanMap[ "addTheta" ] )
+    {
+    m_sphericalCoordinates[ "theta" ] = SpatialLocationImages["theta"];
+    std::cout<<" * add theta to the feature "<<std::endl;
+    }
+  std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
+}
+
+void 
+FeatureInputVector
+::SetSphericalCoordinateBooleanMap( const std::map< std::string, bool> booleanMap )
+{
+  m_sphericalCoordinateBooleanMap = booleanMap;
+  std::cout<< "Size is  "<< m_sphericalCoordinateBooleanMap.size()<<std::endl;
+  for( std::map<std::string, bool>::const_iterator it = m_sphericalCoordinateBooleanMap.begin();
+       it != m_sphericalCoordinateBooleanMap.end();
+       it++
+     )
+  {
+      std::cout<< it->first ;
+      std::cout<< " is now setting to ";
+      std::cout<< it->second << std::endl;
+  }
+  std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
 }
 
 void
 FeatureInputVector
 ::SetCandidateROIs( std::map<std::string, WorkingImagePointer>& candidateROIMap)
 {
+  std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
   m_candidateROIs = candidateROIMap;
 }
 
@@ -177,13 +220,14 @@ void
 FeatureInputVector
 ::SetInputVectorSize()
 {
-  if( m_candidateROIs.empty() || m_imagesOfInterestInOrder.empty() || m_spatialLocations.empty() )
+  if( m_candidateROIs.empty() || m_imagesOfInterestInOrder.empty() || m_sphericalCoordinates.empty() )
     {
     std::string errorMsg = " Cannot compute input vector size properly.";
     errorMsg += "Either ROI(probability maps) or feature images has to be set to compute input vector size.";
     throw BRAINSCutExceptionStringHandler( errorMsg );
     }
-  m_inputVectorSize = m_candidateROIs.size() + m_imagesOfInterestInOrder.size() * 3 + m_spatialLocations.size();
+  m_inputVectorSize = m_candidateROIs.size() + m_imagesOfInterestInOrder.size() * 3 + m_sphericalCoordinates.size();
+  //m_inputVectorSize = m_candidateROIs.size() + m_imagesOfInterestInOrder.size() * 3 ;
 }
 
 unsigned int
@@ -416,9 +460,18 @@ FeatureInputVector
                       std::vector<scalarType>::iterator & elementIterator)
 {
   // std::cout<<" (spatial) ";
-  AddValueToElement( m_spatialLocations.find("rho")->second->GetPixel( currentPixelIndex ), elementIterator );
-  AddValueToElement( m_spatialLocations.find("phi")->second->GetPixel( currentPixelIndex ), elementIterator );
-  AddValueToElement( m_spatialLocations.find("theta")->second->GetPixel( currentPixelIndex ), elementIterator );
+  if( m_sphericalCoordinateBooleanMap["addRho"] )
+    {
+    AddValueToElement( m_sphericalCoordinates.find("rho")->second->GetPixel( currentPixelIndex ), elementIterator );
+    }
+  if( m_sphericalCoordinateBooleanMap["addPhi"] )
+    {
+    AddValueToElement( m_sphericalCoordinates.find("phi")->second->GetPixel( currentPixelIndex ), elementIterator );
+    }
+  if( m_sphericalCoordinateBooleanMap["addTheta"] )
+    {
+    AddValueToElement( m_sphericalCoordinates.find("theta")->second->GetPixel( currentPixelIndex ), elementIterator );
+    }
 }
 
 inline void
@@ -554,7 +607,7 @@ FeatureInputVector
        ++eachInputVector )
     {
     InputVectorType::iterator featureElementIterator = (eachInputVector->second).begin();
-    featureElementIterator += (m_roiIDsInOrder.size() + m_spatialLocations.size() );
+    featureElementIterator += (m_roiIDsInOrder.size() + m_sphericalCoordinates.size() );
     /*for( minmaxPairVectorType::const_iterator m_minmaxIt = currentMinmaxPairVector.begin();
          m_minmaxIt != currentMinmaxPairVector.end();
          ++m_minmaxIt )

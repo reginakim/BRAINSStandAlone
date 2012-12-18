@@ -136,6 +136,10 @@ public:
 
   int          GetMaxTreeCount();
 
+  void         SetSphericalCoordinateBooleanMap( const std::map< std::string, bool> booleanMap );
+
+  std::map< std::string, bool>  GetSphericalCoordinateBooleanMap();
+
 protected:
   TrainingVectorConfigurationType * trainingVectorConfiguration;
 
@@ -164,6 +168,7 @@ protected:
   WorkingImagePointer m_phi;
   WorkingImagePointer m_theta;
 
+  std::map< std::string, bool> m_sphericalCoordinateBooleanMap;
   unsigned int m_gradientSize;
 
   /** vector file name */

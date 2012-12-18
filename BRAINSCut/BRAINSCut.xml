@@ -127,6 +127,27 @@
       <description> Random tree depth. This is to be used when only one model with specified depth wish to be created. </description>
       <default>-1</default>
     </integer>
+   <boolean>
+     <name>noRho</name>
+     <label>noRho</label>
+     <longflag>noRho</longflag>
+     <description>Determine wheter rho (spherical coordinate) information is included.</description>
+     <default>false</default>
+   </boolean>
+   <boolean>
+     <name>noPhi</name>
+     <label>noPhi</label>
+     <longflag>noPhi</longflag>
+     <description>Determine wheter phi (spherical coordinate) information is included.</description>
+     <default>false</default>
+   </boolean>
+   <boolean>
+     <name>noTheta</name>
+     <label>noTheta</label>
+     <longflag>noTheta</longflag>
+     <description>Determine wheter theta (spherical coordinate) information is included.</description>
+     <default>false</default>
+   </boolean>
     <string>
       <name>modelFilename</name>
       <label>modelFilename</label>

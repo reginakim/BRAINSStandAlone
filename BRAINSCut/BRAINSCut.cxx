@@ -40,6 +40,13 @@ int main(int argc, char * *argv)
     throw BRAINSCutExceptionStringHandler( errorMsg );
     }
   BRAINSCutDataHandler m_dataHandler( modelConfigurationFilename );
+  std::map< std::string, bool> m_sphericalCoordinateBooleanMap;
+
+  m_sphericalCoordinateBooleanMap[ "addRho" ] = !noRho;
+  m_sphericalCoordinateBooleanMap[ "addPhi" ] = !noPhi;
+  m_sphericalCoordinateBooleanMap[ "addTheta" ] = !noTheta;
+  
+  m_dataHandler.SetSphericalCoordinateBooleanMap( m_sphericalCoordinateBooleanMap );
 
   BRAINSCutGenerateRegistrations m_registrationGenerator( m_dataHandler );
   const bool                     m_applyDataSetOff = false;

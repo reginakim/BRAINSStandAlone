@@ -142,11 +142,13 @@ BRAINSCutApplyModel
 
   inputVectorGenerator.SetGradientSize( this->m_myDataHandler->GetGradientSize() );
   inputVectorGenerator.SetImagesOfInterestInOrder( imagesOfInterest );
+  inputVectorGenerator.SetSphericalCoordinateBooleanMap( this->m_myDataHandler->GetSphericalCoordinateBooleanMap() );
   inputVectorGenerator.SetImagesOfSpatialLocation( deformedSpatialLocationImageList );
   inputVectorGenerator.SetCandidateROIs( deformedROIs);
   inputVectorGenerator.SetROIInOrder( this->m_myDataHandler->GetROIIDsInOrder() );
   inputVectorGenerator.SetInputVectorSize();
   inputVectorGenerator.SetNormalizationMethod( m_normalization );
+
 
   /* now iterate through the roi */
 

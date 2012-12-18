@@ -703,3 +703,34 @@ BRAINSCutDataHandler
 
   return trainMaxTreeCount;
 }
+
+void 
+BRAINSCutDataHandler
+::SetSphericalCoordinateBooleanMap( const std::map< std::string, bool> booleanMap )
+{
+  m_sphericalCoordinateBooleanMap = booleanMap;
+  for( std::map<std::string, bool>::const_iterator it = booleanMap.begin();
+       it != booleanMap.end();
+       it++
+     )
+  {
+      std::cout<< it->first 
+               <<" will be set to " 
+               << it->second << std::endl;
+  }
+}
+
+std::map< std::string, bool> 
+BRAINSCutDataHandler
+::GetSphericalCoordinateBooleanMap()
+{
+  if ( m_sphericalCoordinateBooleanMap.empty() )
+  {
+    std::cout<<"ERROR"
+             <<"m_sphericalCoordinateBooleanMap is empty now."<<std::endl
+             <<__LINE__<<"::"<<__FILE__<<std::endl;
+    std::exit( EXIT_FAILURE );
+  }
+  return m_sphericalCoordinateBooleanMap;
+}
+

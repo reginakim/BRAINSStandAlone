@@ -91,6 +91,8 @@ BRAINSCutCreateVector
 
   inputVectorGenerator.SetGradientSize( m_myDataHandler.GetGradientSize() );
   inputVectorGenerator.SetImagesOfInterestInOrder( imagesOfInterest );
+  inputVectorGenerator.SetSphericalCoordinateBooleanMap( m_myDataHandler.GetSphericalCoordinateBooleanMap() );
+  std::cout<<__LINE__<<"::"<<__FILE__<<std::endl;
   inputVectorGenerator.SetImagesOfSpatialLocation( deformedSpatialLocationImageList );
   inputVectorGenerator.SetCandidateROIs( deformedROIs);
   inputVectorGenerator.SetROIInOrder( m_myDataHandler.GetROIIDsInOrder() );

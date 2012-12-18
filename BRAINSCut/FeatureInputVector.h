@@ -72,6 +72,8 @@ public:
 
   void SetImagesOfSpatialLocation(  std::map<std::string, WorkingImagePointer>& SpatialLocationImages);
 
+  void SetSphericalCoordinateBooleanMap( const std::map< std::string, bool> booleanMap );
+
   void SetCandidateROIs( std::map<std::string, WorkingImagePointer>& candidateROIMap);
 
   void SetROIInOrder( DataSet::StringVectorType roiInOrder );
@@ -110,7 +112,8 @@ private:
   DataSet::StringVectorType m_roiIDsInOrder;
 
   /** deformed rho/phi/theta images*/
-  std::map<std::string, WorkingImagePointer> m_spatialLocations;
+  std::map<std::string, WorkingImagePointer> m_sphericalCoordinates;
+  std::map<std::string, bool>       m_sphericalCoordinateBooleanMap;
 
   /** deformed candiateROIs */
   std::map<std::string, WorkingImagePointer> m_candidateROIs;
