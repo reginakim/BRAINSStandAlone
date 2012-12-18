@@ -80,10 +80,11 @@ def addSession( subjectID,
 #{#######################################################################################
 def addProbabilityMapElement( probabilityMapFilename, 
                               roiID, 
+                              Gaussian,
                               outStream,
                               roiCreateVector="true"):
     outStream.write( "  <ProbabilityMap StructureID    = \"{str}\"\n".format( str = roiID) )
-    outStream.write( "      Gaussian       = \"2\"\n")
+    outStream.write( "      Gaussian       = \"{vl}\"\n".format( vl = Gaussian ))
     outStream.write( "      GenerateVector = \"{str}\"\n".format( str=roiCreateVector ) )
     outStream.write( "      Filename       = \"{str}\"\n".format( str =  probabilityMapFilename ))
     outStream.write( "   />\n")
@@ -101,6 +102,7 @@ def xmlGenerator( p_templateDict,
                   p_dataListFilename ,
                   p_outputXMLFilename,
                   p_normalization,
+                  p_gaussianSigma,
                   p_featureImageFilenames = {},
                   p_applyModel='False',
                   p_applyModelOutputDirDict={}):
@@ -190,6 +192,7 @@ def xmlGenerator( p_templateDict,
     for roiID in p_roiList.iterkeys():
         addProbabilityMapElement( p_roiList[roiID], 
                                   roiID, 
+                                  p_gaussianSigma,
                                   outStream,
                                   p_inputVectorCreateDict[ roiID ] ) 
     returnList[ 'probabilityMap'] = p_roiList 

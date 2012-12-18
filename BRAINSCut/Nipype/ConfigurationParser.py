@@ -117,6 +117,7 @@ def BRAINSCutCMDFromConfigFile( configurationFilename,
                               subjectListFilename,
                               p_xmlFilename,
                               optionsDict[ 'normalization' ] ,
+                              optionsDict[ 'gaussianSigma'.lower() ],
                               featureListFileDict,
                               applyModel,
                               p_applyModelOutputDirDict)

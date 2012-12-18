@@ -1,3 +1,32 @@
+##############################################################################
+def get_global_sge_script(pythonPathsList,binPathsList,customEnvironment={}):
+    """This is a wrapper script for running commands on an SGE cluster
+so that all the python modules and commands are pathed properly"""
+
+    custEnvString=""
+    for key,value in customEnvironment.items():
+        custEnvString+="export "+key+"="+value+"\n"
+
+    PYTHONPATH=":".join(pythonPathsList)
+    BASE_BUILDS=":".join(binPathsList)
+    GLOBAL_SGE_SCRIPT="""#!/bin/bash
+echo "STARTED at: $(date +'%F-%T')"
+echo "Ran on: $(hostname)"
+export PATH={BINPATH}
+export PYTHONPATH={PYTHONPATH}
+
+echo "========= CUSTOM ENVIORNMENT SETTINGS =========="
+echo "export PYTHONPATH={PYTHONPATH}"
+echo "export PATH={BINPATH}"
+echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+
+echo "With custom environment:"
+echo {CUSTENV}
+{CUSTENV}
+## NOTE:  nipype inserts the actual commands that need running below this section.
+""".format(PYTHONPATH=PYTHONPATH,BINPATH=BASE_BUILDS,CUSTENV=custEnvString)
+    return GLOBAL_SGE_SCRIPT
+##############################################################################
 def writeConfigFile( originalFilename,
                      outputConfigFilename, 
                      outputAdditionaListFiles ):
@@ -209,9 +238,10 @@ def createConfigurationFileForCrossValidationUnitTest( p_configurationFilename,
     mainSessionDict = this.readListFileBySessionID( mainListFilename, 
                                                     numberOfTotalSession)
     featureSessionDict = {}
-    for ft in featureListFilenamesDict.iterkeys():
-        featureSessionDict[ft] = this.readListFileBySessionID( featureListFilenamesDict[ft],
-                                                               numberOfTotalSession)
+    if  featureListFilenamesDict:
+        for ft in featureListFilenamesDict.iterkeys():
+            featureSessionDict[ft] = this.readListFileBySessionID( featureListFilenamesDict[ft],
+                                                                   numberOfTotalSession)
 
 
     returnConfigFile = {}
@@ -228,12 +258,13 @@ def createConfigurationFileForCrossValidationUnitTest( p_configurationFilename,
                             trainApplyTagList)
         trainFeatureStr = {}
         applyFeatureStr = {}
-        for ft in featureSessionDict.iterkeys():
-            this.writeListFile( featureSessionDict[ft],
-                                newFeatureFilenameDict[ft],
-                                trainApplyTagList)
-            trainFeatureStr[ft]=newFeatureFilenameDict[ft]['Train']
-            applyFeatureStr[ft]=newFeatureFilenameDict[ft]['Apply']
+        if featureSessionDict:
+            for ft in featureSessionDict.iterkeys():
+                this.writeListFile( featureSessionDict[ft],
+                                    newFeatureFilenameDict[ft],
+                                    trainApplyTagList)
+                trainFeatureStr[ft]=newFeatureFilenameDict[ft]['Train']
+                applyFeatureStr[ft]=newFeatureFilenameDict[ft]['Apply']
             
         print( newMainFilename['Train'] )
         print( newMainFilename['Apply'] )
@@ -256,7 +287,11 @@ def extractConfigFile ( configurationFiledict ):
     return configurationFiledict.values()
 
 def crossValidationWorkUp( crossValidationConfigurationFilename,
-                           baseDir):
+                           baseDir,
+                           runOption,
+                           PythonBinDir,
+                           BRAINSStandAloneSrcDir,
+                           BRAINSStandAloneBuildDir):
     print("""****************************
           crossValidationWorkUp
           """)
@@ -315,7 +350,35 @@ def crossValidationWorkUp( crossValidationConfigurationFilename,
     workflow.connect( extractConfigurationFileListND, 'configurationFileList',
                       createEachValidationUnitND, 'configurationFilename' )
 
-    workflow.run()
+    if runOption == "cluster":
+        ############################################
+        # Platform specific information
+        #     Prepend the python search paths
+        pythonPath = BRAINSStandAloneSrcDir + "/BRAINSCut/BRAINSFeatureCreators/RobustStatisticComputations:" + BRAINSStandAloneSrcDir + "/AutoWorkup/:" + BRAINSStandAloneSrcDir + "/AutoWorkup/BRAINSTools/:" + BRAINSStandAloneBuildDir + "/SimpleITK-build/bin/" + BRAINSStandAloneBuildDir + "/SimpleITK-build/lib:" + PythonBinDir
+        binPath = BRAINSStandAloneBuildDir + "/bin:" + BRAINSStandAloneBuildDir+ "/lib"
+
+        PYTHON_AUX_PATHS= pythonPath
+        PYTHON_AUX_PATHS=PYTHON_AUX_PATHS.split(':')                                                                                  
+        PYTHON_AUX_PATHS.extend(sys.path)                                                                                             
+        sys.path=PYTHON_AUX_PATHS                                                                                                     
+        #print sys.path
+        import SimpleITK as sitk
+        #     Prepend the shell environment search paths
+        PROGRAM_PATHS= binPath
+        PROGRAM_PATHS=PROGRAM_PATHS.split(':')
+        PROGRAM_PATHS.extend(os.environ['PATH'].split(':'))                                                                           
+        os.environ['PATH']=':'.join(PROGRAM_PATHS)
+
+        Cluster_Script = get_global_sge_script( PYTHON_AUX_PATHS, 
+                                                PROGRAM_PATHS,
+                                                {}
+                                              )
+        workflow.run( plugin='SGE',
+                      plugin_args = dict( template = Cluster_Script, 
+                                          qsub_args = "-S /bin/bash -pe smp1 4-8 -o /dev/null "))
+    else:
+        workflow.run()
+
 
 def main(argv=None):
     import os
@@ -346,6 +409,18 @@ def main(argv=None):
     argWfGrp.add_argument( '--baseDir',    help="""baseDir
         """, 
         dest='baseDir', required=False, default="." )
+    argWfGrp.add_argument( '--runOption',    help="""runOption [local/cluster]
+        """, 
+        dest='runOption', required=False, default="local" )
+    argWfGrp.add_argument( '--PythonBinDir',    help="""PythonBinDir [local/cluster]
+        """, 
+        dest='PythonBinDir', required=False, default="NA" )
+    argWfGrp.add_argument( '--BRAINSStandAloneSrcDir',    help="""BRAINSStandAloneSrcDir [local/cluster]
+        """, 
+        dest='BRAINSStandAloneSrcDir', required=False, default="NA" )
+    argWfGrp.add_argument( '--BRAINSStandAloneBuildDir',    help="""BRAINSStandAloneBuildDir [local/cluster]
+        """, 
+        dest='BRAINSStandAloneBuildDir', required=False, default="NA" )
 
     # test arguments
     argTestGrp = argParser.add_argument_group( 'argTestGrp', """****************************
@@ -357,10 +432,16 @@ def main(argv=None):
         """)
     args = argParser.parse_args()
 
+    #-------------------------------- 
     if not args.unitTest: 
         crossValidationWorkUp ( args.crossValidationConfigurationFilename,
-            args.baseDir)
+                                args.baseDir,
+                                args.PythonBinDir,
+                                args.runOption,
+                                args.BRAINSStandAloneSrcDir,
+                                args.BRAINSStandAloneBuildDir)
     
+    #-------------------------------- 
     if args.unitTest:
         testElementPerSubject = [ 3, 4, 5 ]
         getStartAndEndIndex ( 0, testElementPerSubject )

@@ -21,16 +21,19 @@ def unitWorkUp ( configurationFilename,
     workflow = pe.Workflow( name = 'balancedTraning' )
     workflow.base_dir = baseDir
     
-    #
-    # TODO: Add Config File Generator basedon on Exp Dir
-    #
     configurationMap = ConfigurationParser.ConfigurationSectionMap( configurationFilename) 
     Options          = configurationMap[ 'Options' ]
     roiDict          = Options[ 'roiBooleanCreator'.lower() ]
 
+    #
+    #-------------------------------- filenameGeneratorND is dummy node
+    # to create proper probability file location for nipype
+    #
+
     filenameGeneratorND = pe.Node( name      = "filenameGeneratorND",
                                    interface = Function( 
-                                      input_names  = ['roiList'],
+                                      input_names  = ['roiList',
+                                                      'gaussianSigma'],
                                       output_names = ['probabilityMapFilename'],
                                       function     = this.getProbabilityMapFilename )
                                  )
@@ -129,12 +132,14 @@ def unitWorkUp ( configurationFilename,
                                           'outputXmlFilename',
                                           'methodParameter'],
                            output_names = ['outputTrainedModelFilename'],
-                           function = ConfigurationParser.BRAINSCutTrainModel )
+                           function = ConfigurationParser.BRAINSCutTrainModel ),
                      )
-    methodParameter = { '--method': 'RandomForest',
-                        '--numberOfTrees': 60,
-                        '--randomTreeDepth ': 60 }
-    trainND.inputs.methodParameter = methodParameter
+    #methodParameter = { '--method': 'RandomForest',
+    #                    '--numberOfTrees': 60,
+    #                    '--randomTreeDepth ': 60 }
+    import ast
+    methodFromConfiguFile = ast.literal_eval( Options['modelParameter'.lower()] )
+    trainND.iterables= ( 'methodParameter', methodFromConfiguFile ) 
     trainND.inputs.outputXmlFilename = 'trianNetConfiguration.xml'
     trainND.inputs.configurationFilename = configurationFilename
     trainND.inputs.outputModelFilenamePrefix = 'trainModelFile.txt'
@@ -177,9 +182,10 @@ def unitWorkUp ( configurationFilename,
                                output_names = ['outputLabelDict'],
                                function = ConfigurationParser.BRAINSCutApplyModel )
                          )
-        methodParameter = { '--method': 'RandomForest',
-                            '--numberOfTrees': 60,
-                            '--randomTreeDepth ': 60 }
+        #methodParameter = { '--method': 'RandomForest',
+        #                    '--numberOfTrees': 60,
+        #                    '--randomTreeDepth ': 60 }
+        methodParameter = Options['modelParameter'.lower()]
         applyND.inputs.methodParameter = methodParameter
         applyND.inputs.outputXmlFilename = 'applyConfiguration.xml'
         applyND.inputs.configurationFilename = configurationFilename
