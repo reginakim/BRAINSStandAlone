@@ -152,7 +152,8 @@ FeatureInputVector
     errorMsg += "Either ROI(probability maps) or feature images has to be set to compute input vector size.";
     throw BRAINSCutExceptionStringHandler( errorMsg );
     }
-  m_inputVectorSize = m_candidateROIs.size() + m_imagesOfInterestInOrder.size() * 3 + m_spatialLocations.size();
+  //m_inputVectorSize = m_candidateROIs.size() + m_imagesOfInterestInOrder.size() * 3 + m_spatialLocations.size();
+  m_inputVectorSize = m_candidateROIs.size() + m_imagesOfInterestInOrder.size() * 3 ;
 }
 
 unsigned int
@@ -211,7 +212,7 @@ FeatureInputVector
       InputVectorType::iterator featureElementIterator = oneRowInputFeature.begin();
 
       AddCandidateROIFeature( eachVoxelInROI.GetIndex(), featureElementIterator);
-      AddSpatialLocation( eachVoxelInROI.GetIndex(), featureElementIterator);
+      //AddSpatialLocation( eachVoxelInROI.GetIndex(), featureElementIterator);
       AddFeaturesImagesOfInterest(ROIName, eachVoxelInROI.GetIndex(), featureElementIterator);
 
       const int oneRowKey = FeatureInputVector::HashKeyFromIndex( eachVoxelInROI.GetIndex() );
@@ -448,7 +449,8 @@ FeatureInputVector
        ++eachInputVector )
     {
     InputVectorType::iterator featureElementIterator = (eachInputVector->second).begin();
-    featureElementIterator += (m_roiIDsInOrder.size() + m_spatialLocations.size() );
+    featureElementIterator += m_roiIDsInOrder.size() ;
+    //featureElementIterator += (m_roiIDsInOrder.size() + m_spatialLocations.size() );
     for( m_minmaxPairVectorType::const_iterator m_minmaxIt = currentMinmaxPairVector.begin();
          m_minmaxIt != currentMinmaxPairVector.end();
          ++m_minmaxIt )
