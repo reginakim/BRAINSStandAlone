@@ -3,58 +3,468 @@
 ## output: a set of similarity measures
 ##         mean/median of them
 ##         ICC measures
+##############################################################################
+def get_global_sge_script(pythonPathsList,binPathsList,customEnvironment={}):
+    print("""get_global_sge_script""")
+    """This is a wrapper script for running commands on an SGE cluster
+so that all the python modules and commands are pathed properly"""
 
+    custEnvString=""
+    for key,value in customEnvironment.items():
+        custEnvString+="export "+key+"="+value+"\n"
 
-def computeSimilarity( imageA, imageB):
+    PYTHONPATH=":".join(pythonPathsList)
+    BASE_BUILDS=":".join(binPathsList)
+    GLOBAL_SGE_SCRIPT="""#!/bin/bash
+echo "STARTED at: $(date +'%F-%T')"
+echo "Ran on: $(hostname)"
+export PATH={BINPATH}
+export PYTHONPATH={PYTHONPATH}
+
+echo "========= CUSTOM ENVIORNMENT SETTINGS =========="
+echo "export PYTHONPATH={PYTHONPATH}"
+echo "export PATH={BINPATH}"
+echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+
+echo "With custom environment:"
+echo {CUSTENV}
+{CUSTENV}
+## NOTE:  nipype inserts the actual commands that need running below this section.
+""".format(PYTHONPATH=PYTHONPATH,BINPATH=BASE_BUILDS,CUSTENV=custEnvString)
+    return GLOBAL_SGE_SCRIPT
+#########################################################################################
+def getDefMask( img, tolerance ):
     import SimpleITK as sitk
-    imgA = sitk.ReadImage( imageA )
-    imgB = sitk.ReadImage( imageB )
+    lowerThreshold = tolerance
+    upperThreshold = 1.0 - tolerance
+    binary =  sitk.BinaryThreshold( img, lowerThreshold, upperThreshold)
+    return binary
 
-    binaryLowerThreshold = 1
-    binaryUpperThreshold = 1
-    binaryImgA = sitk.BinaryThreshold( imgA, 
-                                       binaryLowerThreshold, 
-                                       binaryUpperThreshold)
-    binaryImgB = sitk.BinaryThreshold( imgB, 
-                                       binaryLowerThreshold, 
-                                       binaryUpperThreshold)
+#########################################################################################
+def getLabelVolume( img, label=1):
+    import SimpleITK as sitk
+    binary =  sitk.BinaryThreshold( img, label, label)
+    stat = sitk.LabelStatisticsImageFilter()
+    stat.Execute( binary, binary )
+    try:
+        count = stat.GetCount( 1 )
+    except:
+        count = 0
+        pass
+    volume = count *(img.GetSpacing()[0]*img.GetSpacing()[1]*img.GetSpacing()[2])
+    print( """Computed volume is
+            {vl} mm^3""".format( vl=volume ))
+    return volume
 
-    outSI = sitk.SimilarityIndexImageFilter( 
+#########################################################################################
+def printImageInfo( img ):
+    import SimpleITK as sitk
+    print("""Image info:::
+          spacing: {sp}
+          pixelID: {pid}
+          dimension: {d}
+          """.format( sp= img.GetSpacing(), 
+                      pid = img.GetPixelIDValue(), 
+                      d = img.GetDimension() )) 
+#########################################################################################
+def computeSimilarity( autoFilename, defFilename, refFilename, autoLabel=1, identityDict = {} ):
+    import SimpleITK as sitk
+    import os
+    import analysis as this
+    floatTolerance=0.01
+
+    print( """ compute similarity of label : 
+           {l}""".format( l = autoLabel ))
+
+    autoImg = sitk.BinaryThreshold( sitk.ReadImage( autoFilename ), autoLabel, autoLabel )
+    defImg = sitk.ReadImage( defFilename )
+    refImg = sitk.BinaryThreshold( sitk.ReadImage( refFilename ), 1 )
+
+    this.printImageInfo( autoImg )
+    this.printImageInfo( defImg )
+    this.printImageInfo( refImg )
     
-                                       
+    OUT = {}
+    for item in identityDict.iterkeys():
+        OUT[item]=identityDict[ item ]
+    OUT['autoVol'] = this.getLabelVolume( autoImg )
+    OUT['refVol'] = this.getLabelVolume( refImg )
+    
+    defMsk = this.getDefMask( defImg, floatTolerance )
+    OUT['totalSearchVol'] = this.getLabelVolume( defMsk )
+    
+    OUT['union'] = this.getLabelVolume( autoImg | refImg )
+    OUT['intersection'] = this.getLabelVolume( autoImg & refImg )
+    OUT['TP'] = OUT['union']
+    OUT['FP'] = this.getLabelVolume( autoImg - refImg, 1 )
+    
+    autoNeg = sitk.BinaryThreshold( (defMsk - autoImg), 1, 1)
+    refNeg  = sitk.BinaryThreshold( (defMsk - refImg ), 1, 1)
+    
+    OUT['FN'] = this.getLabelVolume( autoNeg & refImg )
+    OUT['TN'] = this.getLabelVolume( autoNeg & refNeg )
+    
+    OUT['alpha'] = OUT['FP'] / ( OUT['FP'] + OUT['TN'] )
+    OUT['beta']  = OUT['FN'] / ( OUT['TP'] + OUT['FN'] )
+    OUT['Sensitivity'] = OUT['TP'] / ( OUT['TP'] + OUT['FN'] )
+    OUT['Specificity'] = OUT['TN'] / ( OUT['FP'] + OUT['TN'] )
+    OUT['Precision'] = OUT['TP'] / (OUT['TP'] + OUT['FP'] )
+    OUT['FScore'] = 2 * OUT['Precision'] * OUT['Sensitivity'] / ( OUT['Precision'] + OUT['Sensitivity'] )
+    OUT['RelativeOverlap'] = OUT['intersection']/ OUT['union']
+    OUT['SimilarityIndex'] = 2 * OUT['intersection'] / ( OUT['autoVol'] + OUT['refVol'] )
+    
+    if OUT['autoVol'] != 0:
+        hausdorffFilter = sitk.HausdorffDistanceImageFilter()
+        hausdorffFilter.Execute( autoImg, refImg )
+        OUT['Hausdorff'] = hausdorffFilter.GetHausdorffDistance ()
+        OUT['HausdorffAvg'] = hausdorffFilter.GetAverageHausdorffDistance()
+    else:
+        OUT['Hausdorff'] = -1
+        OUT['HausdorffAvg'] = -1
+    
 
-    return volumeA, volumeB, RO, SI, HD
+
+    for ele in OUT.iterkeys():
+        print( "{e} = {v}".format( e = ele, v = OUT[ele]))
+    return OUT
+
+#########################################################################################
 def computeICCs( raterA, raterB):
     return ICCs
-def writeCSV( dataDict, 
-              outputFilename):
-    return outputFilename
+
 #########################################################################################
-def similarityFromApplyOutput( BCutResultDict, 
-                               ManualDict,
-                               outputCSVFilename ):
+def computeSummaryFromCSV( inputCSVFilename ):
+    import csv
+
+#########################################################################################
+def writeCSV( dataDictList, 
+              outputCSVFilename):
+    import csv
+    f = open( outputCSVFilename, 'wb')
+    w = csv.DictWriter( f, dataDictList[0].keys() )
+    w.writeheader()
+    for row in dataDictList:
+        w.writerow( row )
+    f.close()
+
+    return outputCSVFilename
+#########################################################################################
+def getData( ResultDir, 
+             normalization, 
+             methodParameter, 
+             sessionID, 
+             optionalString = ''): # ex = ANNLabel_seg.nii.gz
+    import nipype.interfaces.io as nio
+    #
+    # get label map                                                                                                       
+    #
+    DG = nio.DataGrabber( infields = ['normalization','method','sessionID'],                                              
+                          outfields = ['outputList'] )                                                                    
+    DG.inputs.base_directory = ResultDir
+    DG.inputs.template = 'Test*/%s/RF/%s/%s*' + optionalString
+    DG.inputs.template_args = dict( outputList = [[ 'normalization', 'method', 'sessionID' ]]) 
+    DG.inputs.normalization = normalization
+    DG.inputs.method = methodParameter
+    DG.inputs.sessionID =sessionID
+    dt = DG.run()  
+    print( """Data grabber with {opt}:::                                                                                  
+           {str}
+           """.format( opt = optionalString, str=dt.outputs.outputList ))          
+
+    return dt.outputs.outputList
+    
+
+#########################################################################################
+def experimentAnalysis( resultDir, 
+                 outputCSVFilename, 
+                 normalization,
+                 methodParameter, 
+                 manualDict,
+                 roiList,
+                 sessionIDList ):
+    import nipype.interfaces.io as nio
+    import ast
+    import analysis as this
+
+    roiLabel = {}
+    label = 1
+    for roi in sorted( set( roiList) ):
+        roiLabel [ roi ] = label
+        print( """{r} ===> {l}""".format( r=roi, l=label))
+        label = label +1
+
+
+    autoFileList = []
+    defFileList = []
+    refFileList = []
+    autoLabelList = []
+    identityDictList = []
+    for sessionID in sessionIDList:
+        #
+        # get label map
+        #
+        labelDT = this.getData( resultDir,       normalization,
+                           methodParameter, sessionID,
+                           "ANNLabel_seg.nii.gz" )
+        roiManualDict = ast.literal_eval(  manualDict[ sessionID]['roiList']  )
+        identityDict = { } 
+        for roi in roiList:
+            identityDict[ 'sessionID' ] = sessionID
+            identityDict[ 'roi' ] = roi
+            identityDictList.append( identityDict )
+            print( """compute roi of ::
+                   {s}
+                   """.format( s = roi ))
+            #
+            # get get deformation 
+            #
+            autoFileList.append( labelDT )
+            defFileList.append( this.getData( resultDir,       normalization,
+                                         methodParameter, sessionID,
+                                         roi+"*.nii.gzdef.nii.gz" )  
+                              )
+
+            # read manual image
+            refFileList.append( roiManualDict[ roi ] )
+            autoLabelList.append( roiLabel[ roi ] ) 
+
+    import nipype.pipeline.engine as pe
+    import os
+    exp = pe.Workflow( name = 'experimentAnalysis' )
+    outputCSVFilename = os.path.abspath( outputCSVFilename ) 
+    exp.base_dir = os.path.dirname( outputCSVFilename )
+
+    from nipype.interfaces.utility import Function 
+    computeSimilarityND = pe.MapNode( name = "computeSimilarityND",
+                                      interface = Function( input_names =[ 'autoFilename',
+                                                                           'defFilename',
+                                                                           'refFilename',
+                                                                           'autoLabel',
+                                                                           'identityDict'] ,
+                                                            output_names = [ 'outDict' ],
+                                                            function = this.computeSimilarity ),
+                                      iterfield = ['autoFilename', 
+                                                   'defFilename',
+                                                   'refFilename',
+                                                   'autoLabel',
+                                                   'identityDict']
+                                    )
+    computeSimilarityND.inputs.autoFilename = autoFileList
+    computeSimilarityND.inputs.defFilename = defFileList
+    computeSimilarityND.inputs.refFilename = refFileList
+    computeSimilarityND.inputs.autoLabel = autoLabelList
+    computeSimilarityND.inputs.identityDict = identityDictList
+
+    exp.add_nodes( [ computeSimilarityND ] )
+
+    writeCSVFileND = pe.Node( name = 'writeCSVFileND',
+                              interface = Function( input_names = ['dataDictList',
+                                                                   'outputCSVFilename'],
+                                                    output_names = ['outputCSVFilename'],
+                                                    function = this.writeCSV )
+                            )
+    writeCSVFileND.inputs.outputCSVFilename = outputCSVFilename
+    exp.connect( computeSimilarityND, 'outDict',
+                      writeCSVFileND, 'dataDictList')
+   
+    exp.run()
+    return outputCSVFilename 
+     
+#########################################################################################
+def similarityComputeWorkflow( ResultDir, 
+                               OutputDir,
+                               ExperimentalConfigurationFile,
+                               runOption,
+                               PythonBinDir,
+                               BRAINSStandAloneSrcDir,
+                               BRAINSStandAloneBuildDir):
     
     import sys
-    if not set( BCutResultDict.keys() ) in set( ManualDict.keys() ):
-        print("""ERROR
-              BCutResult dictionary has some ROI that does not have 
-              reference volumes
-              """)
-        sys.exit()
+    import nipype.interfaces.io as nio
+    import nipype.pipeline.engine as pe
+    #
+    # get normalization option from experimental configuration file
+    #
+    import ConfigurationParser as configParser
+    import analysis as this
+    configMap = configParser.ConfigurationSectionMap( ExperimentalConfigurationFile )
+    normalizationOptions = configMap[ 'Options'][ 'normalization' ]
+    print(""" Normalization Option:::
+          {str}
+          """.format( str = normalizationOptions ))
+  
+    #
+    # get methods
+    #
+    methodOptionsDictList = configMap['Options'][ 'modelParameter'.lower() ]
+    methodOptions = []
+    import ast
+    for option in methodOptionsDictList:
+        methodStr = 'TreeDepth'+str( option['--randomTreeDepth']) +'_TreeNumber'+str(option['--numberOfTrees'])
+        methodOptions.append( methodStr )
+    print(""" Method Option:::
+          {str}
+          """.format( str = methodStr ))
 
-    returnSimilarityDict = {}
-    for session in  BCutResultDict.iterkeys(): 
-        sessionResultDict= {} 
-        for roi in session.iterkeys():
-            sessionResultDict[ roi ] = computeSimilarity( BCutResultDict[ roi ],
-                                                          ManualDict[ roi] )
-        returnSimilarityDict[ session ] =sessionResultDict
+    #
+    # get roiList
+    #
+    roiList = configMap[ 'Options']['roiBooleanCreator'.lower() ].keys()
+    print(""" ROIList:::
+          {str}
+          """.format( str = roiList ))
 
-    returnOutputCSVFilename = writeCSV( returnSimilarityDict, outputCSVFilename )
+    #
+    # get sessionList and manualDict
+    #
+    import XMLConfigurationGenerator
+    subjectListFilename = configMap['ListFiles'][ 'subjectListFilename'.lower() ]
+    manualDict  = XMLConfigurationGenerator.combineCSVs( subjectListFilename, {} )
+    sessionList = manualDict.keys()
 
-    return returnOutputCSVFilename
+    #
+    # workflow
+    #
+    workflow = pe.Workflow( name = 'outputDataCollector' )
+    workflow.base_dir = OutputDir
+    
+    from nipype.interfaces.utility import Function
+    experimentalND = pe.Node( name = 'experimentalND',
+                              interface = Function( input_names=['resultDir',
+                                                                 'outputCSVFilename',
+                                                                 'normalization',
+                                                                 'methodParameter',
+                                                                 'manualDict',
+                                                                 'roiList',
+                                                                 'sessionIDList'],
+                                                    output_names='outputCSVFilename',
+                                                    function = this.experimentAnalysis 
+                                                   )
+                              )
+    experimentalND.inputs.resultDir = ResultDir
+    experimentalND.inputs.outputCSVFilename = 'experimentalResult.csv' 
+    experimentalND.inputs.roiList = roiList
+    experimentalND.inputs.manualDict = manualDict
+    experimentalND.inputs.sessionIDList = sessionList
+    experimentalND.iterables = [ ( 'normalization', normalizationOptions),
+                                 ( 'methodParameter', methodOptions )
+                               ]
+    workflow.add_nodes( [ experimentalND ] )
+    if runOption == "cluster":
+        ############################################
+        # Platform specific information
+        #     Prepend the python search paths
+        pythonPath = BRAINSStandAloneSrcDir + "/BRAINSCut/BRAINSFeatureCreators/RobustStatisticComputations:" + BRAINSStandAloneSrcDir + "/AutoWorkup/:" + BRAINSStandAloneSrcDir + "/AutoWorkup/BRAINSTools/:" + BRAINSStandAloneBuildDir + "/SimpleITK-build/bin/" + BRAINSStandAloneBuildDir + "/SimpleITK-build/lib:" + PythonBinDir
+        binPath = BRAINSStandAloneBuildDir + "/bin:" + BRAINSStandAloneBuildDir+ "/lib"
 
+        PYTHON_AUX_PATHS= pythonPath
+        PYTHON_AUX_PATHS=PYTHON_AUX_PATHS.split(':')                                                                                  
+        PYTHON_AUX_PATHS.extend(sys.path)                                                                                             
+        sys.path=PYTHON_AUX_PATHS                                                                                                     
+        #print sys.path
+        import SimpleITK as sitk
+        #     Prepend the shell environment search paths
+        PROGRAM_PATHS= binPath
+        PROGRAM_PATHS=PROGRAM_PATHS.split(':')
+        PROGRAM_PATHS.extend(os.environ['PATH'].split(':'))                                                                           
+        os.environ['PATH']=':'.join(PROGRAM_PATHS)
+
+        Cluster_Script = get_global_sge_script( PYTHON_AUX_PATHS, 
+                                                PROGRAM_PATHS,
+                                                {}
+                                              )
+        workflow.run( plugin='SGE',
+                      plugin_args = dict( template = Cluster_Script, 
+                                          qsub_args = "-S /bin/bash -pe smp1 4-8 -o /dev/null "))
+    else:
+        workflow.run()
+
+def main(argv=None):
+    import os
+    import sys
+    
+    from nipype import config
+    config.enable_debug_mode()
+    
+    #-------------------------------- argument parser
+    import argparse
+    argParser = argparse.ArgumentParser( description ="""****************************
+        10-cross validation analysis 
+        """)
+    # workup arguments
+    argWfGrp = argParser.add_argument_group( 'argWfGrp', """****************************
+        auto workflow arguments for cross validation
+        """)
+    argWfGrp.add_argument( '--experimentalConfigurationFile',    
+        help="""experimentalConfigurationFile
+        Configuration file name with FULL PATH""", 
+        dest='experimentalConfigurationFile', required=True )
+    argWfGrp.add_argument( '--expDir',    help="""expDir
+        """, 
+        dest='expDir', required=False, default="." )
+    argWfGrp.add_argument( '--baseDir',    help="""baseDir
+        """, 
+        dest='baseDir', required=False, default="." )
+    argWfGrp.add_argument( '--runOption',    help="""runOption [local/cluster]
+        """, 
+        dest='runOption', required=False, default="local" )
+    argWfGrp.add_argument( '--PythonBinDir',    help="""PythonBinDir [local/cluster]
+        """, 
+        dest='PythonBinDir', required=False, default="NA" )
+    argWfGrp.add_argument( '--BRAINSStandAloneSrcDir',    help="""BRAINSStandAloneSrcDir [local/cluster]
+        """, 
+        dest='BRAINSStandAloneSrcDir', required=False, default="NA" )
+    argWfGrp.add_argument( '--BRAINSStandAloneBuildDir',    help="""BRAINSStandAloneBuildDir [local/cluster]
+        """, 
+        dest='BRAINSStandAloneBuildDir', required=False, default="NA" )
+
+    args =argParser.parse_args()
+    similarityComputeWorkflow( args.expDir, 
+                               args.baseDir,
+                               args.experimentalConfigurationFile,
+                               args.runOption,
+                               args.PythonBinDir,
+                               args.BRAINSStandAloneSrcDir,
+                               args.BRAINSStandAloneBuildDir)
+                               
+    
+
+import sys
+
+if __name__ == "__main__":
+    sys.exit(main())
 #########################################################################################
 # unit test
 #
- 
+#ResultDir = "/hjohnson/HDNI/PREDICT_TRAINING/regina_ann/TrainingModels/BAW2012Dec/Experiment_20121222/Result/Labels/"
+#outputDir = '/ipldev/scratch/eunyokim/src/BRAINSStandAlone/BRAINSStandAlone/BRAINSCut/Nipype/'
+#
+#outputCSVFilename = '/ipldev/scratch/eunyokim/src/BRAINSStandAlone/BRAINSStandAlone/BRAINSCut/Nipype/output.csv'
+#normalization = 'Linear'
+#methodParameter = 'TreeDepth50_TreeNumber50'
+#configFilename = '/hjohnson/HDNI/PREDICT_TRAINING/regina_ann/TrainingModels/BAW2012Dec/Dec22/model.config'
+#
+#similarityComputeWorkflow( ResultDir, outputDir, configFilename )
+#
+#import ConfigurationParser as configParser
+#import XMLConfigurationGenerator
+#configMap = configParser.ConfigurationSectionMap( configFilename )  
+#subjectListFilename = configMap[ 'ListFiles' ]['subjectListFilename'.lower() ]
+#manualDict  = XMLConfigurationGenerator.combineCSVs( subjectListFilename, {} )
+#sessionIDList = manualDict.keys()
+#print( sessionIDList )
+#
+#testDictList = [ {'roi':'l_accumben','vol':1000,'NF':3},
+#                 {'roi':'r_accumben','vol':100,'NF':3} ]
+#writeCSV(  testDictList, 'out.csv' )
+#roiList =  [
+#            'l_thalamus'
+#           ]
+#experimentAnalysis( ResultDir, 
+#                    outputCSVFilename, 
+#                    normalization, 
+#                    methodParameter, 
+#                    manualDict, 
+#                    roiList, 
+#                    sessionIDList )
+#
