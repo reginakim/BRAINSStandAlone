@@ -4,6 +4,132 @@
 ##         mean/median of them
 ##         ICC measures
 ##############################################################################
+##############################################################################
+def computeSummary( rObject ):
+    import rpy2.robjects as robjects
+    rObject.r('''
+    require( psy )                                                                              
+    numericCols <- c(                                                                           
+        "FP", "SimilarityIndex", "totalSearchVol", "RelativeOverlap", "union", "Sensitivity",   
+        "HausdorffAvg", "Precision",   "TP", "refVol",   "TN", "Hausdorff",      "beta", "sessionID",
+        "FScore", "Specificity",       "alpha", "intersection",  "FN", "autoVol" )              
+        
+    dataColumns <- c( numericCols, 'roi' )                                                      
+    
+    error.bar <- function(x, y, upper, lower=upper, length=0.1,...){                            
+      if(length(x) != length(y) | length(y) !=length(lower) | length(lower) != length(upper))   
+      stop("vectors must be same length")
+      arrows(x,upper, x, lower, angle=90, code=3, length=length, ...)                           
+    } 
+    computeSummary <- function( csvFilename, outputFilePrefix )                                 
+    {
+      print( outputFilePrefix )                                                                 
+      dt<-read.csv( csvFilename, header=T )                                                     
+      print( head( dt ) )
+      
+      for ( cROI in levels( factor( dt$roi )) )                                                 
+      {
+        subResult <- data.frame( matrix( nrow=0,                                                
+                                         ncol= length( numericCols ) ,                          
+                                         dimnames = list( NULL, col.names=numericCols ) ))      
+        print( paste("processing ", cROI ) )
+        roiDT <- subset( dt, dt$roi == cROI , select=numericCols )                              
+        print(head(roiDT))
+        subResult[ 'min', ]       <- apply( roiDT, 2, min )                                     
+        subResult[ 'which.min', ] <- roiDT$sessionID[ apply( roiDT, 2, which.min ) ]            
+        subResult[ 'mean', ]      <- apply( roiDT, 2, mean ) 
+        subResult[ 'max', ]       <- apply( roiDT, 2, max )                                     
+        subResult[ 'which.max', ] <- roiDT$sessionID[ apply( roiDT, 2, which.max ) ]            
+        
+        print( subResult )                                                                      
+        
+        print( outputFilePrefix )                                                               
+        currentFilePrefix = paste( outputFilePrefix, '_', cROI, sep = "" )                      
+        write.csv( subResult, paste( currentFilePrefix, '_summary.csv', sep=""),                
+                   quote = FALSE )
+                   
+        iccDT <- subset( roiDT, select=c(autoVol, refVol))                                      
+        iccResult <- icc( iccDT )
+        write.csv( iccResult, paste( currentFilePrefix, '_icc.csv', sep=""),                    
+                   quote = FALSE, 
+                   row.names = FALSE )                                                          
+                   
+        pdf( paste( currentFilePrefix, '_icc.pdf', sep=""))                                     
+        plot( iccDT , pch=19)
+        legend( "topleft", 
+                c( paste( "ICC(c):", round( iccResult$icc.consistency, 2) ),                    
+                   paste( "ICC(a):", round( iccResult$icc.agreement, 2 ) )  ),                  
+                bty="n"
+              ) 
+        dev.off() 
+        pdf( paste( currentFilePrefix, '_summary.pdf', sep=""))                                 
+        print( paste( "Write ", currentFilePrefix, '_summary.pdf', sep="") )                    
+        print( c( subResult[ 'mean', "SimilarityIndex"],
+                  subResult[ 'mean', "RelativeOverlap" ],                                       
+                  subResult[ 'mean', "Sensitivity" ],
+                  subResult[ 'mean', "Specificity" ] ) )                                        
+        print( subResult[ 'mean', "SimilarityIndex"] + subResult[ 'mean', "RelativeOverlap" ] ) 
+        xbar <- barplot( c( subResult[ 'mean', "SimilarityIndex"],
+                            subResult[ 'mean', "RelativeOverlap" ],                             
+                            subResult[ 'mean', "Sensitivity" ],
+                            subResult[ 'mean', "Specificity" ] ),                               
+                          ylim=c(0,1)) 
+        axis( 1, at = xbar,
+                 labels = c( 'Similarity', 'RelativeOverlap', 'Sensitivity', 'Specificity' ) )  
+        error.bar( xbar, c( subResult[ 'mean', "SimilarityIndex"],
+                         subResult[ 'mean', "RelativeOverlap" ],
+                         subResult[ 'mean', "Sensitivity" ],
+                         subResult[ 'mean', "Specificity" ] ),
+                         c( subResult[ 'min', "SimilarityIndex"],
+                         subResult[ 'min', "RelativeOverlap" ],
+                         subResult[ 'min', "Sensitivity" ],
+                         subResult[ 'min', "Specificity" ] ),
+                      c( subResult[ 'max', "SimilarityIndex"],
+                         subResult[ 'max', "RelativeOverlap" ],
+                         subResult[ 'max', "Sensitivity" ],
+                         subResult[ 'max', "Specificity" ] ) )
+        text( xbar, c( subResult[ 'min', "SimilarityIndex"],
+                       subResult[ 'min', "RelativeOverlap" ],
+                       subResult[ 'min', "Sensitivity" ],
+                       subResult[ 'min', "Specificity" ] ),
+                    c( subResult[ 'which.min', "SimilarityIndex"],
+                       subResult[ 'which.min', "RelativeOverlap" ],
+                       subResult[ 'which.min', "Sensitivity" ],
+                       subResult[ 'which.min', "Specificity" ] ) )
+        text( xbar, c( subResult[ 'max', "SimilarityIndex"],
+                       subResult[ 'max', "RelativeOverlap" ],
+                       subResult[ 'max', "Sensitivity" ],
+                       subResult[ 'max', "Specificity" ] ),
+                    c( subResult[ 'which.max', "SimilarityIndex"],
+                       subResult[ 'which.max', "RelativeOverlap" ],
+                       subResult[ 'which.max', "Sensitivity" ],
+                       subResult[ 'which.max', "Specificity" ] ) )
+        dev.off()
+      }
+
+    }
+    ''')
+    return rObject
+
+#########################################################################################
+def computeSummaryFromCSV( inputCSVFilename,
+                           outputCSVPrefix):
+    import rpy2.robjects as robjects
+    import analysis as this
+    robjects = this.computeSummary( robjects )
+    rComputeSummary = robjects.globalenv['computeSummary']
+
+    import os
+    outputCSVPrefix = os.path.abspath( outputCSVPrefix )
+    res = rComputeSummary( inputCSVFilename , outputCSVPrefix )
+
+    import glob
+    outputCSVList = glob.glob( outputCSVPrefix + "*csv" ) 
+    outputCSVList.append( glob.glob( outputCSVPrefix + "*pdf" ) )
+    return outputCSVList 
+
+
+#########################################################################################
 def get_global_sge_script(pythonPathsList,binPathsList,customEnvironment={}):
     print("""get_global_sge_script""")
     """This is a wrapper script for running commands on an SGE cluster
@@ -131,10 +257,6 @@ def computeSimilarity( autoFilename, defFilename, refFilename, autoLabel=1, iden
 #########################################################################################
 def computeICCs( raterA, raterB):
     return ICCs
-
-#########################################################################################
-def computeSummaryFromCSV( inputCSVFilename ):
-    import csv
 
 #########################################################################################
 def writeCSV( dataDictList, 
@@ -296,9 +418,10 @@ def similarityComputeWorkflow( ResultDir,
     #
     # get methods
     #
+    import ast
     methodOptionsDictList = configMap['Options'][ 'modelParameter'.lower() ]
     methodOptions = []
-    import ast
+    print( methodOptionsDictList )
     for option in methodOptionsDictList:
         methodStr = 'TreeDepth'+str( option['--randomTreeDepth']) +'_TreeNumber'+str(option['--numberOfTrees'])
         methodOptions.append( methodStr )
@@ -350,6 +473,18 @@ def similarityComputeWorkflow( ResultDir,
                                  ( 'methodParameter', methodOptions )
                                ]
     workflow.add_nodes( [ experimentalND ] )
+
+    summaryND = pe.Node( name = 'summaryND',
+                         interface = Function( input_names = ['inputCSVFilename',
+                                                              'outputCSVPrefix'],
+                                               output_names = ['outputCSVList'],
+                                               function = this.computeSummaryFromCSV )
+                        )
+
+    summaryND.inputs.outputCSVPrefix = 'summaryOutput'
+    workflow.connect( experimentalND, 'outputCSVFilename',
+                      summaryND, 'inputCSVFilename' )
+
     if runOption == "cluster":
         ############################################
         # Platform specific information

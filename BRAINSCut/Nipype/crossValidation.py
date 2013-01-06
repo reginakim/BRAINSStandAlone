@@ -462,7 +462,7 @@ def crossValidationWorkUp( crossValidationConfigurationFilename,
                                 )
     vectorCreatorND.inputs.outputVectorFilename = 'oneROIVectorFile.txt'
     vectorCreatorND.inputs.outputXmlFilename = 'oneROICreateVectorNetConfiguration.xml'
-    normalizationOption = ast.literal_eval( Options[ 'normalization'.lower()]  )
+    normalizationOption = Options[ 'normalization'.lower()]  
     print( """Normalization Option: {str}
            """.format( str=normalizationOption ) )
     vectorCreatorND.iterables = ( 'normalization', normalizationOption )
@@ -522,7 +522,7 @@ def crossValidationWorkUp( crossValidationConfigurationFilename,
     #methodParameter = { '--method': 'RandomForest',
     #                    '--numberOfTrees': 60,
     #                    '--randomTreeDepth ': 60 }
-    methodFromConfiguFile = ast.literal_eval( Options['modelParameter'.lower()] )
+    methodFromConfiguFile = Options['modelParameter'.lower()] 
     trainND.iterables= ( 'methodParameter', methodFromConfiguFile)
                          
     trainND.inputs.outputXmlFilename = 'trianNetConfiguration.xml'
