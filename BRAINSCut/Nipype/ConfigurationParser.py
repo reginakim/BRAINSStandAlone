@@ -411,17 +411,14 @@ def BRAINSCutApplyModel( configurationFilename,
     for session in returnList['outputDirDict'].iterkeys():
         outputDir = returnList['outputDirDict'][ session ]
         print( outputDir )
-        print( outputDir )
-        print( outputDir )
-        print( outputDir )
-        print( outputDir )
-        print( outputDir )
         outputSessionDict={}
-        outputSessionDict[ 'label' ] = glob.glob(  outputDir +"/*_ANNLabel_seg.nii.gz" ) 
-        outputSessionDict[ 'ambigiousLabel' ] = glob.glob(  outputDir +"/*AmbiguousMap.nii.gz" ) 
-        outputSessionDict[ 'defPrior' ] = glob.glob(   outputDir +"/*def.nii.gz" ) 
-        outputSessionDict[ 'rawOutput' ]  = glob.glob(   outputDir +"/ANNContinuous*.nii.gz" )
+        outputSessionDict[ 'label' ] = outputDir + "/" + session + "_ANNLabel_seg.nii.gz" 
+        outputSessionDict[ 'ambigiousLabel' ] = outputDir + "/" + session + "_AmbiguousMap.nii.gz"
+        for roi in probabilityMapDict.iterkeys():
+            outputSessionDict[ 'defPrior_' + roi ] = outputDir + "/" + session + "ANNLabel_" + roi + ".nii.gzdef.nii.gz"
+            outputSessionDict[ 'rawOutput_' + roi ]  = outputDir + "/" + "ANNContinuousPrediction" + roi + session + ".nii.gz"
         outputLabelDict[ session ] = outputSessionDict 
+        print( outputSessionDict )
         
     returnList[ 'outputLabelDict' ] = outputLabelDict 
 

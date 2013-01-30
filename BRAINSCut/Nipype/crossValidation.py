@@ -5,8 +5,20 @@ def getDictionaryValues( inputDictionary ):
     for session in inputDictionary.iterkeys():
         sessionDict = inputDictionary[ session ]
         for label in sessionDict.iterkeys():
-            for img in sessionDict[label]:
-                returnList.append( img )
+            currentData = sessionDict[ label ]
+            if type( currentData ) is list:
+                for img in currentData: 
+                    returnList.append( img )
+            elif type ( currentData ) is dict:
+                for imgKey in currentData.iterkeys():
+                    returnList.append( currentData[imgKey] )
+            else:
+                returnList.append( currentData )
+    print( """ To Result ::: """ )
+    print( """ To Result ::: """ )
+    print( """ To Result ::: """ )
+    print( returnList )
+           
     return returnList
 
 
@@ -580,6 +592,10 @@ def crossValidationWorkUp( crossValidationConfigurationFilename,
 
     workflow.connect( [ ( applyND, LabelsDS,
                           [ ( ( 'outputLabelDict', getDictionaryValues), 'Labels')] ) ] )
+
+    #####################################################################################
+    # Post Processing 
+    #
 
     #####################################################################################
     # analysis 
