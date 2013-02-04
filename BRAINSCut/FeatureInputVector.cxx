@@ -1,6 +1,7 @@
 #include "FeatureInputVector.h"
 #include "BRAINSCutExceptionStringHandler.h"
 #include "itkLabelStatisticsImageFilter.h"
+#include "itkThresholdImageFilter.h"
 
 const unsigned int MAX_IMAGE_SIZE=1024;
 const WorkingImageType::IndexType ConstantHashIndexSize = {{1024, 1024, 1024}};
@@ -353,6 +354,51 @@ FeatureInputVector
     m_statistics[ ROIName ][ ImageTypeNumber ][ "Q_95" ] = histogram->Quantile( 0, 0.95 ); 
     m_statistics[ ROIName ][ ImageTypeNumber ][ "Q_05" ] = histogram->Quantile( 0, 0.05 ); 
 
+    /* trimmed mean */
+    m_statistics[ ROIName ][ ImageTypeNumber ][ "TrimmedMean_Q01" ] = this->GetTrimmedStat( m_statistics[ ROIName ][ ImageTypeNumber ][ "Q_01" ],
+                                                                                          m_statistics[ ROIName ][ ImageTypeNumber ][ "Q_99" ],
+                                                                                          *eachTypeOfImage,
+                                                                                          binaryImage,
+                                                                                          true );
+    m_statistics[ ROIName ][ ImageTypeNumber ][ "TrimmedMean_Q05" ] = this->GetTrimmedStat( m_statistics[ ROIName ][ ImageTypeNumber ][ "Q_05" ],
+                                                                                          m_statistics[ ROIName ][ ImageTypeNumber ][ "Q_95" ],
+                                                                                          *eachTypeOfImage,
+                                                                                          binaryImage,
+                                                                                          true);
+    /* winsorized mean */
+    m_statistics[ ROIName ][ ImageTypeNumber ][ "WinsorizedMean_Q01" ] = this->GetWinsorizedStat( m_statistics[ ROIName ][ ImageTypeNumber ][ "Q_01" ],
+                                                                                          m_statistics[ ROIName ][ ImageTypeNumber ][ "Q_99" ],
+                                                                                          *eachTypeOfImage,
+                                                                                          binaryImage,
+                                                                                          true);
+    m_statistics[ ROIName ][ ImageTypeNumber ][ "WinsorizedMean_Q05" ] = this->GetWinsorizedStat( m_statistics[ ROIName ][ ImageTypeNumber ][ "Q_05" ],
+                                                                                          m_statistics[ ROIName ][ ImageTypeNumber ][ "Q_95" ],
+                                                                                          *eachTypeOfImage,
+                                                                                          binaryImage,
+                                                                                          true);
+    /* trimmed sigma */
+    m_statistics[ ROIName ][ ImageTypeNumber ][ "TrimmedSigma_Q01" ] = this->GetTrimmedStat( m_statistics[ ROIName ][ ImageTypeNumber ][ "Q_01" ],
+                                                                                          m_statistics[ ROIName ][ ImageTypeNumber ][ "Q_99" ],
+                                                                                          *eachTypeOfImage,
+                                                                                          binaryImage,
+                                                                                          false );
+    m_statistics[ ROIName ][ ImageTypeNumber ][ "TrimmedSigma_Q05" ] = this->GetTrimmedStat( m_statistics[ ROIName ][ ImageTypeNumber ][ "Q_05" ],
+                                                                                          m_statistics[ ROIName ][ ImageTypeNumber ][ "Q_95" ],
+                                                                                          *eachTypeOfImage,
+                                                                                          binaryImage,
+                                                                                          false);
+    /* winsorized sigma */
+    m_statistics[ ROIName ][ ImageTypeNumber ][ "WinsorizedSigma_Q01" ] = this->GetWinsorizedStat( m_statistics[ ROIName ][ ImageTypeNumber ][ "Q_01" ],
+                                                                                          m_statistics[ ROIName ][ ImageTypeNumber ][ "Q_99" ],
+                                                                                          *eachTypeOfImage,
+                                                                                          binaryImage,
+                                                                                          false);
+    m_statistics[ ROIName ][ ImageTypeNumber ][ "WinsorizedSigma_Q05" ] = this->GetWinsorizedStat( m_statistics[ ROIName ][ ImageTypeNumber ][ "Q_05" ],
+                                                                                          m_statistics[ ROIName ][ ImageTypeNumber ][ "Q_95" ],
+                                                                                          *eachTypeOfImage,
+                                                                                          binaryImage,
+                                                                                          false);
+
     std::cout<<ROIName<<" :: "<<ImageTypeNumber<<" :: Minimum :: "
              << m_statistics[ ROIName ][ ImageTypeNumber ][ "Minimum" ]  << std::endl;
     std::cout<<ROIName<<" :: "<<ImageTypeNumber<<" :: Maximum :: "
@@ -375,10 +421,126 @@ FeatureInputVector
              << m_statistics[ ROIName ][ ImageTypeNumber ][ "Q_95" ]  << std::endl;
     std::cout<<ROIName<<" :: "<<ImageTypeNumber<<" :: Q_99 :: "
              << m_statistics[ ROIName ][ ImageTypeNumber ][ "Q_99" ]  << std::endl;
+    std::cout<<ROIName<<" :: "<<ImageTypeNumber<<" :: TrimmedMean_Q01 :: "
+             << m_statistics[ ROIName ][ ImageTypeNumber ][ "TrimmedMean_Q01" ]  << std::endl;
+    std::cout<<ROIName<<" :: "<<ImageTypeNumber<<" :: TrimmedMean_Q05 :: "
+             << m_statistics[ ROIName ][ ImageTypeNumber ][ "TrimmedMean_Q05" ]  << std::endl;
+    std::cout<<ROIName<<" :: "<<ImageTypeNumber<<" :: TrimmedSigma_Q01 :: "
+             << m_statistics[ ROIName ][ ImageTypeNumber ][ "TrimmedSigma_Q01" ]  << std::endl;
+    std::cout<<ROIName<<" :: "<<ImageTypeNumber<<" :: TrimmedSigma_Q05 :: "
+             << m_statistics[ ROIName ][ ImageTypeNumber ][ "TrimmedSigma_Q05" ]  << std::endl;
+    std::cout<<ROIName<<" :: "<<ImageTypeNumber<<" :: WinsorizedMean_Q01 :: "
+             << m_statistics[ ROIName ][ ImageTypeNumber ][ "WinsorizedMean_Q01" ]  << std::endl;
+    std::cout<<ROIName<<" :: "<<ImageTypeNumber<<" :: WinsorizedMean_Q05 :: "
+             << m_statistics[ ROIName ][ ImageTypeNumber ][ "WinsorizedMean_Q05" ]  << std::endl;
+    std::cout<<ROIName<<" :: "<<ImageTypeNumber<<" :: WinsorizedSigma_Q01 :: "
+             << m_statistics[ ROIName ][ ImageTypeNumber ][ "WinsorizedSigma_Q01" ]  << std::endl;
+    std::cout<<ROIName<<" :: "<<ImageTypeNumber<<" :: WinsorizedSigma_Q05 :: "
+             << m_statistics[ ROIName ][ ImageTypeNumber ][ "WinsorizedSigma_Q05" ]  << std::endl;
     ++ImageTypeNumber;
     }
 
   m_minmax[ROIName] = currentMinMaxVector;
+}
+
+float
+FeatureInputVector
+::GetTrimmedStat( const float lowerBound, 
+                  const float upperBound,
+                  const WorkingImagePointer image,
+                  const BinaryImageType::Pointer binaryImage,
+                  const bool returnMean)
+{
+  const unsigned char defaultLabel = 1;
+  /* threshold image */ 
+  typedef itk::BinaryThresholdImageFilter<WorkingImageType,
+                                          BinaryImageType> ThresholdType;
+
+  ThresholdType::Pointer thresholder = ThresholdType::New();
+
+  thresholder->SetInput( image );
+  thresholder->SetLowerThreshold( lowerBound );
+  thresholder->SetUpperThreshold( upperBound );
+  thresholder->SetInsideValue( defaultLabel );
+
+  /* multiply two binary images */
+  typedef itk::MultiplyImageFilter< BinaryImageType, BinaryImageType, BinaryImageType > BinaryMultiplierType;
+  BinaryMultiplierType::Pointer binaryMultiplier = BinaryMultiplierType::New();
+  binaryMultiplier->SetInput1( thresholder->GetOutput() );
+  binaryMultiplier->SetInput2( binaryImage );
+  binaryMultiplier->Update();
+
+  /* make sure multiplied image is one labeled image */
+  typedef itk::BinaryThresholdImageFilter<BinaryImageType,BinaryImageType> BinaryThresholdType;
+  BinaryThresholdType::Pointer binaryThresholder = BinaryThresholdType::New();
+  binaryThresholder->SetInput( binaryMultiplier->GetOutput() );
+  binaryThresholder->SetLowerThreshold( 0.5F );
+  binaryThresholder->SetInsideValue( defaultLabel );
+
+  /* get mean */
+  typedef itk::LabelStatisticsImageFilter<WorkingImageType, BinaryImageType> StatisticCalculatorType;
+  StatisticCalculatorType::Pointer statisticCalculator = StatisticCalculatorType::New();
+
+  statisticCalculator->SetInput( image );
+  statisticCalculator->SetLabelInput( binaryThresholder->GetOutput() );
+  statisticCalculator->Update();
+
+  float returnValue;
+  if( returnMean )
+    { 
+    returnValue = statisticCalculator->GetMean( defaultLabel ); 
+    }
+  else
+    {
+    returnValue = statisticCalculator->GetSigma( defaultLabel );
+    }
+
+  return returnValue;
+}
+
+float
+FeatureInputVector
+::GetWinsorizedStat( const float lowerBound, 
+                  const float upperBound,
+                  const WorkingImagePointer image,
+                  const BinaryImageType::Pointer binaryImage,
+                  const bool returnMean )
+{
+  const unsigned char defaultLabel = 1;
+  /* threshold image */ 
+  /* if I < lowerBound, setting to lower bound */
+  typedef itk::ThresholdImageFilter<WorkingImageType> ThresholdType;
+
+  ThresholdType::Pointer lowerThresholder = ThresholdType::New();
+
+  lowerThresholder->SetInput( image );
+  lowerThresholder->ThresholdBelow( lowerBound);
+
+  /* if I < upperBound, setting to upper bound */
+  ThresholdType::Pointer upperThresholder = ThresholdType::New();
+
+  upperThresholder->SetInput( lowerThresholder->GetOutput() );
+  upperThresholder->ThresholdAbove( upperBound );
+
+  /* get mean */
+  typedef itk::LabelStatisticsImageFilter<WorkingImageType, BinaryImageType> StatisticCalculatorType;
+  StatisticCalculatorType::Pointer statisticCalculator = StatisticCalculatorType::New();
+
+  statisticCalculator->SetInput( upperThresholder->GetOutput() );
+  statisticCalculator->SetLabelInput( binaryImage );
+  statisticCalculator->Update();
+
+  float returnValue;
+  if( returnMean )
+    { 
+    returnValue = statisticCalculator->GetMean( defaultLabel ); 
+    }
+  else
+    {
+    returnValue = statisticCalculator->GetSigma( defaultLabel );
+    }
+
+  return returnValue;
 }
 
 /** inline functions */

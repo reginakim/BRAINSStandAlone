@@ -86,6 +86,18 @@ public:
 
   void SetNormalizationMethod( const std::string & normalizationMethod );
 
+  float GetTrimmedStat( const float lowerBound, 
+                  const float upperBound,
+                  const WorkingImagePointer image,
+                  const BinaryImageType::Pointer binaryImage,
+                  const bool returnMean);
+
+  float GetWinsorizedStat( const float lowerBound, 
+                  const float upperBound,
+                  const WorkingImagePointer image,
+                  const BinaryImageType::Pointer binaryImage,
+                  const bool returnMean );
+
   void NormalizationOfVector( InputVectorMapType& currentFeatureVector, std::string ROIName );
 
   /** get function(s) */
