@@ -97,6 +97,10 @@ FeatureInputVector
   m_featureNormalizationMap[ "DoubleSigmoid_Q01" ] = DoubleSigmoid_Q01;
   m_featureNormalizationMap[ "zScore" ] = zScore;
   m_featureNormalizationMap[ "IQR" ] = IQR;
+  m_featureNormalizationMap[ "Trimmed_Q01" ] = Trimmed_Q01;
+  m_featureNormalizationMap[ "Trimmed_Q05" ] = Trimmed_Q05;
+  m_featureNormalizationMap[ "Winsorized_Q01" ] = Winsorized_Q01;
+  m_featureNormalizationMap[ "Winsorized_Q05" ] = Winsorized_Q05;
 
 }
 
@@ -225,6 +229,10 @@ FeatureInputVector
         case DoubleSigmoid_Q01:
         case zScore:
         case IQR:
+        case Trimmed_Q01:
+        case Trimmed_Q05:
+        case Winsorized_Q01:
+        case Winsorized_Q05:
           m_normalizationMethod = normalizationMethod;
           break;
         default:
@@ -802,6 +810,30 @@ FeatureInputVector
               *featureElementIterator= ZScore( *featureElementIterator,
                                                 m_statistics[ROIName][currentImgType][ "Median" ],
                                                 current_IQR );
+              }
+          else if ( m_normalizationMethod == "Trimmed_Q01" )
+              {
+              *featureElementIterator= ZScore( *featureElementIterator,
+                                                m_statistics[ROIName][currentImgType][ "TrimmedMean_Q01" ],
+                                                m_statistics[ROIName][currentImgType][ "TrimmedSigma_Q01" ] );
+              }
+          else if ( m_normalizationMethod == "Trimmed_Q05" )
+              {
+              *featureElementIterator= ZScore( *featureElementIterator,
+                                                m_statistics[ROIName][currentImgType][ "TrimmedMean_Q05" ],
+                                                m_statistics[ROIName][currentImgType][ "TrimmedSigma_Q05" ] );
+              }
+          else if ( m_normalizationMethod == "Winsorized_Q01" )
+              {
+              *featureElementIterator= ZScore( *featureElementIterator,
+                                                m_statistics[ROIName][currentImgType][ "WinsorizedMean_Q01" ],
+                                                m_statistics[ROIName][currentImgType][ "WinsorizedSigma_Q01" ] );
+              }
+          else if ( m_normalizationMethod == "Winsorized_Q05" )
+              {
+              *featureElementIterator= ZScore( *featureElementIterator,
+                                                m_statistics[ROIName][currentImgType][ "WinsorizedMean_Q05" ],
+                                                m_statistics[ROIName][currentImgType][ "WinsorizedSigma_Q05" ] );
               }
           else if ( m_normalizationMethod == "None")
             {

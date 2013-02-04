@@ -34,7 +34,11 @@ public:
     Sigmoid_Q01,
     DoubleSigmoid_Q01,
     zScore,
-    IQR
+    IQR,
+    Trimmed_Q01,
+    Trimmed_Q05,
+    Winsorized_Q01,
+    Winsorized_Q05
     };
 
   /** type definition */
